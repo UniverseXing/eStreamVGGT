@@ -1,5 +1,6 @@
 import tqdm
 import torch
+import os
 from dust3r.utils.device import to_cpu, collate_with_cat
 from dust3r.utils.misc import invalid_to_nans
 from dust3r.utils.geometry import depthmap_to_pts3d, geotrf
@@ -91,9 +92,30 @@ def loss_of_one_batch(
     with torch.cuda.amp.autocast(dtype=dtype):
         if inference:
             with torch.no_grad():
-                output = model.inference(batch, query_pts)
+                cache_window_env = os.environ.get("STREAMVGGT_CACHE_WINDOW")
+                cache_window_size = int(cache_window_env) if cache_window_env else None
+                cache_policy = os.environ.get("STREAMVGGT_CACHE_POLICY", "fifo")
+                return_memory_events = os.environ.get(
+                    "STREAMVGGT_LOG_SELECTIONS", "0"
+                ).lower() in ("1", "true", "yes")
+                return_memory_trace = os.environ.get(
+                    "STREAMVGGT_TRACE_MEMORY", "0"
+                ).lower() in ("1", "true", "yes")
+                output = model.inference(
+                    batch,
+                    query_pts,
+                    cache_window_size=cache_window_size,
+                    cache_policy=cache_policy,
+                    return_memory_events=return_memory_events,
+                    return_memory_trace=return_memory_trace,
+                )
                 preds, batch = output.ress, output.views
-                result = dict(views=batch, pred=preds)
+                result = dict(
+                    views=batch,
+                    pred=preds,
+                    memory_events=output.memory_events,
+                    memory_trace=output.memory_trace,
+                )
                 return result[ret] if ret else result
         else:
             output = model(batch, query_pts)

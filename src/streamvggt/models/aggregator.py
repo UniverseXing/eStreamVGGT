@@ -190,7 +190,8 @@ class Aggregator(nn.Module):
         images: torch.Tensor,
         past_key_values=None,
         use_cache=False,
-        past_frame_idx=0
+        past_frame_idx=0,
+        return_frame_features=False,
     ) -> Tuple[List[torch.Tensor], int]:
         """
         Args:
@@ -225,6 +226,13 @@ class Aggregator(nn.Module):
 
         if isinstance(patch_tokens, dict):
             patch_tokens = patch_tokens["x_norm_patchtokens"]
+
+        frame_features = None
+        if return_frame_features:
+            frame_features = F.normalize(
+                patch_tokens.detach().float().mean(dim=1),
+                dim=-1,
+            ).reshape(B, S, -1)
 
         _, P, C = patch_tokens.shape
 
@@ -289,8 +297,12 @@ class Aggregator(nn.Module):
         del concat_inter
         del frame_intermediates
         del global_intermediates
-        if use_cache:      
+        if use_cache and return_frame_features:
+            return output_list, self.patch_start_idx, past_key_values, frame_features
+        if use_cache:
             return output_list, self.patch_start_idx, past_key_values
+        if return_frame_features:
+            return output_list, self.patch_start_idx, frame_features
         return output_list, self.patch_start_idx
 
     def _process_frame_attention(self, tokens, B, S, P, C, frame_idx, pos=None):

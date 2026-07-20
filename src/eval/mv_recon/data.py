@@ -1,15 +1,13 @@
 import os
 import cv2
-import json
 import numpy as np
 import os.path as osp
+from bisect import bisect_left
 from collections import deque
 import random
 from eval.mv_recon.base import BaseStereoViewDataset
 from dust3r.utils.image import imread_cv2
 import eval.mv_recon.dataset_utils.cropping as cropping
-import imageio.v3 as iio
-from tifffile import tifffile
 from einops import rearrange
 
 
@@ -95,9 +93,16 @@ class SevenScenes(BaseStereoViewDataset):
             print(f"Found {len(self.scene_list)} sequences in split {self.split}")
             return
 
-        scenes = os.listdir(base_dir)
-
         file_split = {"train": "TrainSplit.txt", "test": "TestSplit.txt"}[self.split]
+
+        # The official download may leave archives/cache directories beside
+        # scenes. Only directories with the requested split file are scenes.
+        scenes = sorted(
+            scene
+            for scene in os.listdir(base_dir)
+            if os.path.isdir(osp.join(base_dir, scene))
+            and osp.isfile(osp.join(base_dir, scene, file_split))
+        )
 
         self.scene_list = []
         for scene in scenes:
@@ -127,11 +132,33 @@ class SevenScenes(BaseStereoViewDataset):
 
         else:
             scene_id = self.scene_list[idx // self.num_seq]
-            seq_id = idx % self.num_seq
 
             data_path = osp.join(self.ROOT, scene_id)
-            num_files = len([name for name in os.listdir(data_path) if "color" in name])
-            img_idxs = [f"{i:06d}" for i in range(num_files)]
+            img_idxs = sorted(
+                name[len("frame-") : -len(".color.png")]
+                for name in os.listdir(data_path)
+                if name.startswith("frame-") and name.endswith(".color.png")
+            )
+            valid_img_idxs = []
+            for im_idx in img_idxs:
+                posepath = osp.join(data_path, f"frame-{im_idx}.pose.txt")
+                depthpath = osp.join(data_path, f"frame-{im_idx}.depth.proj.png")
+                try:
+                    pose = np.loadtxt(posepath)
+                except (OSError, ValueError):
+                    continue
+                if (
+                    osp.isfile(depthpath)
+                    and pose.shape == (4, 4)
+                    and np.isfinite(pose).all()
+                ):
+                    valid_img_idxs.append(im_idx)
+            if len(valid_img_idxs) != len(img_idxs):
+                print(
+                    f"[7Scenes] {scene_id}: ignored "
+                    f"{len(img_idxs) - len(valid_img_idxs)} frame(s) with missing/invalid GT"
+                )
+            img_idxs = valid_img_idxs
             img_idxs = img_idxs[:: self.kf_every]
 
         # Intrinsics used in SimpleRecon
@@ -161,6 +188,9 @@ class SevenScenes(BaseStereoViewDataset):
             depthmap[depthmap < 1e-3] = 0
 
             camera_pose = np.loadtxt(posepath).astype(np.float32)
+            if camera_pose.shape != (4, 4) or not np.isfinite(camera_pose).all():
+                print(f"[7Scenes] {scene_id}/{im_idx}: skipped invalid camera pose")
+                continue
 
             if resolution != (224, 224) or self.rebuttal:
                 rgb_image, depthmap, intrinsics = self._crop_resize_if_necessary(
@@ -272,7 +302,20 @@ class ETH3D(BaseStereoViewDataset):
 
     def _load_all_scenes(self, root):
         self.scene_list = sorted(
-            d for d in os.listdir(root) if os.path.isdir(os.path.join(root, d))
+            d
+            for d in os.listdir(root)
+            if not d.startswith("_")
+            and os.path.isdir(os.path.join(root, d))
+            and os.path.isfile(
+                os.path.join(root, d, "dslr_calibration_jpg", "cameras.txt")
+            )
+            and os.path.isfile(
+                os.path.join(root, d, "dslr_calibration_jpg", "images.txt")
+            )
+            and os.path.isdir(os.path.join(root, d, "images", "dslr_images"))
+            and os.path.isdir(
+                os.path.join(root, d, "ground_truth_depth", "dslr_images")
+            )
         )
         print(f"[ETH3D] Found {len(self.scene_list)} scenes.")
         self.scenes = self.scene_list
@@ -347,6 +390,175 @@ class ETH3D(BaseStereoViewDataset):
                 label=f"{scene_id}/{name}",
                 instance=img_path,
             ))
+        return views
+
+
+class TUMDynamics(BaseStereoViewDataset):
+    """TUM-dynamics RGB-D sequences aligned by the MonST3R preparation.
+
+    ``prepare_tum.py`` creates ``rgb_90`` and ``groundtruth_90.txt`` but keeps
+    depth images in the original ``depth`` directory.  We therefore recover
+    the RGB timestamps from ``rgb.txt`` and associate the nearest depth frame.
+    """
+
+    def __init__(
+        self,
+        num_frames=50,
+        sampling="first",
+        max_association_delta=0.02,
+        *args,
+        ROOT,
+        **kwargs,
+    ):
+        self.ROOT = ROOT
+        super().__init__(*args, **kwargs)
+        self.num_seq = 1
+        self.num_frames = num_frames
+        self.sampling = sampling
+        self.max_association_delta = max_association_delta
+        self.scene_list = sorted(
+            name
+            for name in os.listdir(ROOT)
+            if os.path.isdir(osp.join(ROOT, name, "rgb_90"))
+            and osp.isfile(osp.join(ROOT, name, "groundtruth_90.txt"))
+            and osp.isfile(osp.join(ROOT, name, "rgb.txt"))
+            and osp.isfile(osp.join(ROOT, name, "depth.txt"))
+        )
+        self.scenes = self.scene_list
+        print(f"[TUM-dynamics] Found {len(self.scene_list)} sequences.")
+
+    @staticmethod
+    def _read_index(path):
+        records = []
+        with open(path) as handle:
+            for line in handle:
+                line = line.strip()
+                if not line or line.startswith("#"):
+                    continue
+                fields = line.split()
+                if len(fields) >= 2:
+                    records.append((float(fields[0]), fields[1]))
+        return records
+
+    @staticmethod
+    def _quaternion_pose(row):
+        tx, ty, tz, qx, qy, qz, qw = row[1:8]
+        norm = np.linalg.norm([qx, qy, qz, qw])
+        if not np.isfinite(norm) or norm < 1e-8:
+            raise ValueError("invalid TUM quaternion")
+        qx, qy, qz, qw = np.asarray([qx, qy, qz, qw]) / norm
+        rotation = np.array(
+            [
+                [1 - 2 * (qy * qy + qz * qz), 2 * (qx * qy - qz * qw), 2 * (qx * qz + qy * qw)],
+                [2 * (qx * qy + qz * qw), 1 - 2 * (qx * qx + qz * qz), 2 * (qy * qz - qx * qw)],
+                [2 * (qx * qz - qy * qw), 2 * (qy * qz + qx * qw), 1 - 2 * (qx * qx + qy * qy)],
+            ],
+            dtype=np.float32,
+        )
+        pose = np.eye(4, dtype=np.float32)
+        pose[:3, :3] = rotation
+        pose[:3, 3] = (tx, ty, tz)
+        return pose
+
+    def _associated_frames(self, scene_id):
+        scene_dir = osp.join(self.ROOT, scene_id)
+        rgb_paths = sorted(
+            osp.join(scene_dir, "rgb_90", name)
+            for name in os.listdir(osp.join(scene_dir, "rgb_90"))
+            if osp.splitext(name)[1].lower() in (".png", ".jpg", ".jpeg")
+        )
+        gt_rows = np.atleast_2d(
+            np.loadtxt(osp.join(scene_dir, "groundtruth_90.txt"), comments="#")
+        )
+        if len(rgb_paths) != len(gt_rows) or gt_rows.shape[1] != 8:
+            raise ValueError(
+                f"{scene_id}: expected aligned rgb_90/groundtruth_90, got "
+                f"{len(rgb_paths)} images and trajectory shape {gt_rows.shape}"
+            )
+
+        rgb_records = self._read_index(osp.join(scene_dir, "rgb.txt"))
+        rgb_timestamps = {osp.basename(relpath): timestamp for timestamp, relpath in rgb_records}
+        depth_records = sorted(self._read_index(osp.join(scene_dir, "depth.txt")))
+        depth_times = [record[0] for record in depth_records]
+
+        associated = []
+        for rgb_path, gt_row in zip(rgb_paths, gt_rows):
+            rgb_name = osp.basename(rgb_path)
+            rgb_time = rgb_timestamps.get(rgb_name)
+            if rgb_time is None:
+                try:
+                    rgb_time = float(osp.splitext(rgb_name)[0])
+                except ValueError:
+                    continue
+            insertion = bisect_left(depth_times, rgb_time)
+            candidate_indices = [
+                index
+                for index in (insertion - 1, insertion)
+                if 0 <= index < len(depth_records)
+            ]
+            if not candidate_indices:
+                continue
+            depth_index = min(
+                candidate_indices,
+                key=lambda index: abs(depth_times[index] - rgb_time),
+            )
+            if abs(depth_times[depth_index] - rgb_time) > self.max_association_delta:
+                continue
+            depth_path = osp.join(scene_dir, depth_records[depth_index][1])
+            if not osp.isfile(depth_path) or not np.isfinite(gt_row).all():
+                continue
+            associated.append((rgb_path, depth_path, self._quaternion_pose(gt_row)))
+        return associated
+
+    def _get_views(self, idx, resolution, rng):
+        scene_id = self.scene_list[idx]
+        associated = self._associated_frames(scene_id)
+        if len(associated) < self.num_frames:
+            raise ValueError(
+                f"{scene_id}: only {len(associated)} RGB/depth/pose triplets; "
+                f"Stage 3.3C requires {self.num_frames}"
+            )
+        if self.sampling == "first":
+            associated = associated[: self.num_frames]
+        elif self.sampling == "uniform":
+            sample_indices = np.linspace(0, len(associated) - 1, self.num_frames, dtype=int)
+            associated = [associated[index] for index in sample_indices]
+        else:
+            raise ValueError(f"unsupported TUM sampling: {self.sampling}")
+
+        # All eight TUM-dynamics sequences are Freiburg 3 RGB-D sequences.
+        intrinsics_ = np.array(
+            [[535.4, 0.0, 320.1], [0.0, 539.2, 247.6], [0.0, 0.0, 1.0]],
+            dtype=np.float32,
+        )
+        views = []
+        for rgb_path, depth_path, camera_pose in associated:
+            rgb_image = imread_cv2(rgb_path)
+            depthmap = imread_cv2(depth_path, cv2.IMREAD_UNCHANGED)
+            if rgb_image is None or depthmap is None:
+                raise FileNotFoundError(f"failed to load {rgb_path} or {depth_path}")
+            depthmap = np.nan_to_num(depthmap.astype(np.float32), 0.0) / 5000.0
+            depthmap[(depthmap > 10.0) | (depthmap < 1e-3)] = 0.0
+            if rgb_image.shape[:2] != depthmap.shape[:2]:
+                rgb_image = cv2.resize(
+                    rgb_image,
+                    (depthmap.shape[1], depthmap.shape[0]),
+                    interpolation=cv2.INTER_AREA,
+                )
+            rgb_image, depthmap, intrinsics = self._crop_resize_if_necessary(
+                rgb_image, depthmap, intrinsics_, resolution, rng=rng, info=rgb_path
+            )
+            views.append(
+                dict(
+                    img=rgb_image,
+                    depthmap=depthmap,
+                    camera_pose=camera_pose,
+                    camera_intrinsics=intrinsics,
+                    dataset="tum",
+                    label=f"{scene_id}/{osp.basename(rgb_path)}",
+                    instance=rgb_path,
+                )
+            )
         return views
 
 
@@ -588,9 +800,14 @@ class NRGBD(BaseStereoViewDataset):
 
     def load_all_scenes(self, base_dir):
 
-        scenes = [
-            d for d in os.listdir(base_dir) if os.path.isdir(os.path.join(base_dir, d))
-        ]
+        scenes = sorted(
+            d
+            for d in os.listdir(base_dir)
+            if not d.startswith("_")
+            and os.path.isdir(os.path.join(base_dir, d, "images"))
+            and os.path.isdir(os.path.join(base_dir, d, "depth"))
+            and os.path.isfile(os.path.join(base_dir, d, "poses.txt"))
+        )
 
         if self.test_id is not None:
             self.scene_list = [self.test_id]
@@ -608,16 +825,23 @@ class NRGBD(BaseStereoViewDataset):
         valid = []
         lines_per_matrix = 4
         for i in range(0, len(lines), lines_per_matrix):
-            if "nan" in lines[i]:
+            pose_lines = lines[i : i + lines_per_matrix]
+            if len(pose_lines) != lines_per_matrix:
+                continue
+            try:
+                pose_floats = [
+                    [float(x) for x in line.split()]
+                    for line in pose_lines
+                ]
+                pose = np.asarray(pose_floats, dtype=np.float32)
+            except ValueError:
+                pose = np.full((4, 4), np.nan, dtype=np.float32)
+            if pose.shape != (4, 4) or not np.isfinite(pose).all():
                 valid.append(False)
                 poses.append(np.eye(4, 4, dtype=np.float32).tolist())
             else:
                 valid.append(True)
-                pose_floats = [
-                    [float(x) for x in line.split()]
-                    for line in lines[i : i + lines_per_matrix]
-                ]
-                poses.append(pose_floats)
+                poses.append(pose.tolist())
 
         return np.array(poses, dtype=np.float32), valid
 
@@ -631,15 +855,38 @@ class NRGBD(BaseStereoViewDataset):
         else:
             scene_id = self.scene_list[idx // self.num_seq]
 
-            num_files = len(os.listdir(os.path.join(self.ROOT, scene_id, "images")))
-            img_idxs = [f"{i}" for i in range(num_files)]
-            img_idxs = img_idxs[:: min(self.kf_every, len(img_idxs) // 2)]
+            image_dir = os.path.join(self.ROOT, scene_id, "images")
+            img_idxs = sorted(
+                (
+                    name[len("img") : -len(".png")]
+                    for name in os.listdir(image_dir)
+                    if name.startswith("img")
+                    and name.endswith(".png")
+                    and name[len("img") : -len(".png")].isdigit()
+                ),
+                key=int,
+            )
 
         fx, fy, cx, cy = 554.2562584220408, 554.2562584220408, 320, 240
         intrinsics_ = np.array([[fx, 0, cx], [0, fy, cy], [0, 0, 1]], dtype=np.float32)
 
         posepath = osp.join(self.ROOT, scene_id, f"poses.txt")
         camera_poses, valids = self.load_poses(posepath)
+        valid_img_idxs = [
+            im_idx
+            for im_idx in img_idxs
+            if int(im_idx) < len(valids) and valids[int(im_idx)]
+        ]
+        if len(valid_img_idxs) != len(img_idxs):
+            print(
+                f"[NRGBD] {scene_id}: ignored "
+                f"{len(img_idxs) - len(valid_img_idxs)} frame(s) with invalid GT"
+            )
+        if self.tuple_list is None:
+            stride = max(1, min(self.kf_every, max(1, len(valid_img_idxs) // 2)))
+            img_idxs = valid_img_idxs[::stride]
+        else:
+            img_idxs = valid_img_idxs
 
         imgs_idxs = deque(img_idxs)
         if self.shuffle_seed >= 0:

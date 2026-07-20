@@ -1,0 +1,61 @@
+# Python
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.ipynb_checkpoints/
+
+# Virtual environments and local environment
+.venv/
+venv/
+env/
+.env
+.env.*
+!.env.example
+
+# Editors and OS
+.vscode/
+.idea/
+.DS_Store
+
+# Local tool and Gradio state
+.codex/
+.gradio/
+*.pem
+
+# Logs and scheduler output
+*.log
+*.out
+*.err
+slurm-*.out
+
+# CSV and spreadsheet files
+*.csv
+*.tsv
+*.xls
+*.xlsx
+*.xlsm
+*.ods
+
+# Datasets, checkpoints, and generated results
+/ckpt/
+/data/
+/demo/
+/eval_results/
+/stage2.5/
+/stage2.6/
+
+# Large generated/model files
+*.pth
+*.pt
+*.ckpt
+*.onnx
+*.npy
+*.npz
+*.glb
+*.ply
+*.zip
+
+# Locally downloaded papers
+/*.pdf

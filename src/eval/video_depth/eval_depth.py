@@ -13,6 +13,15 @@ import json
 from eval.video_depth.metadata import dataset_metadata
 
 
+def bonn_seq_dir(seq, kind):
+    seq_root = f"../data/eval/bonn/rgbd_bonn_dataset/rgbd_bonn_{seq}"
+    for dirname in (f"{kind}_110_sampled", f"{kind}_110", kind):
+        path = os.path.join(seq_root, dirname)
+        if os.path.isdir(path):
+            return path
+    return os.path.join(seq_root, f"{kind}_110")
+
+
 def get_args_parser():
     parser = argparse.ArgumentParser()
 
@@ -31,6 +40,8 @@ def get_args_parser():
         default="scale&shift",
         choices=["scale&shift", "scale", "metric"],
     )
+    parser.add_argument("--seq_list", nargs="+", default=None)
+    parser.add_argument("--max_frames", type=int, default=None)
     return parser
 
 
@@ -62,6 +73,9 @@ def main(args):
             f"{args.output_dir}/*/frame_*.npy"
         )  # TODO: update the path to your prediction
         pred_pathes = sorted(pred_pathes)
+        if not pred_pathes:
+            print(f"No Sintel predictions found in {args.output_dir}; skipping depth metrics.")
+            return
 
         if len(pred_pathes) > 643:
             full = True
@@ -72,7 +86,7 @@ def main(args):
             depth_pathes = glob.glob(f"../data/eval/sintel/training/depth/*/*.dpt")
             depth_pathes = sorted(depth_pathes)
         else:
-            seq_list = [
+            seq_list = args.seq_list or [
                 "alley_2",
                 "ambush_4",
                 "ambush_5",
@@ -105,6 +119,8 @@ def main(args):
             for key in tqdm(grouped_pred_depth.keys()):
                 pd_pathes = grouped_pred_depth[key]
                 gt_pathes = grouped_gt_depth[key.replace("_pred_depth", "")]
+                if args.max_frames is not None:
+                    gt_pathes = gt_pathes[: args.max_frames]
 
                 gt_depth = np.stack(
                     [depth_read(gt_path) for gt_path in gt_pathes], axis=0
@@ -184,10 +200,12 @@ def main(args):
             depth[depth_png == 0] = -1.0
             return depth
 
-        seq_list = ["balloon2", "crowd2", "crowd3", "person_tracking2", "synchronous"]
+        seq_list = args.seq_list or [
+            "balloon2", "crowd2", "crowd3", "person_tracking2", "synchronous"
+        ]
 
         img_pathes_folder = [
-            f"../data/eval/bonn/rgbd_bonn_dataset/rgbd_bonn_{seq}/rgb_110/*.png"
+            os.path.join(bonn_seq_dir(seq, "rgb"), "*.png")
             for seq in seq_list
         ]
         img_pathes = []
@@ -195,7 +213,7 @@ def main(args):
             img_pathes += glob.glob(img_pathes_folder_i)
         img_pathes = sorted(img_pathes)
         depth_pathes_folder = [
-            f"../data/eval/bonn/rgbd_bonn_dataset/rgbd_bonn_{seq}/depth_110/*.png"
+            os.path.join(bonn_seq_dir(seq, "depth"), "*.png")
             for seq in seq_list
         ]
         depth_pathes = []
@@ -206,6 +224,9 @@ def main(args):
             f"{args.output_dir}/*/frame*.npy"
         )  # TODO: update the path to your prediction
         pred_pathes = sorted(pred_pathes)
+        if not pred_pathes:
+            print(f"No Bonn predictions found in {args.output_dir}; skipping depth metrics.")
+            return
 
         def get_video_results():
             grouped_pred_depth = group_by_directory(pred_pathes)
@@ -214,6 +235,8 @@ def main(args):
             for key in tqdm(grouped_gt_depth.keys()):
                 pd_pathes = grouped_pred_depth[key[10:]]
                 gt_pathes = grouped_gt_depth[key]
+                if args.max_frames is not None:
+                    gt_pathes = gt_pathes[: args.max_frames]
                 gt_depth = np.stack(
                     [depth_read(gt_path) for gt_path in gt_pathes], axis=0
                 )

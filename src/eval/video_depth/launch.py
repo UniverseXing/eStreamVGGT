@@ -7,6 +7,7 @@ import cv2
 import numpy as np
 import torch
 import argparse
+import json
 
 from copy import deepcopy
 from eval.video_depth.metadata import dataset_metadata
@@ -15,6 +16,12 @@ from accelerate import PartialState
 from add_ckpt_path import add_path_to_dust3r
 import time
 from tqdm import tqdm
+
+
+def cache_metadata():
+    window = os.environ.get("STREAMVGGT_CACHE_WINDOW")
+    policy = os.environ.get("STREAMVGGT_CACHE_POLICY", "fifo") if window else "full_cache"
+    return window, policy
 
 
 def get_args_parser():
@@ -61,6 +68,12 @@ def get_args_parser():
         default=None,
         help="list of sequences for pose evaluation",
     )
+    parser.add_argument(
+        "--max_frames",
+        type=int,
+        default=None,
+        help="evaluate only the first N frames of each selected sequence",
+    )
     return parser
 
 
@@ -105,11 +118,15 @@ def eval_pose_estimation_dist(args, model, img_path, save_dir=None, mask_path=No
         ate_list = []
         rpe_trans_list = []
         rpe_rot_list = []
+        runtime_stats = []
         load_img_size = args.size
         assert load_img_size == 518
+        os.makedirs(save_dir, exist_ok=True)
         error_log_path = f"{save_dir}/_error_log_{distributed_state.process_index}.txt"  # Unique log file per process
         bug = False
         for seq in tqdm(seqs):
+            seq_total_start = time.perf_counter()
+            filelist = []
             try:
                 dir_path = metadata["dir_path_func"](img_path, seq)
 
@@ -128,6 +145,11 @@ def eval_pose_estimation_dist(args, model, img_path, save_dir=None, mask_path=No
                 ]
                 filelist.sort()
                 filelist = filelist[:: args.pose_eval_stride]
+                if args.max_frames is not None:
+                    filelist = filelist[: args.max_frames]
+                if device.type == "cuda":
+                    torch.cuda.reset_peak_memory_stats(device)
+                    torch.cuda.synchronize(device)
 
                 views = prepare_input(
                     filelist,
@@ -137,9 +159,23 @@ def eval_pose_estimation_dist(args, model, img_path, save_dir=None, mask_path=No
                 )
                 for view in views:
                     view["img"] = (view["img"] + 1.0) / 2.0
-                start = time.time()
+                if device.type == "cuda":
+                    torch.cuda.synchronize(device)
+                start = time.perf_counter()
                 outputs = loss_of_one_batch(views, model, None, None, inference=True)
-                end = time.time()
+                if device.type == "cuda":
+                    torch.cuda.synchronize(device)
+                end = time.perf_counter()
+                if outputs.get("memory_events"):
+                    selection_dir = os.path.join(save_dir, "memory_selections")
+                    os.makedirs(selection_dir, exist_ok=True)
+                    with open(os.path.join(selection_dir, f"{seq}.json"), "w") as f:
+                        json.dump(outputs["memory_events"], f, indent=2)
+                if outputs.get("memory_trace"):
+                    trace_dir = os.path.join(save_dir, "memory_traces")
+                    os.makedirs(trace_dir, exist_ok=True)
+                    with open(os.path.join(trace_dir, f"{seq}.json"), "w") as f:
+                        json.dump(outputs["memory_trace"], f, indent=2)
                 # fps = len(filelist) / (end - start)
                 with torch.cuda.amp.autocast(dtype=torch.float32):
                     (
@@ -149,11 +185,58 @@ def eval_pose_estimation_dist(args, model, img_path, save_dir=None, mask_path=No
 
                     os.makedirs(f"{save_dir}/{seq}", exist_ok=True)
                     save_depth_maps(pts3ds_self, f"{save_dir}/{seq}", conf_self=conf_self)
+                if device.type == "cuda":
+                    peak_allocated_mb = torch.cuda.max_memory_allocated(device) / (1024 ** 2)
+                    peak_reserved_mb = torch.cuda.max_memory_reserved(device) / (1024 ** 2)
+                else:
+                    peak_allocated_mb = 0.0
+                    peak_reserved_mb = 0.0
+                seq_total_end = time.perf_counter()
+                runtime_stats.append(
+                    {
+                        "seq": seq,
+                        "status": "ok",
+                        "num_frames": len(filelist),
+                        "requested_max_frames": args.max_frames,
+                        "total_sec": seq_total_end - seq_total_start,
+                        "inference_sec": end - start,
+                        "fps_inference": len(filelist) / max(end - start, 1e-8),
+                        "peak_allocated_mb": peak_allocated_mb,
+                        "peak_reserved_mb": peak_reserved_mb,
+                        "cache_window_size": cache_metadata()[0],
+                        "cache_policy": cache_metadata()[1],
+                    }
+                )
 
             except Exception as e:
                 if "out of memory" in str(e):
                     # Handle OOM
-                    torch.cuda.empty_cache()  # Clear the CUDA memory
+                    if device.type == "cuda":
+                        try:
+                            peak_allocated_mb = torch.cuda.max_memory_allocated(device) / (1024 ** 2)
+                            peak_reserved_mb = torch.cuda.max_memory_reserved(device) / (1024 ** 2)
+                            torch.cuda.empty_cache()  # Clear the CUDA memory
+                        except Exception:
+                            peak_allocated_mb = None
+                            peak_reserved_mb = None
+                    else:
+                        peak_allocated_mb = 0.0
+                        peak_reserved_mb = 0.0
+                    runtime_stats.append(
+                        {
+                            "seq": seq,
+                            "status": "oom",
+                            "num_frames": len(filelist),
+                            "requested_max_frames": args.max_frames,
+                            "total_sec": time.perf_counter() - seq_total_start,
+                            "inference_sec": None,
+                            "fps_inference": None,
+                            "peak_allocated_mb": peak_allocated_mb,
+                            "peak_reserved_mb": peak_reserved_mb,
+                            "cache_window_size": cache_metadata()[0],
+                            "cache_policy": cache_metadata()[1],
+                        }
+                    )
                     with open(error_log_path, "a") as f:
                         f.write(
                             f"OOM error in sequence {seq}, skipping this sequence.\n"
@@ -168,6 +251,34 @@ def eval_pose_estimation_dist(args, model, img_path, save_dir=None, mask_path=No
                     print(f"Traj evaluation error in sequence {seq}, skipping.")
                 else:
                     raise e  # Rethrow if it's not an expected exception
+        os.makedirs(save_dir, exist_ok=True)
+        ok_stats = [item for item in runtime_stats if item["status"] == "ok"]
+        summary = {
+            "num_sequences": len(runtime_stats),
+            "num_ok": len(ok_stats),
+            "num_oom": len(runtime_stats) - len(ok_stats),
+            "total_frames": sum(item["num_frames"] for item in ok_stats),
+            "total_inference_sec": sum(item["inference_sec"] for item in ok_stats),
+            "max_peak_allocated_mb": max(
+                [item["peak_allocated_mb"] for item in ok_stats if item["peak_allocated_mb"] is not None],
+                default=None,
+            ),
+            "max_peak_reserved_mb": max(
+                [item["peak_reserved_mb"] for item in ok_stats if item["peak_reserved_mb"] is not None],
+                default=None,
+            ),
+            "cache_window_size": cache_metadata()[0],
+            "cache_policy": cache_metadata()[1],
+            "requested_max_frames": args.max_frames,
+        }
+        if summary["total_inference_sec"] > 0:
+            summary["fps_inference"] = summary["total_frames"] / summary["total_inference_sec"]
+        stats_path = os.path.join(
+            save_dir,
+            f"runtime_memory_rank{distributed_state.process_index}.json",
+        )
+        with open(stats_path, "w") as f:
+            json.dump({"summary": summary, "sequences": runtime_stats}, f, indent=2)
     return None, None, None
 
 

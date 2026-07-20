@@ -99,7 +99,16 @@ def run_model(target_dir, model) -> dict:
 
     with torch.no_grad():
         with torch.cuda.amp.autocast(dtype=dtype):
-            output = model.inference(frames)
+            cache_window_env = os.environ.get("STREAMVGGT_CACHE_WINDOW")
+            cache_window_size = int(cache_window_env) if cache_window_env else None
+            cache_policy = os.environ.get("STREAMVGGT_CACHE_POLICY", "fifo")
+            if cache_window_size is not None:
+                print(f"Using {cache_policy} cache window: {cache_window_size} frames")
+            output = model.inference(
+                frames,
+                cache_window_size=cache_window_size,
+                cache_policy=cache_policy,
+            )
 
     all_pts3d = []
     all_conf = []
@@ -539,7 +548,7 @@ with gr.Blocks(
                 label="Preview",
                 columns=4,
                 height="300px",
-                show_download_button=True,
+                buttons=["download"],
                 object_fit="contain",
                 preview=True,
             )

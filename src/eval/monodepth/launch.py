@@ -9,6 +9,8 @@ from copy import deepcopy
 from scipy.optimize import minimize
 import os
 import sys
+import time
+import json
 
 sys.path.append(os.path.dirname(os.path.dirname(os.path.dirname(__file__))))
 from collections import defaultdict
@@ -54,9 +56,39 @@ def eval_mono_depth_estimation(args, model, device):
             f"No processing function defined for dataset: {args.eval_dataset}"
         )
 
+    if torch.cuda.is_available():
+        torch.cuda.reset_peak_memory_stats()
+        torch.cuda.synchronize()
+    total_start = time.perf_counter()
+    num_images = 0
     for filelist, save_dir in process_func(args, img_path):
+        num_images += len(filelist)
         Path(save_dir).mkdir(parents=True, exist_ok=True)
         eval_mono_depth(args, model, device, filelist, save_dir=save_dir)
+    if torch.cuda.is_available():
+        torch.cuda.synchronize()
+        peak_allocated_mb = torch.cuda.max_memory_allocated() / (1024 ** 2)
+        peak_reserved_mb = torch.cuda.max_memory_reserved() / (1024 ** 2)
+    else:
+        peak_allocated_mb = 0.0
+        peak_reserved_mb = 0.0
+    total_sec = time.perf_counter() - total_start
+    Path(args.output_dir).mkdir(parents=True, exist_ok=True)
+    with open(os.path.join(args.output_dir, "runtime_memory.json"), "w") as f:
+        json.dump(
+            {
+                "dataset": args.eval_dataset,
+                "num_images": num_images,
+                "total_sec": total_sec,
+                "fps": num_images / max(total_sec, 1e-8),
+                "peak_allocated_mb": peak_allocated_mb,
+                "peak_reserved_mb": peak_reserved_mb,
+                "cache_window_size": os.environ.get("STREAMVGGT_CACHE_WINDOW"),
+                "cache_policy": os.environ.get("STREAMVGGT_CACHE_POLICY", "fifo"),
+            },
+            f,
+            indent=2,
+        )
 
 
 def eval_mono_depth(args, model, device, filelist, save_dir=None):

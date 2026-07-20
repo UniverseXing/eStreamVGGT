@@ -146,7 +146,9 @@ Results will be saved in `eval_results/video_depth/${data}_${model_name}/result_
 bash eval/mv_recon/run.sh 
 ```
 
-Results will be saved in `eval_results/mv_recon/${model_name}_${ckpt_name}/logs_all.txt`.
+Results are saved under `eval_results/mv_recon/streamvggt_${run_tag}/`, including
+per-dataset `metrics.json`, point clouds, trajectories, and the merged
+`reconstruction_metrics.json`.
 
 ### Camera Pose Estimation
 1. Install the required dependencies:

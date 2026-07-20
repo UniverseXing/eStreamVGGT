@@ -2,6 +2,16 @@ import os
 import glob
 from tqdm import tqdm
 
+
+def bonn_seq_dir(img_path, seq, kind):
+    seq_root = os.path.join(img_path, f"rgbd_bonn_{seq}")
+    for dirname in (f"{kind}_110_sampled", f"{kind}_110", kind):
+        path = os.path.join(seq_root, dirname)
+        if os.path.isdir(path):
+            return path
+    return os.path.join(seq_root, f"{kind}_110")
+
+
 # Define the merged dataset metadata dictionary
 dataset_metadata = {
     "davis": {
@@ -31,9 +41,7 @@ dataset_metadata = {
     "bonn": {
         "img_path": "../data/eval/bonn/rgbd_bonn_dataset",
         "mask_path": None,
-        "dir_path_func": lambda img_path, seq: os.path.join(
-            img_path, f"rgbd_bonn_{seq}", "rgb_110"
-        ),
+        "dir_path_func": lambda img_path, seq: bonn_seq_dir(img_path, seq, "rgb"),
         "gt_traj_func": lambda img_path, anno_path, seq: os.path.join(
             img_path, f"rgbd_bonn_{seq}", "groundtruth_110.txt"
         ),
@@ -129,7 +137,9 @@ def process_bonn(args, img_path):
             else args.seq_list
         )
         for seq in tqdm(seq_list):
-            filelist = sorted(glob.glob(f"{img_path}/rgbd_bonn_{seq}/rgb_110/*.png"))
+            filelist = sorted(
+                glob.glob(os.path.join(bonn_seq_dir(img_path, seq, "rgb"), "*.png"))
+            )
             save_dir = f"{args.output_dir}/{seq}"
             yield filelist, save_dir
 
