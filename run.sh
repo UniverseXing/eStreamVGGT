@@ -1,43 +1,23 @@
 #!/usr/bin/env bash
-#SBATCH --job-name=streamvggt-stage2
-#SBATCH --gpus=pro6000:1
-#SBATCH --time=06:00:00
-#SBATCH --output=streamvggt-stage2-pro6000-%j.out
-#SBATCH --error=streamvggt-stage2-pro6000-%j.err
+#SBATCH --job-name=streamvggt-stage3.3
+#SBATCH --gpus=6000ada:1
+#SBATCH --time=12:00:00
+#SBATCH --output=streamvggt-stage3-6000ada-%j.out
+#SBATCH --error=streamvggt-stage3-6000ada-%j.err
 
-# Runs the three interleaved Stage 2 timing repeats on one PRO 6000 GPU.
+# Runs the three interleaved Stage 3 timing repeats on one 6000ada GPU.
 set -euo pipefail
 
-repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-
-
-cd "${repo_root}"
 
 module load Miniforge3
-conda activate StreamVGGT
+conda init
+source activate StreamVGGT
 
 echo "Job ID: ${SLURM_JOB_ID:-unknown}"
 echo "Node: $(hostname)"
 echo "Started: $(date --iso-8601=seconds)"
 nvidia-smi
 
-python - <<'PY'
-import torch
-
-if not torch.cuda.is_available():
-    raise RuntimeError("Slurm allocated no CUDA device")
-
-device = torch.cuda.get_device_name(0)
-capability = torch.cuda.get_device_capability(0)
-print(f"PyTorch: {torch.__version__}")
-print(f"PyTorch CUDA: {torch.version.cuda}")
-print(f"GPU: {device}")
-print(f"Compute capability: sm_{capability[0]}{capability[1]}")
-print(f"Compiled CUDA architectures: {torch.cuda.get_arch_list()}")
-PY
-
-bash "${repo_root}/run1.sh"
-bash "${repo_root}/run2.sh"
-bash "${repo_root}/run3.sh"
+bash "run_stage3_3c_recon.sh"
 
 echo "Finished: $(date --iso-8601=seconds)"
