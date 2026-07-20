@@ -13,6 +13,18 @@
 
 **StreamVGGT**, a causal transformer architecture for **real-time streaming 4D visual geometry perception** compatiable with LLM-targeted attention mechanism (e.g., [FlashAttention](https://github.com/Dao-AILab/flash-attention)), delivers both fast inference and high-quality 4D reconstruction.
 
+## About eStreamVGGT
+
+This repository is an experimental extension of the original
+[StreamVGGT](https://github.com/wzzheng/StreamVGGT). It adds bounded-memory
+streaming inference with configurable cache sizes and frame-selection policies,
+along with evaluation scripts for scalability, memory usage, camera pose, video
+depth, and multi-view reconstruction. The original full-cache behavior remains
+available for comparison.
+
+> **Work in progress:** Experiments are still ongoing, and the implementation,
+> evaluation settings, and reported results may continue to change.
+
 ## News
 
 - **[2025/7/18]** [Demo](https://huggingface.co/spaces/lch01/StreamVGGT) and [checkpoints](https://huggingface.co/lch01/StreamVGGT/) released on Hugging Face; demo code is available for local launch.
