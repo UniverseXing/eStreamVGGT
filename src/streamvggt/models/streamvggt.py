@@ -84,6 +84,13 @@ def _old_recent_layout(num_cached_frames, max_cache_frames, policy):
                 "cache_window_size=4"
             )
         return 2, max(1, num_cached_frames - 1)
+    if policy == "anchor_recent_dino_diverse_1old_3recent":
+        if max_cache_frames != 6:
+            raise ValueError(
+                "anchor_recent_dino_diverse_1old_3recent requires "
+                "cache_window_size=6"
+            )
+        return 1, max(1, num_cached_frames - 4)
     return _split_old_recent(num_cached_frames, max_cache_frames)
 
 
@@ -167,6 +174,11 @@ def _cache_keep_frame_indices(
         raise ValueError(
             f"{policy} requires cache_window_size=4"
         )
+    if (
+        policy == "anchor_recent_dino_diverse_1old_3recent"
+        and max_cache_frames != 6
+    ):
+        raise ValueError(f"{policy} requires cache_window_size=6")
     if num_cached_frames <= max_cache_frames:
         return None
 
@@ -225,6 +237,7 @@ def _cache_keep_frame_indices(
         "anchor_recent_dino_diverse",
         "dino_diverse",
         "anchor_recent_dino_diverse_2old_1recent",
+        "anchor_recent_dino_diverse_1old_3recent",
     ):
         if max_cache_frames == 1:
             return torch.tensor([num_cached_frames - 1], device=device)
@@ -390,6 +403,8 @@ class StreamVGGT(nn.Module, PyTorchModelHubMixin):
         past_key_values=None,
         cache_window_size: Optional[int] = None,
         cache_policy: str = "fifo",
+        camera_cache_window_size: Optional[int] = None,
+        camera_cache_policy: Optional[str] = None,
         return_memory_events: bool = False,
         return_memory_trace: bool = False,
         return_frame_timings: bool = False,
@@ -404,6 +419,27 @@ class StreamVGGT(nn.Module, PyTorchModelHubMixin):
             raise ValueError(
                 f"{cache_policy} requires cache_window_size=4"
             )
+        if (
+            cache_policy == "anchor_recent_dino_diverse_1old_3recent"
+            and cache_window_size != 6
+        ):
+            raise ValueError(
+                f"{cache_policy} requires cache_window_size=6"
+            )
+        if camera_cache_policy is None and camera_cache_window_size is not None:
+            raise ValueError(
+                "camera_cache_window_size requires camera_cache_policy; "
+                "omit both to keep the legacy coupled camera cache"
+            )
+        if camera_cache_policy == "full" and camera_cache_window_size is not None:
+            raise ValueError("camera_cache_policy=full does not take a window size")
+        if camera_cache_policy not in (None, "full") and camera_cache_window_size is None:
+            raise ValueError(
+                "an independent bounded camera cache requires "
+                "camera_cache_window_size"
+            )
+        if camera_cache_window_size is not None and camera_cache_window_size < 1:
+            raise ValueError("camera_cache_window_size must be at least 1")
         adaptive_similarity_threshold = float(
             os.environ.get("STREAMVGGT_ADAPTIVE_SIM_THRESHOLD", "0.99")
         )
@@ -417,6 +453,7 @@ class StreamVGGT(nn.Module, PyTorchModelHubMixin):
         past_key_values_camera = [None] * self.camera_head.trunk_depth
         cache_frame_features = None
         cache_frame_ids = None
+        camera_cache_frame_ids = None
         
         all_ress = []
         processed_frames = []
@@ -437,6 +474,7 @@ class StreamVGGT(nn.Module, PyTorchModelHubMixin):
                 "anchor_recent_dino_diverse",
                 "dino_diverse",
                 "anchor_recent_dino_diverse_2old_1recent",
+                "anchor_recent_dino_diverse_1old_3recent",
                 "anchor_stable_adaptive_recent",
             )
             if use_rgb_features:
@@ -476,6 +514,12 @@ class StreamVGGT(nn.Module, PyTorchModelHubMixin):
                 cache_frame_ids = current_frame_id
             else:
                 cache_frame_ids = torch.cat([cache_frame_ids, current_frame_id])
+            if camera_cache_frame_ids is None:
+                camera_cache_frame_ids = current_frame_id
+            else:
+                camera_cache_frame_ids = torch.cat(
+                    [camera_cache_frame_ids, current_frame_id]
+                )
 
             keep_frame_indices = None
             if cache_window_size is not None:
@@ -528,11 +572,45 @@ class StreamVGGT(nn.Module, PyTorchModelHubMixin):
             with torch.cuda.amp.autocast(enabled=False):
                 if self.camera_head is not None:
                     pose_enc, past_key_values_camera = self.camera_head(aggregated_tokens, past_key_values_camera=past_key_values_camera, use_cache=True)
-                    if keep_frame_indices is not None:
+                    camera_keep_frame_indices = None
+                    if camera_cache_policy is None:
+                        # Backward-compatible coupled mode: camera KV follows the
+                        # exact same selected frames as the aggregator KV.
+                        camera_keep_frame_indices = keep_frame_indices
+                    elif camera_cache_policy != "full":
+                        first_camera_kv = next(
+                            (
+                                block_kv
+                                for block_kv in past_key_values_camera
+                                if block_kv is not None
+                            ),
+                            None,
+                        )
+                        if first_camera_kv is not None:
+                            num_camera_items = first_camera_kv[0].shape[2]
+                            if num_camera_items % 4 != 0:
+                                raise ValueError(
+                                    "camera KV item count must be divisible by 4, "
+                                    f"got {num_camera_items}"
+                                )
+                            camera_keep_frame_indices = _cache_keep_frame_indices(
+                                num_camera_items // 4,
+                                camera_cache_window_size,
+                                camera_cache_policy,
+                                first_camera_kv[0].device,
+                                frame_ids=camera_cache_frame_ids,
+                            )
+                    if camera_keep_frame_indices is not None:
                         past_key_values_camera = _trim_kv_cache_by_frame_indices(
                             past_key_values_camera,
-                            keep_frame_indices,
+                            camera_keep_frame_indices,
                             cache_items_per_frame=4,
+                        )
+                        camera_cache_frame_ids = camera_cache_frame_ids.index_select(
+                            0,
+                            camera_keep_frame_indices.to(
+                                camera_cache_frame_ids.device
+                            ),
                         )
                     pose_enc = pose_enc[-1]
                     camera_pose = pose_enc[:, 0, :]
@@ -581,6 +659,7 @@ class StreamVGGT(nn.Module, PyTorchModelHubMixin):
                     {
                         "frame_index": i,
                         "retained_frame_ids": cache_frame_ids.tolist(),
+                        "camera_retained_frame_ids": camera_cache_frame_ids.tolist(),
                         "aggregator_kv_mib": _tensor_tree_nbytes(past_key_values) / (1024 ** 2),
                         "camera_kv_mib": _tensor_tree_nbytes(past_key_values_camera) / (1024 ** 2),
                         "descriptor_mib": _tensor_tree_nbytes(cache_frame_features) / (1024 ** 2),

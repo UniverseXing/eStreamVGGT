@@ -140,7 +140,7 @@ bash run_stage3_4.sh
 - 7-Scenes 18/18 回访实验成功。K4 的回访平移、旋转和 depth consistency 分别为 0.00381、0.062°、0.00282，均明显优于 full 的 0.01469、0.245°、0.00982；但该协议是完全相同图像的反序重访，应称为 synthetic revisit consistency，不宣称已经实现传统 SLAM 回环优化。
 - old-DINO K6 相对 uniform K6 在 Bonn depth 和 7-Scenes 回访上继续占优，同 K 非 DINO 对照的证据已经充分。后续不再重复运行 uniform K6。
 
-## Stage 3.5A：近期帧连续性诊断（当前阶段）
+## Stage 3.5A：近期帧连续性诊断（已完成）
 
 只在 Bonn `person_tracking2` 上运行 110 帧，不扩张成完整矩阵：
 
@@ -171,17 +171,68 @@ sbatch run.sh
 - K4 都不修复、old-DINO K6 明显更稳：K4 只保留为高压缩/depth 方案，pose 主预算使用 K6。
 - 所有固定 cache 都失败：需要增加 camera cache 的独立近期预算，不能只改锚点。
 
-## Stage 3.5B：是否新增 new-DINO K6，以及增量回测 3.3
+### Stage 3.5A 结论
 
-不在 3.5A 前实现 new K6。当前 old-DINO K6 已保留两个近期历史帧；机械照搬 new K4、把 K6 改成“0 号锚点 + 4 个 DINO 历史槽 + 当前帧”可能放大 `person_tracking2` 的失败。
+- 近期帧数量与局部旋转稳定性呈明确单调关系：Stage 3.2 K4、old K4、old-DINO K6、FIFO K4 的最终旋转 RPE 分别为 41.67°、31.30°、21.58°、4.72°。old-DINO K6 将明显旋转失稳从约 40 帧推迟到 60 帧以后。
+- 但四种固定 cache 的最终 ATE 都约为 0.65，显著差于 full cache 的 0.148；FIFO 修复局部旋转仍不能修复全局漂移。因此结果同时命中“近期连续性关键”和“所有固定 cache 的全局 pose 失败”两部分，不能只靠重新排列同一套保留帧解决。
+- FIFO K4 的 AbsRel 为 0.1402，而 Stage 3.2 K4、old-DINO K6 分别为 0.0452、0.0549，说明 DINO 长期帧仍是深度/几何质量的必要组成。
+- 当前实现用同一组 frame indices 同时裁剪 aggregator KV 与 camera-head KV。110 帧时 full aggregator KV 为 10353.75 MiB，camera KV 仅为 27.5 MiB；下一步应让 DINO 控制占主要显存的 aggregator cache，并独立寻找 camera cache 的最小有效时序预算。
 
-根据 3.5A 决定：
+## Stage 3.5B：双 cache 解耦、新 DINO K6 与 Stage 3.3 回测门槛（当前阶段）
 
-- 若近期帧关键，候选 new K6 为“0 号锚点 + 3 个 DINO 历史槽 + 上一帧 + 当前帧”，只牺牲一个近期槽增加长期覆盖。
-- 若近期帧并不关键，才测试“0 号锚点 + 4 个 DINO 历史槽 + 当前帧”。
-- 若 old K4 已形成更好的质量/资源 Pareto，且 old-DINO K6 没有独立缺陷，则不为增加方法数量而新增 K6。
+仍只在 Bonn `person_tracking2` 上运行 110 帧，每 10 帧报告 depth、pose、资源以及 aggregator/camera 各自的 retained IDs。Stage 3.5B 自包含地运行三个控制组，避免代码或集群环境变化使 gate 引用不可比的旧结果：
 
-只有 new K6 通过 `person_tracking2` 后，才增量补跑它的 Stage 3.3，不重跑 full/K4/old-DINO K6/uniform K6：
+1. `full_cache`。
+2. `stage3_2_k4`：aggregator 与 camera 继续耦合，0 号锚点 + 2 个 DINO 历史槽 + 当前帧。
+3. `old_dino_k6`：aggregator 与 camera 继续耦合，0 号锚点 + 2 个 DINO 历史槽 + 两个近期历史帧 + 当前帧。
+
+五个新增实验保持 Stage 3.2 DINO K4 aggregator 或固定 K6 总预算，只改变一个因素：
+
+4. `split_k4_camera4`：DINO K4 aggregator；camera 为 0 号锚点 + 最近 3 帧（包含当前帧）。
+5. `split_k4_camera8`：DINO K4 aggregator；camera 为 0 号锚点 + 最近 7 帧（包含当前帧）。
+6. `split_k4_camera16`：DINO K4 aggregator；camera 为 0 号锚点 + 最近 15 帧（包含当前帧）。
+7. `split_k4_camera_full`：DINO K4 aggregator；camera 不裁剪。它只用于确定独立 camera cache 的质量上界，不是可进入后续回测的最终有界方案。
+8. `recent_dino_k6`（新 K6）：0 号锚点 + 1 个 DINO 历史槽 + 最近 3 个历史帧 + 当前帧。相对 old-DINO K6，用一个 DINO 长期槽换取一个近期槽，K 和显存预算不变。
+
+不再测试“0 号锚点 + 3/4 个 DINO 历史槽 + 极少近期帧”的 old-heavy new K6，因为 3.5A 已证明减少近期槽会放大旋转失稳。K8/K16 不是预设最终答案，而是总 camera budget 按 4、8、16 倍增的两个有界观测点；分别对应一个锚点加 7/15 个最近帧。
+
+```bash
+# 可选短检查；prefix 必须不超过 max frames
+env STREAMVGGT_STAGE3_5B_MAX_FRAMES=10 \
+    STREAMVGGT_STAGE3_5B_PREFIX_FRAMES="5 10" \
+    sbatch run.sh
+
+# 正式 110 帧完整矩阵
+sbatch run.sh
+```
+
+输出为：
+
+- `stage3_5b_results.csv`：方法及 prefix 汇总，包含独立 camera policy/window。
+- `stage3_5b_sequence_results.csv`：最终 aggregator/camera retained IDs 与选择统计。
+- `stage3_5b_gate.csv`：是否允许进入 Stage 3.3 增量回测的逐项判定。
+
+### Stage 3.3 增量回测硬门槛
+
+所有阈值以同一次 Stage 3.5B 的 `full_cache` 为参照。候选必须同时满足：
+
+1. 全部序列成功，depth AbsRel 不超过 full 的 1.10 倍。
+2. 最终旋转 RPE 不超过 full 的 1.50 倍；所有 prefix 的旋转 RPE 也不超过该上限，且相邻 prefix 的最大正向跳变不超过 5°。
+3. 最终 ATE 不超过 full 的 2.0 倍。
+4. 峰值 allocated 小于 10240 MiB；aggregator KV 不超过每个 cache frame 100 MiB 的线性上界。
+5. camera cache 必须有界；`split_k4_camera_full` 即使质量通过，也只能触发后续 K32/K64 搜索，不能直接进入 Stage 3.3。
+
+`scripts/check_stage3_5b_gate.py` 自动生成 gate 表。默认只报告 PASS/FAIL，不因无人通过而令 SLURM 作业失败；只有人工确认后才使用通过者继续回测。
+
+解释分支：
+
+- camera K4 通过：解耦本身比增加 K 更关键，以最小双 cache 为主方案。
+- camera K4 失败而 K8/K16 通过：选择最小通过预算，不继续扩大。
+- 只有 camera full 通过：依次补 K32/K64，定位最小有界窗口；未找到前不回测 Stage 3.3。
+- `recent_dino_k6` 通过而 split K4 均不通过：新 K6 成为 pose 主预算，K4 保留为高压缩/depth 方案。
+- 所有候选失败：转向“长期全局参考 bank + 近期运动 bank”，不浪费算力做完整 Stage 3.3。
+
+只有通过上述全部硬门槛的有界候选，才增量补跑它的 Stage 3.3，不重跑 full/K4/old-DINO K6/uniform K6：
 
 1. Stage 3.3A：Sintel、ScanNet、TUM pose。
 2. Stage 3.3B：NRGBD、ETH3D，以及原结果中成功的同一组 12 个 7-Scenes 序列。即使现在 proj 已补齐，也不改成 18 段，以保证和已有 K6 结果同覆盖比较。

@@ -49,12 +49,29 @@ def parse_args():
     parser.add_argument("--size", type=int, default=518)
     parser.add_argument("--cache-window", type=int)
     parser.add_argument("--cache-policy", default="fifo")
+    parser.add_argument("--camera-cache-window", type=int)
+    parser.add_argument(
+        "--camera-cache-policy",
+        help=(
+            "omit for the legacy coupled cache, use 'full' for an independent "
+            "uncropped camera cache, or provide a bounded policy together with "
+            "--camera-cache-window"
+        ),
+    )
     parser.add_argument("--trace-memory", action=argparse.BooleanOptionalAction, default=True)
     return parser.parse_args()
 
 
 def cache_name(args):
     return "full_cache" if args.cache_window is None else args.cache_policy
+
+
+def camera_cache_config(args):
+    if args.camera_cache_policy is None:
+        return "coupled", args.cache_window
+    if args.camera_cache_policy == "full":
+        return "full_cache", None
+    return args.camera_cache_policy, args.camera_cache_window
 
 
 def resolve_bonn_dir(scene_root, kind):
@@ -245,13 +262,18 @@ def loop_depth_consistency(pred_depth, prefix, loop_forward_frames):
     }
 
 
-def selection_statistics(memory_trace, cache_window, loop_forward_frames):
+def selection_statistics(
+    memory_trace,
+    cache_window,
+    loop_forward_frames,
+    frame_ids_key="retained_frame_ids",
+):
     if not memory_trace:
         return {}
     rows = [
         row
         for row in memory_trace
-        if cache_window is None or len(row.get("retained_frame_ids", [])) >= cache_window
+        if cache_window is None or len(row.get(frame_ids_key, [])) >= cache_window
     ]
     ages = []
     spans = []
@@ -264,7 +286,7 @@ def selection_statistics(memory_trace, cache_window, loop_forward_frames):
     total_length = 2 * loop_forward_frames if loop_forward_frames is not None else None
     for row in rows:
         step = int(row["frame_index"])
-        retained = [int(item) for item in row.get("retained_frame_ids", [])]
+        retained = [int(item) for item in row.get(frame_ids_key, [])]
         historical = [item for item in retained if item != step]
         unique_ids.update(historical)
         ages.extend(step - item for item in historical)
@@ -288,7 +310,7 @@ def selection_statistics(memory_trace, cache_window, loop_forward_frames):
         "mean_selection_churn": float(np.mean(churn)) if churn else None,
         "unique_retained_frames": len(unique_ids),
         "loop_match_retention_rate": loop_hits / loop_total if loop_total else None,
-        "final_retained_frame_ids": memory_trace[-1].get("retained_frame_ids", []),
+        "final_retained_frame_ids": memory_trace[-1].get(frame_ids_key, []),
     }
 
 
@@ -388,10 +410,13 @@ def summarize(dataset, args, rows):
     failed = [row for row in rows if row["status"] != "ok"]
     total_frames = sum(row["num_frames"] for row in successful)
     total_inference = sum(row["inference_sec"] for row in successful)
+    camera_policy, camera_window = camera_cache_config(args)
     summary = {
         "dataset": dataset,
         "cache_policy": cache_name(args),
         "cache_window_size": args.cache_window,
+        "camera_cache_policy": camera_policy,
+        "camera_cache_window_size": camera_window,
         "num_sequences": len(rows),
         "num_successful": len(successful),
         "num_failed": len(failed),
@@ -475,6 +500,8 @@ def main():
                     frames,
                     cache_window_size=args.cache_window,
                     cache_policy=args.cache_policy,
+                    camera_cache_window_size=args.camera_cache_window,
+                    camera_cache_policy=args.camera_cache_policy,
                     return_memory_events=False,
                     return_memory_trace=args.trace_memory,
                     return_frame_timings=True,
@@ -502,6 +529,13 @@ def main():
             memory_trace = output.memory_trace or []
             frame_timings = output.frame_inference_ms or []
             selection = selection_statistics(memory_trace, args.cache_window, loop_forward_frames)
+            camera_policy, camera_window = camera_cache_config(args)
+            camera_selection = selection_statistics(
+                memory_trace,
+                camera_window,
+                loop_forward_frames,
+                frame_ids_key="camera_retained_frame_ids",
+            )
 
             np.savez_compressed(
                 osp.join(trajectory_dir, sequence.replace("/", "_") + ".npz"),
@@ -553,6 +587,7 @@ def main():
                 "peak_reserved_mb": peak_reserved,
                 "prefix_metrics": prefix_metrics,
                 "selection_statistics": selection,
+                "camera_selection_statistics": camera_selection,
                 **{key: value for key, value in full.items() if key != "prefix_frames"},
             }
             rows.append(result)
@@ -571,10 +606,13 @@ def main():
             torch.cuda.empty_cache()
 
     summary = summarize(args.dataset, args, rows)
+    camera_policy, camera_window = camera_cache_config(args)
     payload = {
         "dataset": args.dataset,
         "cache_policy": cache_name(args),
         "cache_window_size": args.cache_window,
+        "camera_cache_policy": camera_policy,
+        "camera_cache_window_size": camera_window,
         "prefix_frames": sorted(set(args.prefix_frames)),
         "loop_forward_frames": args.loop_forward_frames if args.dataset == "7scenes_loop" else None,
         "summary": summary,

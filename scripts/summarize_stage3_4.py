@@ -15,6 +15,8 @@ FIELDS = (
     "prefix_frames",
     "cache_policy",
     "cache_window_size",
+    "camera_cache_policy",
+    "camera_cache_window_size",
     "num_sequences",
     "num_successful",
     "num_failed",
@@ -53,6 +55,10 @@ FIELDS = (
 SEQUENCE_FIELDS = (
     "dataset",
     "method",
+    "cache_policy",
+    "cache_window_size",
+    "camera_cache_policy",
+    "camera_cache_window_size",
     "sequence",
     "status",
     "error",
@@ -80,6 +86,12 @@ SEQUENCE_FIELDS = (
     "unique_retained_frames",
     "loop_match_retention_rate",
     "final_retained_frame_ids",
+    "mean_camera_retained_age",
+    "max_camera_retained_age",
+    "mean_camera_temporal_span",
+    "camera_anchor0_retention_rate",
+    "camera_unique_retained_frames",
+    "final_camera_retained_frame_ids",
     "result_dir",
 )
 
@@ -122,6 +134,10 @@ def metric_row(dataset, method, payload, rows, prefix, result_dir):
         "prefix_frames": prefix,
         "cache_policy": payload["cache_policy"],
         "cache_window_size": payload.get("cache_window_size"),
+        "camera_cache_policy": payload.get("camera_cache_policy", "coupled"),
+        "camera_cache_window_size": payload.get(
+            "camera_cache_window_size", payload.get("cache_window_size")
+        ),
         "num_sequences": len(payload["sequences"]),
         "num_successful": len(rows),
         "num_failed": len(payload["sequences"]) - len(rows),
@@ -163,9 +179,16 @@ def metric_row(dataset, method, payload, rows, prefix, result_dir):
 
 def flatten_sequence(dataset, method, payload, row, result_dir):
     selection = row.get("selection_statistics", {})
+    camera_selection = row.get("camera_selection_statistics", {})
     return {
         "dataset": dataset,
         "method": method,
+        "cache_policy": payload["cache_policy"],
+        "cache_window_size": payload.get("cache_window_size"),
+        "camera_cache_policy": payload.get("camera_cache_policy", "coupled"),
+        "camera_cache_window_size": payload.get(
+            "camera_cache_window_size", payload.get("cache_window_size")
+        ),
         "sequence": row.get("sequence"),
         "status": row.get("status"),
         "error": row.get("error"),
@@ -193,6 +216,18 @@ def flatten_sequence(dataset, method, payload, row, result_dir):
         "unique_retained_frames": selection.get("unique_retained_frames"),
         "loop_match_retention_rate": selection.get("loop_match_retention_rate"),
         "final_retained_frame_ids": json.dumps(selection.get("final_retained_frame_ids")),
+        "mean_camera_retained_age": camera_selection.get("mean_retained_age"),
+        "max_camera_retained_age": camera_selection.get("max_retained_age"),
+        "mean_camera_temporal_span": camera_selection.get("mean_temporal_span"),
+        "camera_anchor0_retention_rate": camera_selection.get(
+            "anchor0_retention_rate"
+        ),
+        "camera_unique_retained_frames": camera_selection.get(
+            "unique_retained_frames"
+        ),
+        "final_camera_retained_frame_ids": json.dumps(
+            camera_selection.get("final_retained_frame_ids")
+        ),
         "result_dir": result_dir,
     }
 
