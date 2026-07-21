@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Apply the Stage 3.5B gate before any incremental Stage 3.3 rerun."""
+"""Apply the long-sequence quality gate before an incremental Stage 3.3 rerun."""
 
 import argparse
 import csv
@@ -20,6 +20,7 @@ FIELDS = (
     "ate_ok",
     "rotation_ok",
     "prefix_stable",
+    "pose_diagnostic_pass",
     "peak_memory_ok",
     "aggregator_bounded",
     "camera_bounded",
@@ -51,7 +52,7 @@ def passed(value):
 
 def main():
     parser = argparse.ArgumentParser(
-        "Check whether Stage 3.5B candidates may enter incremental Stage 3.3"
+        "Check whether long-sequence candidates may enter incremental Stage 3.3"
     )
     parser.add_argument("--input", default="stage3_5b_results.csv")
     parser.add_argument("--output", default="stage3_5b_gate.csv")
@@ -91,13 +92,24 @@ def main():
     for method in args.candidates:
         row = final_rows.get(method)
         if row is None:
-            results.append(
+            missing = {key: "" for key in FIELDS}
+            missing.update(
                 {
                     "method": method,
-                    **{key: "no" for key in FIELDS[1:10]},
+                    "all_sequences_ok": "no",
+                    "depth_ok": "no",
+                    "ate_ok": "no",
+                    "rotation_ok": "no",
+                    "prefix_stable": "no",
+                    "pose_diagnostic_pass": "no",
+                    "peak_memory_ok": "no",
+                    "aggregator_bounded": "no",
+                    "camera_bounded": "no",
+                    "eligible_for_stage3_3": "no",
                     "decision": "missing result",
                 }
             )
+            results.append(missing)
             continue
 
         abs_rel = number(row, "mean_abs_rel")
@@ -137,6 +149,9 @@ def main():
             bool(prefix_rotations)
             and max_prefix_rotation <= rotation_limit
             and max_positive_step <= args.max_prefix_rotation_step_deg
+        )
+        pose_diagnostic_pass = all(
+            (all_sequences_ok, ate_ok, rotation_ok, prefix_stable)
         )
         peak_ok = peak is not None and peak < args.max_peak_allocated_mb
         aggregator_bounded = (
@@ -180,6 +195,7 @@ def main():
                 "ate_ok": passed(ate_ok),
                 "rotation_ok": passed(rotation_ok),
                 "prefix_stable": passed(prefix_stable),
+                "pose_diagnostic_pass": passed(pose_diagnostic_pass),
                 "peak_memory_ok": passed(peak_ok),
                 "aggregator_bounded": passed(aggregator_bounded),
                 "camera_bounded": passed(camera_bounded),
@@ -206,7 +222,11 @@ def main():
     eligible_methods = [
         row["method"] for row in results if row["eligible_for_stage3_3"] == "yes"
     ]
+    pose_diagnostic_methods = [
+        row["method"] for row in results if row["pose_diagnostic_pass"] == "yes"
+    ]
     print(f"Wrote {len(results)} gate decisions to {args.output}")
+    print("Passed the pose-only diagnostic:", pose_diagnostic_methods or "none")
     print("Eligible for incremental Stage 3.3:", eligible_methods or "none")
     if args.require_pass and not eligible_methods:
         raise SystemExit(1)

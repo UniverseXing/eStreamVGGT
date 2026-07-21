@@ -232,7 +232,56 @@ sbatch run.sh
 - `recent_dino_k6` 通过而 split K4 均不通过：新 K6 成为 pose 主预算，K4 保留为高压缩/depth 方案。
 - 所有候选失败：转向“长期全局参考 bank + 近期运动 bank”，不浪费算力做完整 Stage 3.3。
 
-只有通过上述全部硬门槛的有界候选，才增量补跑它的 Stage 3.3，不重跑 full/K4/old-DINO K6/uniform K6：
+### Stage 3.5B 结论
+
+- 五个新增候选均未通过回测门槛。四个 split K4 的 AbsRel 都保持 0.0452，但 ATE 仍约 0.666、旋转 RPE 仍约 41°–42°。
+- 即使 camera cache 保留全部 110 帧，K4 aggregator 下的 ATE/旋转也只有 0.6668/41.24°，与耦合 K4 的 0.6666/41.67°几乎相同。camera full 的最终 IDs 已确认是 `[0..109]`，因此不是裁剪实现错误；K32/K64 在同一 K4 aggregator 下不再测试。
+- `recent_dino_k6` 在 60 帧时优于 old-DINO K6（旋转 6.27° vs 15.10°），但 110 帧时反而为 28.97° vs 21.58°，且 AbsRel 恶化到 0.0651。用一个长期 DINO 槽交换一个近期槽只推迟失稳，不能解决全局 ATE。
+- 主要瓶颈位于 aggregator 上下文：camera head 无法从已经缺失时序/全局信息的 aggregated tokens 中恢复 pose。old-DINO K6 继续作为正式 K6 基线，recent-DINO K6 只保留为诊断结果。
+
+## Stage 3.5C-1：Aggregator/Camera 反向交叉与 K8 容量诊断（当前阶段）
+
+继续只运行 Bonn `person_tracking2` 110 帧及每 10 帧 prefix。Stage 3.5B 固定 DINO K4 aggregator、扩大 camera 历史没有效果；本轮反过来固定近期 aggregator、扩大 camera 历史，并加入一个标准 DINO K8 容量控制。
+
+四个自包含控制组：
+
+1. `full_cache`。
+2. `stage3_2_k4`。
+3. `fifo_k4`。
+4. `old_dino_k6`。
+
+四个新增组：
+
+5. `fifo_k4_camera16`：aggregator 只保留最近 4 帧；camera 保留 0 号锚点 + 最近 15 帧（包含当前帧）。
+6. `fifo_k4_camera_full`：aggregator 只保留最近 4 帧；camera 不裁剪，用作全局 pose 诊断上界。
+7. `anchor_recent_k4_camera_full`：aggregator 为 `[0, t-2, t-1, t]`；camera 不裁剪。它与 FIFO K4 的对照用于判断固定早期锚点是改善 ATE，还是会干扰动态场景局部旋转。
+8. `standard_dino_k8`：0 号锚点 + 3 个 DINO 历史槽 + 最近 3 个历史帧 + 当前帧。它同时不减少 old-DINO K6 的长期/近期信息，用于区分 K6 容量不足与选择结构错误。
+
+```bash
+# 可选 10 帧执行检查
+env STREAMVGGT_STAGE3_5C1_MAX_FRAMES=10 \
+    STREAMVGGT_STAGE3_5C1_PREFIX_FRAMES="5 10" \
+    sbatch run.sh
+
+# 正式矩阵
+sbatch run.sh
+```
+
+输出为 `stage3_5c1_results.csv`、`stage3_5c1_sequence_results.csv` 和 `stage3_5c1_gate.csv`。gate 沿用 Stage 3.5B 的全部硬门槛，并额外报告 `pose_diagnostic_pass`：
+
+- `pose_diagnostic_pass` 只要求序列成功、ATE、旋转和 prefix 稳定性通过，用于判断 FIFO aggregator + 长期 camera 是否值得发展为独立 pose 分支。
+- `eligible_for_stage3_3` 仍额外要求 depth、峰值显存、aggregator/camera 都有界；诊断通过不等于可以回测 Stage 3.3。
+- `fifo_k4_camera_full` 和 `anchor_recent_k4_camera_full` 无论质量如何都不能直接进入 Stage 3.3。
+
+判定分支：
+
+- `fifo_k4_camera_full` 的 pose 通过：aggregator 近期上下文与 camera 长期历史可以互补；下一步实现双 aggregator 原型，DINO K4 服务 depth/geometry，FIFO K4 服务 pose，再用 K16/K32 搜索 pose 分支的最小有界 camera budget。
+- camera full 通过而 camera K16 不通过：只在 FIFO aggregator 分支补 K32/K64；不再对 DINO K4 aggregator 扩 camera。
+- FIFO + camera full 仍不通过 pose：全局 pose 也需要 aggregator 级长期信息，放弃仅靠 camera KV 恢复的路线。
+- `standard_dino_k8` 通过完整 gate：优先采用更简单的单 aggregator K8。
+- K8 也失败：进入 Stage 3.5C-2，同 K8 比较标准 DINO 与“2 个稳定 DINO 槽 + 1 个周期更新的中期 landmark + 3 个近期历史帧 + 锚点和当前帧”，分离容量收益与时间分段收益。
+
+只有通过 Stage 3.5C-1 或后续阶段全部硬门槛的有界候选，才增量补跑它的 Stage 3.3，不重跑 full/K4/old-DINO K6/uniform K6：
 
 1. Stage 3.3A：Sintel、ScanNet、TUM pose。
 2. Stage 3.3B：NRGBD、ETH3D，以及原结果中成功的同一组 12 个 7-Scenes 序列。即使现在 proj 已补齐，也不改成 18 段，以保证和已有 K6 结果同覆盖比较。
@@ -240,9 +289,9 @@ sbatch run.sh
 
 所有后续集群提交只修改根目录 `run.sh`，由它完成 SLURM 资源申请、Conda 环境激活并调用阶段内部脚本；不再创建硬件命名的 `*_pro6000.sh`。
 
-## Stage 3.5C：选择器定型与最终消融
+## Stage 3.5C-2：选择器定型与最终消融
 
-根据 3.5A/3.5B 再决定是否实现分段 DINO coreset，不提前堆复杂度。候选保留一个稳定参考槽和至少一个近期历史槽，其余槽位按时间分段后用 DINO 相似度与多样性联合选择；稳定锚点只在证据支持时通过覆盖/新颖度阈值更新。
+根据 3.5A/3.5B/3.5C-1 再决定是否实现分段 DINO coreset，不提前堆复杂度。候选保留一个稳定参考槽和至少一个近期历史槽，其余槽位按时间分段后用 DINO 相似度与多样性联合选择；稳定锚点只在证据支持时通过覆盖/新颖度阈值更新。
 
 最终消融至少包含：
 
