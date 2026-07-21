@@ -117,8 +117,90 @@ def _different_old_frame_indices(old_start, old_end, count, device, frame_featur
     return selected.sort().values
 
 
+def _temporal_binned_dino_indices(frame_features, frame_ids, device):
+    """Select an anchor, three age-binned DINO landmarks, and four recent frames."""
+    if frame_features is None or frame_ids is None:
+        raise ValueError("temporal_binned_dino_k8 requires DINO features and frame IDs")
+    if frame_features.shape[0] != frame_ids.shape[0]:
+        raise ValueError("DINO feature/frame ID count mismatch")
+
+    current_id = frame_ids[-1]
+    ages = current_id - frame_ids
+    anchor = torch.nonzero(frame_ids == 0, as_tuple=False).flatten()
+    if anchor.numel() == 0:
+        raise ValueError("temporal_binned_dino_k8 requires frame 0 as its anchor")
+    anchor = anchor[:1].to(device=device)
+    recent = torch.nonzero((ages >= 0) & (ages <= 3), as_tuple=False).flatten()
+    recent = recent.to(device=device)
+
+    features = frame_features.to(device=device)
+    reference = torch.cat([anchor, recent]).unique(sorted=True)
+    selected_landmarks = []
+    # Select from older to newer banks. The long bank uses DINO diversity.
+    # Near/middle retain their oldest candidate so a landmark is guaranteed to
+    # age into the next bank instead of being repeatedly replaced by a newer,
+    # visually novel frame before it can provide a temporal bridge.
+    for minimum_age, maximum_age in ((48, None), (16, 47), (4, 15)):
+        mask = ages >= minimum_age
+        if maximum_age is not None:
+            mask &= ages <= maximum_age
+        candidates = torch.nonzero(mask, as_tuple=False).flatten().to(device=device)
+        candidates = candidates[frame_ids.index_select(0, candidates) != 0]
+        if candidates.numel() == 0:
+            continue
+        if minimum_age == 48:
+            similarities = (
+                features.index_select(0, candidates)
+                @ features.index_select(0, reference).transpose(0, 1)
+            )
+            scores = similarities.max(dim=1).values
+            chosen = candidates[torch.argsort(scores, stable=True)[0:1]]
+        else:
+            candidate_ages = ages.index_select(0, candidates)
+            chosen = candidates[torch.argsort(candidate_ages, descending=True, stable=True)[0:1]]
+        selected_landmarks.append(chosen)
+        reference = torch.cat([reference, chosen]).unique(sorted=True)
+
+    selected = torch.cat([anchor, *selected_landmarks, recent]).unique(sorted=True)
+    # Before middle/long banks have warmed up, use otherwise idle capacity for
+    # the most recent unselected candidates. Once all banks exist this branch
+    # is inactive and the steady-state layout is exactly 1+1+1+1+4 frames.
+    if selected.numel() < 8:
+        all_indices = torch.arange(frame_ids.shape[0], device=device)
+        remaining_mask = torch.ones(frame_ids.shape[0], dtype=torch.bool, device=device)
+        remaining_mask[selected] = False
+        remaining = all_indices[remaining_mask]
+        fill_count = min(8 - selected.numel(), remaining.numel())
+        if fill_count:
+            selected = torch.cat([selected, remaining[-fill_count:]])
+    return selected.sort().values
+
+
+def _temporal_bank_frame_ids(frame_ids):
+    if frame_ids is None or frame_ids.numel() == 0:
+        return {}
+    current_id = int(frame_ids[-1])
+    assignments = {"anchor": [], "long": [], "middle": [], "near": [], "recent": []}
+    for frame_id in frame_ids.tolist():
+        age = current_id - int(frame_id)
+        if frame_id == 0:
+            bank = "anchor"
+        elif age <= 3:
+            bank = "recent"
+        elif age <= 15:
+            bank = "near"
+        elif age <= 47:
+            bank = "middle"
+        else:
+            bank = "long"
+        assignments[bank].append(int(frame_id))
+    return assignments
+
+
 def _candidate_similarity_log(frame_features, frame_ids, max_cache_frames, policy):
     if frame_features is None:
+        return []
+    if policy == "temporal_binned_dino_k8":
         return []
     if policy == "anchor_stable_adaptive_recent":
         if frame_features.shape[0] < 5:
@@ -179,6 +261,12 @@ def _cache_keep_frame_indices(
         and max_cache_frames != 6
     ):
         raise ValueError(f"{policy} requires cache_window_size=6")
+    if policy == "temporal_binned_dino_k8":
+        if max_cache_frames != 8:
+            raise ValueError(f"{policy} requires cache_window_size=8")
+        if frame_ids is None:
+            raise ValueError(f"{policy} requires frame IDs")
+        return _temporal_binned_dino_indices(frame_features, frame_ids, device)
     if num_cached_frames <= max_cache_frames:
         return None
 
@@ -426,6 +514,8 @@ class StreamVGGT(nn.Module, PyTorchModelHubMixin):
             raise ValueError(
                 f"{cache_policy} requires cache_window_size=6"
             )
+        if cache_policy == "temporal_binned_dino_k8" and cache_window_size != 8:
+            raise ValueError(f"{cache_policy} requires cache_window_size=8")
         if camera_cache_policy is None and camera_cache_window_size is not None:
             raise ValueError(
                 "camera_cache_window_size requires camera_cache_policy; "
@@ -475,6 +565,7 @@ class StreamVGGT(nn.Module, PyTorchModelHubMixin):
                 "dino_diverse",
                 "anchor_recent_dino_diverse_2old_1recent",
                 "anchor_recent_dino_diverse_1old_3recent",
+                "temporal_binned_dino_k8",
                 "anchor_stable_adaptive_recent",
             )
             if use_rgb_features:
@@ -660,6 +751,11 @@ class StreamVGGT(nn.Module, PyTorchModelHubMixin):
                         "frame_index": i,
                         "retained_frame_ids": cache_frame_ids.tolist(),
                         "camera_retained_frame_ids": camera_cache_frame_ids.tolist(),
+                        "temporal_bank_frame_ids": (
+                            _temporal_bank_frame_ids(cache_frame_ids)
+                            if cache_policy == "temporal_binned_dino_k8"
+                            else {}
+                        ),
                         "aggregator_kv_mib": _tensor_tree_nbytes(past_key_values) / (1024 ** 2),
                         "camera_kv_mib": _tensor_tree_nbytes(past_key_values_camera) / (1024 ** 2),
                         "descriptor_mib": _tensor_tree_nbytes(cache_frame_features) / (1024 ** 2),

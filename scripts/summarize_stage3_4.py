@@ -49,6 +49,13 @@ FIELDS = (
     "mean_selection_churn",
     "unique_retained_frames",
     "loop_match_retention_rate",
+    "mean_near_bank_occupancy_rate",
+    "mean_middle_bank_occupancy_rate",
+    "mean_long_bank_occupancy_rate",
+    "mean_near_bank_updates",
+    "mean_middle_bank_updates",
+    "mean_long_bank_updates",
+    "max_final_temporal_gap",
     "result_dir",
 )
 
@@ -92,6 +99,17 @@ SEQUENCE_FIELDS = (
     "camera_anchor0_retention_rate",
     "camera_unique_retained_frames",
     "final_camera_retained_frame_ids",
+    "near_bank_occupancy_rate",
+    "middle_bank_occupancy_rate",
+    "long_bank_occupancy_rate",
+    "near_bank_updates",
+    "middle_bank_updates",
+    "long_bank_updates",
+    "near_bank_unique_frames",
+    "middle_bank_unique_frames",
+    "long_bank_unique_frames",
+    "final_max_temporal_gap",
+    "final_temporal_bank_frame_ids",
     "result_dir",
 )
 
@@ -126,6 +144,7 @@ def method_name(result_dir, dataset):
 
 def metric_row(dataset, method, payload, rows, prefix, result_dir):
     selection_rows = [row.get("selection_statistics", {}) for row in rows]
+    temporal_rows = [row.get("temporal_bank_statistics", {}) for row in rows]
     total_frames = sum(row.get("num_frames", 0) for row in rows) if prefix is None else prefix * len(rows)
     total_inference = sum(row.get("inference_sec", 0.0) for row in rows) if prefix is None else None
     result = {
@@ -172,6 +191,13 @@ def metric_row(dataset, method, payload, rows, prefix, result_dir):
         "mean_selection_churn": mean([row.get("mean_selection_churn") for row in selection_rows]) if prefix is None else None,
         "unique_retained_frames": mean([row.get("unique_retained_frames") for row in selection_rows]) if prefix is None else None,
         "loop_match_retention_rate": mean([row.get("loop_match_retention_rate") for row in selection_rows]) if prefix is None else None,
+        "mean_near_bank_occupancy_rate": mean([row.get("near_occupancy_rate") for row in temporal_rows]) if prefix is None else None,
+        "mean_middle_bank_occupancy_rate": mean([row.get("middle_occupancy_rate") for row in temporal_rows]) if prefix is None else None,
+        "mean_long_bank_occupancy_rate": mean([row.get("long_occupancy_rate") for row in temporal_rows]) if prefix is None else None,
+        "mean_near_bank_updates": mean([row.get("near_updates") for row in temporal_rows]) if prefix is None else None,
+        "mean_middle_bank_updates": mean([row.get("middle_updates") for row in temporal_rows]) if prefix is None else None,
+        "mean_long_bank_updates": mean([row.get("long_updates") for row in temporal_rows]) if prefix is None else None,
+        "max_final_temporal_gap": maximum([row.get("final_max_temporal_gap") for row in temporal_rows]) if prefix is None else None,
         "result_dir": result_dir,
     }
     return result
@@ -180,6 +206,7 @@ def metric_row(dataset, method, payload, rows, prefix, result_dir):
 def flatten_sequence(dataset, method, payload, row, result_dir):
     selection = row.get("selection_statistics", {})
     camera_selection = row.get("camera_selection_statistics", {})
+    temporal_banks = row.get("temporal_bank_statistics", {})
     return {
         "dataset": dataset,
         "method": method,
@@ -227,6 +254,19 @@ def flatten_sequence(dataset, method, payload, row, result_dir):
         ),
         "final_camera_retained_frame_ids": json.dumps(
             camera_selection.get("final_retained_frame_ids")
+        ),
+        "near_bank_occupancy_rate": temporal_banks.get("near_occupancy_rate"),
+        "middle_bank_occupancy_rate": temporal_banks.get("middle_occupancy_rate"),
+        "long_bank_occupancy_rate": temporal_banks.get("long_occupancy_rate"),
+        "near_bank_updates": temporal_banks.get("near_updates"),
+        "middle_bank_updates": temporal_banks.get("middle_updates"),
+        "long_bank_updates": temporal_banks.get("long_updates"),
+        "near_bank_unique_frames": temporal_banks.get("near_unique_frames"),
+        "middle_bank_unique_frames": temporal_banks.get("middle_unique_frames"),
+        "long_bank_unique_frames": temporal_banks.get("long_unique_frames"),
+        "final_max_temporal_gap": temporal_banks.get("final_max_temporal_gap"),
+        "final_temporal_bank_frame_ids": json.dumps(
+            temporal_banks.get("final_bank_frame_ids")
         ),
         "result_dir": result_dir,
     }

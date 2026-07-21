@@ -24,6 +24,7 @@ FIELDS = (
     "peak_memory_ok",
     "aggregator_bounded",
     "camera_bounded",
+    "temporal_banks_ok",
     "eligible_for_stage3_3",
     "abs_rel",
     "abs_rel_limit",
@@ -35,6 +36,14 @@ FIELDS = (
     "max_prefix_rotation_step_deg",
     "peak_allocated_mb",
     "aggregator_kv_mib",
+    "near_bank_occupancy_rate",
+    "middle_bank_occupancy_rate",
+    "long_bank_occupancy_rate",
+    "near_bank_updates",
+    "middle_bank_updates",
+    "long_bank_updates",
+    "final_max_temporal_gap",
+    "max_temporal_gap_limit",
     "decision",
 )
 
@@ -64,6 +73,10 @@ def main():
     parser.add_argument("--max-prefix-rotation-step-deg", type=float, default=5.0)
     parser.add_argument("--max-peak-allocated-mb", type=float, default=10240.0)
     parser.add_argument("--aggregator-mib-per-frame", type=float, default=100.0)
+    parser.add_argument("--temporal-bank-candidates", nargs="*", default=())
+    parser.add_argument("--min-bank-occupancy", type=float, default=0.95)
+    parser.add_argument("--min-near-middle-updates", type=int, default=1)
+    parser.add_argument("--max-final-temporal-gap", type=int, default=64)
     parser.add_argument(
         "--require-pass",
         action="store_true",
@@ -105,6 +118,7 @@ def main():
                     "peak_memory_ok": "no",
                     "aggregator_bounded": "no",
                     "camera_bounded": "no",
+                    "temporal_banks_ok": "no",
                     "eligible_for_stage3_3": "no",
                     "decision": "missing result",
                 }
@@ -118,6 +132,13 @@ def main():
         peak = number(row, "max_peak_allocated_mb")
         aggregator_kv = number(row, "mean_aggregator_kv_mib")
         cache_window = number(row, "cache_window_size")
+        near_occupancy = number(row, "mean_near_bank_occupancy_rate")
+        middle_occupancy = number(row, "mean_middle_bank_occupancy_rate")
+        long_occupancy = number(row, "mean_long_bank_occupancy_rate")
+        near_updates = number(row, "mean_near_bank_updates")
+        middle_updates = number(row, "mean_middle_bank_updates")
+        long_updates = number(row, "mean_long_bank_updates")
+        final_temporal_gap = number(row, "max_final_temporal_gap")
         method_prefixes = sorted(
             (
                 int(prefix_row["prefix_frames"]),
@@ -161,6 +182,23 @@ def main():
         )
         camera_policy = row.get("camera_cache_policy", "coupled")
         camera_bounded = camera_policy not in ("full", "full_cache")
+        requires_temporal_banks = method in args.temporal_bank_candidates
+        temporal_banks_ok = not requires_temporal_banks or all(
+            (
+                near_occupancy is not None
+                and near_occupancy >= args.min_bank_occupancy,
+                middle_occupancy is not None
+                and middle_occupancy >= args.min_bank_occupancy,
+                long_occupancy is not None
+                and long_occupancy >= args.min_bank_occupancy,
+                near_updates is not None
+                and near_updates >= args.min_near_middle_updates,
+                middle_updates is not None
+                and middle_updates >= args.min_near_middle_updates,
+                final_temporal_gap is not None
+                and final_temporal_gap <= args.max_final_temporal_gap,
+            )
+        )
         eligible = all(
             (
                 all_sequences_ok,
@@ -171,6 +209,7 @@ def main():
                 peak_ok,
                 aggregator_bounded,
                 camera_bounded,
+                temporal_banks_ok,
             )
         )
         failed_checks = [
@@ -184,6 +223,7 @@ def main():
                 ("peak_memory", peak_ok),
                 ("aggregator_bound", aggregator_bounded),
                 ("camera_bound", camera_bounded),
+                ("temporal_banks", temporal_banks_ok),
             )
             if not value
         ]
@@ -199,6 +239,7 @@ def main():
                 "peak_memory_ok": passed(peak_ok),
                 "aggregator_bounded": passed(aggregator_bounded),
                 "camera_bounded": passed(camera_bounded),
+                "temporal_banks_ok": passed(temporal_banks_ok),
                 "eligible_for_stage3_3": passed(eligible),
                 "abs_rel": abs_rel,
                 "abs_rel_limit": abs_rel_limit,
@@ -210,6 +251,14 @@ def main():
                 "max_prefix_rotation_step_deg": max_positive_step,
                 "peak_allocated_mb": peak,
                 "aggregator_kv_mib": aggregator_kv,
+                "near_bank_occupancy_rate": near_occupancy,
+                "middle_bank_occupancy_rate": middle_occupancy,
+                "long_bank_occupancy_rate": long_occupancy,
+                "near_bank_updates": near_updates,
+                "middle_bank_updates": middle_updates,
+                "long_bank_updates": long_updates,
+                "final_max_temporal_gap": final_temporal_gap,
+                "max_temporal_gap_limit": args.max_final_temporal_gap,
                 "decision": "PASS" if eligible else "FAIL: " + ", ".join(failed_checks),
             }
         )

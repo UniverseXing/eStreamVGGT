@@ -239,7 +239,7 @@ sbatch run.sh
 - `recent_dino_k6` 在 60 帧时优于 old-DINO K6（旋转 6.27° vs 15.10°），但 110 帧时反而为 28.97° vs 21.58°，且 AbsRel 恶化到 0.0651。用一个长期 DINO 槽交换一个近期槽只推迟失稳，不能解决全局 ATE。
 - 主要瓶颈位于 aggregator 上下文：camera head 无法从已经缺失时序/全局信息的 aggregated tokens 中恢复 pose。old-DINO K6 继续作为正式 K6 基线，recent-DINO K6 只保留为诊断结果。
 
-## Stage 3.5C-1：Aggregator/Camera 反向交叉与 K8 容量诊断（当前阶段）
+## Stage 3.5C-1：Aggregator/Camera 反向交叉与 K8 容量诊断（已完成）
 
 继续只运行 Bonn `person_tracking2` 110 帧及每 10 帧 prefix。Stage 3.5B 固定 DINO K4 aggregator、扩大 camera 历史没有效果；本轮反过来固定近期 aggregator、扩大 camera 历史，并加入一个标准 DINO K8 容量控制。
 
@@ -279,7 +279,14 @@ sbatch run.sh
 - camera full 通过而 camera K16 不通过：只在 FIFO aggregator 分支补 K32/K64；不再对 DINO K4 aggregator 扩 camera。
 - FIFO + camera full 仍不通过 pose：全局 pose 也需要 aggregator 级长期信息，放弃仅靠 camera KV 恢复的路线。
 - `standard_dino_k8` 通过完整 gate：优先采用更简单的单 aggregator K8。
-- K8 也失败：进入 Stage 3.5C-2，同 K8 比较标准 DINO 与“2 个稳定 DINO 槽 + 1 个周期更新的中期 landmark + 3 个近期历史帧 + 锚点和当前帧”，分离容量收益与时间分段收益。
+- K8 也失败：进入 Stage 3.5C-2，同 K8 比较标准 DINO 与“固定锚点 + long/middle/near 三个分段 landmark + 最近 3 个历史帧 + 当前帧”，分离容量收益与时间覆盖收益。
+
+### Stage 3.5C-1 结论
+
+- 无候选通过完整 gate 或 pose-only gate。FIFO aggregator + camera K16 已将平移/旋转 RPE 恢复到 0.0928/4.88°，与 full 的 0.0949/5.44°相当，但 ATE 仍为 0.648；camera full 的 0.645 没有实质改善。因此不补 camera K32/K64，也暂不实现双 aggregator。
+- `anchor_recent_k4_camera_full` 在 60 帧仍为 ATE 0.196、旋转 6.85°，到 70 帧突变为 0.607/14.81°。固定 0 号锚点前期有助于全局参考，远离初始视角后则缺少中期桥接。
+- `standard_dino_k8` 的深度为 0.0552、峰值 allocated 为 9.53 GB，但 ATE/旋转仍为 0.654/24.85°，最终 IDs 为 `[0,1,2,3,106,107,108,109]`。增加容量没有阻止 DINO 历史槽冻结在序列开头。
+- GT 在 60 帧相对起点约旋转 162°、位移 1.49 m；70 帧位移约 1.99 m且最近十帧转向约 35°，与所有有界 aggregator 的共同失稳点一致。下一步保持 K8 不变，强制形成近/中/长期时间覆盖。
 
 只有通过 Stage 3.5C-1 或后续阶段全部硬门槛的有界候选，才增量补跑它的 Stage 3.3，不重跑 full/K4/old-DINO K6/uniform K6：
 
@@ -289,9 +296,71 @@ sbatch run.sh
 
 所有后续集群提交只修改根目录 `run.sh`，由它完成 SLURM 资源申请、Conda 环境激活并调用阶段内部脚本；不再创建硬件命名的 `*_pro6000.sh`。
 
-## Stage 3.5C-2：选择器定型与最终消融
+## Stage 3.5C-2：时间分段 DINO K8（当前阶段）
 
-根据 3.5A/3.5B/3.5C-1 再决定是否实现分段 DINO coreset，不提前堆复杂度。候选保留一个稳定参考槽和至少一个近期历史槽，其余槽位按时间分段后用 DINO 相似度与多样性联合选择；稳定锚点只在证据支持时通过覆盖/新颖度阈值更新。
+仍只运行 Bonn `person_tracking2` 110 帧和每 10 帧 prefix，矩阵为：
+
+1. `full_cache`：质量参照。
+2. `standard_dino_k8`：0 号锚点 + 3 个无时间约束的 DINO 历史槽 + 最近 3 个历史帧 + 当前帧。
+3. `temporal_binned_dino_k8`：同样 K8，但历史槽强制分为 long/middle/near 三个时间 bank；near/middle 保证时序晋级，long bank 再用 DINO 多样性选择全局代表。
+
+`temporal_binned_dino_k8` 的在线有界布局为：
+
+- `anchor`：固定帧 0。
+- `recent`：age 0–3，即当前帧和最近 3 个历史帧。
+- `near`：age 4–15，保留该时间带最老的候选作为短期桥梁。
+- `middle`：age 16–47，保留该时间带最老的候选作为中期桥梁。
+- `long`：age ≥48 且排除帧 0，用 DINO 多样性保留 1 个全局 landmark。
+
+每个时间段只在当前仍存在的 KV 候选中在线选择，不保存已经丢弃的 KV，也不事后访问全部图像，因此 aggregator KV 始终不超过 8 帧。near/middle 使用最老候选是结构约束：若这两个 bank 也只按视觉新颖度更新，代表可能反复换成新帧、永远无法老化晋级到 long；DINO 用在 long bank 内，从已晋级的长期候选中选择相对锚点和 recent 更互补的全局代表。在 middle/long 尚未形成的 warm-up 阶段，空余槽临时由最近的未选候选补满；所有 bank 形成后回到严格的 `1 anchor + 3 landmarks + 4 recent`。
+
+```bash
+# 可选 10 帧检查；短检查只能验证 recent/near，不能验证 middle/long
+env STREAMVGGT_STAGE3_5C2_MAX_FRAMES=10 \
+    STREAMVGGT_STAGE3_5C2_PREFIX_FRAMES="5 10" \
+    sbatch run.sh
+
+# 正式 110 帧
+sbatch run.sh
+```
+
+输出为：
+
+- `stage3_5c2_results.csv`。
+- `stage3_5c2_sequence_results.csv`：包含 near/middle/long 的占用率、更新次数、unique IDs、最终 bank IDs 和最大时间缺口。
+- `stage3_5c2_gate.csv`：质量、资源和 bank 结构的联合 gate。
+
+### Stage 3.5C-2 决策门槛
+
+质量与资源门槛继续以同一次 `full_cache` 为参照，必须全部满足：
+
+1. 全部序列成功；AbsRel ≤ full × 1.10。
+2. 最终 ATE ≤ full × 2.0。
+3. 最终及所有 prefix 的旋转 RPE ≤ full × 1.50，相邻 prefix 最大正向跳变 ≤5°。
+4. 峰值 allocated <10240 MiB；aggregator KV ≤ 每个 cache frame 100 MiB；camera cache 有界。
+5. 70 帧附近不能再次出现 ATE/旋转突变。
+
+`temporal_binned_dino_k8` 还必须通过结构门槛，防止质量偶然改善但 bank 实际没有工作：
+
+1. warm-up 后 near、middle、long 各 bank 占用率均 ≥0.95。
+2. near 和 middle 在 110 帧内都至少更新 1 次；long 可以稳定保留一个真正长期 landmark。
+3. 最终相邻 retained IDs 的最大时间缺口 ≤64 帧。
+
+### 达成门槛后的动作
+
+若 `temporal_binned_dino_k8` 同时通过全部质量、资源和结构门槛：
+
+1. 冻结 K8 bank 边界与选择规则，不再根据 `person_tracking2` 调参。
+2. 只增量补跑新方法的 Stage 3.3A：Sintel、ScanNet、TUM pose。
+3. 再补 Stage 3.3B：NRGBD、ETH3D、原成功的同一组 12 个 7-Scenes 序列。
+4. 再补 Stage 3.3C：TUM-dynamics 八段。
+5. 三类任务均保持可接受后，进入 Stage 3.5D，同 K8 增加非 DINO 时间分段对照，验证收益来自 DINO 而不只是时间分桶；已有 full/K4/K6/uniform K6 不重跑。
+
+若 70 帧突变消失但只小幅错过数值门槛，只允许一次预先声明的 bank 边界敏感性实验，再比较 `4/12/40` 与 `4/16/48`；不能连续针对单序列调阈值。若 ATE 仍约为 0.65，或 standard/temporal K8 无实质差异，则停止增加 K、camera window 或帧槽排列，转向显式的局部窗口对齐与全局 pose stitching。
+
+## Stage 3.5D：选择器定型与最终消融
+
+只有 Stage 3.5C-2 通过后才进行。候选保留固定 K8 和相同时间 bank，比较 DINO 与不使用 DINO 的 bank 内代表选择；稳定锚点是否更新只在新证据支持时作为独立消融，不与主策略同时改变。
 
 最终消融至少包含：
 

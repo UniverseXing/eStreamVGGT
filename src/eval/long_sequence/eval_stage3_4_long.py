@@ -314,6 +314,45 @@ def selection_statistics(
     }
 
 
+def temporal_bank_statistics(memory_trace):
+    rows = [row for row in memory_trace if row.get("temporal_bank_frame_ids")]
+    if not rows:
+        return {}
+    minimum_steps = {"near": 5, "middle": 17, "long": 49}
+    result = {}
+    for bank, minimum_step in minimum_steps.items():
+        eligible = [row for row in rows if int(row["frame_index"]) >= minimum_step]
+        values = [
+            tuple(int(item) for item in row["temporal_bank_frame_ids"].get(bank, []))
+            for row in eligible
+        ]
+        occupied = [value for value in values if value]
+        updates = sum(
+            current != previous
+            for previous, current in zip(occupied, occupied[1:])
+        )
+        result[f"{bank}_occupancy_rate"] = (
+            len(occupied) / len(values) if values else None
+        )
+        result[f"{bank}_updates"] = updates
+        result[f"{bank}_unique_frames"] = len(
+            {item for value in occupied for item in value}
+        )
+
+    final_banks = rows[-1]["temporal_bank_frame_ids"]
+    final_ids = sorted(
+        int(item)
+        for values in final_banks.values()
+        for item in values
+    )
+    temporal_gaps = [
+        current - previous for previous, current in zip(final_ids, final_ids[1:])
+    ]
+    result["final_bank_frame_ids"] = final_banks
+    result["final_max_temporal_gap"] = max(temporal_gaps, default=0)
+    return result
+
+
 def resource_at_prefix(memory_trace, frame_timings, prefix):
     result = {
         "mean_frame_latency_ms": (
@@ -536,6 +575,7 @@ def main():
                 loop_forward_frames,
                 frame_ids_key="camera_retained_frame_ids",
             )
+            temporal_banks = temporal_bank_statistics(memory_trace)
 
             np.savez_compressed(
                 osp.join(trajectory_dir, sequence.replace("/", "_") + ".npz"),
@@ -588,6 +628,7 @@ def main():
                 "prefix_metrics": prefix_metrics,
                 "selection_statistics": selection,
                 "camera_selection_statistics": camera_selection,
+                "temporal_bank_statistics": temporal_banks,
                 **{key: value for key, value in full.items() if key != "prefix_frames"},
             }
             rows.append(result)
