@@ -18,6 +18,6 @@ echo "Node: $(hostname)"
 echo "Started: $(date --iso-8601=seconds)"
 nvidia-smi
 
-bash "run_stage3_3c_recon.sh"
+bash "run_stage3_5a.sh"
 
 echo "Finished: $(date --iso-8601=seconds)"

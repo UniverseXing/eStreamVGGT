@@ -10,6 +10,14 @@ data_root="${STREAMVGGT_STAGE3_5A_BONN_ROOT:-${repo_root}/data/eval/bonn/rgbd_bo
 sequence="${STREAMVGGT_STAGE3_5A_SEQUENCE:-person_tracking2}"
 prefixes="${STREAMVGGT_STAGE3_5A_PREFIX_FRAMES:-10 20 30 40 50 60 70 80 90 100 110}"
 
+if [[ -z "${CONDA_PREFIX:-}" || ! -x "${CONDA_PREFIX}/bin/python" ]]; then
+    echo "Stage 3.5A requires an activated Conda environment with CONDA_PREFIX/bin/python" >&2
+    echo "CONDA_DEFAULT_ENV=${CONDA_DEFAULT_ENV:-unset}, CONDA_PREFIX=${CONDA_PREFIX:-unset}" >&2
+    exit 2
+fi
+python_bin="${CONDA_PREFIX}/bin/python"
+"${python_bin}" -c 'import numpy, sys; print("Stage 3.5A Python:", sys.executable, "NumPy:", numpy.__version__)'
+
 run_eval() {
     local label="$1"
     local window="$2"
@@ -18,7 +26,7 @@ run_eval() {
 
     read -r -a prefix_args <<< "${prefixes}"
     command=(
-        python "${repo_root}/src/eval/long_sequence/eval_stage3_4_long.py"
+        "${python_bin}" "${repo_root}/src/eval/long_sequence/eval_stage3_4_long.py"
         --weights "${weights}"
         --dataset bonn
         --data-root "${data_root}"
@@ -47,8 +55,7 @@ run_eval old_k4 4 anchor_recent_dino_diverse
 run_eval fifo_k4 4 fifo
 run_eval old_dino_k6 6 anchor_recent_dino_diverse
 
-python "${repo_root}/scripts/summarize_stage3_4.py" \
+"${python_bin}" "${repo_root}/scripts/summarize_stage3_4.py" \
     --results-root "${results_root}" \
     --output "${repo_root}/stage3_5a_results.csv" \
     --sequence-output "${repo_root}/stage3_5a_sequence_results.csv"
-

@@ -154,12 +154,12 @@ bash run_stage3_4.sh
 
 ```bash
 # 可选 10 帧执行检查
-STREAMVGGT_STAGE3_5A_MAX_FRAMES=10 \
-STREAMVGGT_STAGE3_5A_PREFIX_FRAMES="5 10" \
-bash run_stage3_5a.sh
+env STREAMVGGT_STAGE3_5A_MAX_FRAMES=10 \
+    STREAMVGGT_STAGE3_5A_PREFIX_FRAMES="5 10" \
+    sbatch run.sh
 
 # 正式 person_tracking2 110 帧
-bash run_stage3_5a.sh
+sbatch run.sh
 ```
 
 输出为 `stage3_5a_results.csv` 和 `stage3_5a_sequence_results.csv`。
@@ -187,7 +187,7 @@ bash run_stage3_5a.sh
 2. Stage 3.3B：NRGBD、ETH3D，以及原结果中成功的同一组 12 个 7-Scenes 序列。即使现在 proj 已补齐，也不改成 18 段，以保证和已有 K6 结果同覆盖比较。
 3. Stage 3.3C：TUM-dynamics 八段。
 
-所有后续集群入口只新增或修改普通 `run_*.sh`，不再创建硬件命名的 `*_pro6000.sh`。
+所有后续集群提交只修改根目录 `run.sh`，由它完成 SLURM 资源申请、Conda 环境激活并调用阶段内部脚本；不再创建硬件命名的 `*_pro6000.sh`。
 
 ## Stage 3.5C：选择器定型与最终消融
 
