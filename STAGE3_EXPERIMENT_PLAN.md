@@ -1,6 +1,6 @@
 # StreamVGGT 固定显存帧选择实验计划
 
-更新日期：2026-07-19
+更新日期：2026-07-21
 
 ## 目标与实验原则
 
@@ -26,7 +26,7 @@
 
 三套数据均已完成四策略 pose 对比。结果说明固定 cache 的优势不是只存在于深度：它显著降低显存并提高吞吐，但 ScanNet 和 Sintel 上 full cache 仍有明显的位姿质量优势。TUM 上 K4 的 ATE（0.0250）略好于 full cache（0.0269），old-DINO K6 的旋转误差最接近 full cache；因此不能仅凭单一数据集宣布 K4 全面优于 K6。
 
-### Stage 3.3B：静态多视图重建（待修复后重跑）
+### Stage 3.3B：静态多视图重建（已完成可用部分，继续诊断 7-Scenes）
 
 首轮完整序列的相对趋势可作为预实验：
 
@@ -36,16 +36,18 @@
 - old-DINO K6 在三个数据集都优于 uniform K6，支持“DINO 选择本身有效”；但不同场景的最优 K 不同。
 - old-DINO K6 相对 full cache 的宏观峰值 allocated 由 9429 MB 降至 8650 MB，FPS 由 10.67 升至 11.84。
 
-首轮结果不能作为最终表格，原因是 7-Scenes 只有 11/18 成功、ETH3D 把 `_archives` 当成了场景，而且 prefix 指标在全序列尺度对齐后再截断，存在未来帧泄漏。修复内容：
+修复版已经消除 ETH3D 误枚举和 prefix 未来帧泄漏；ETH3D 13/13、NRGBD 9/9 成功。7-Scenes 在四种策略下均为相同的 12/18 成功，说明剩余 6 段首先是数据/协议问题而不是缓存策略问题。已实施的修复内容：
 
 1. 7-Scenes 和 NRGBD 在采样前剔除缺失或非有限 GT pose 的帧。
 2. ETH3D 只枚举具有完整 calibration/images/depth 布局的真实场景。
 3. 每个 4/6/8/10 帧 prefix 从原始预测独立执行尺度/位移对齐与 ICP。
-4. 重跑 paper full-cache 与 dense 四策略，覆盖原输出并重新生成 `stage3_3b_recon_results.csv`。
+4. 重跑 paper full-cache 与 dense 四策略并生成修复版结果表。
+
+剩余工作是用失败 JSON 对 7-Scenes 六段逐项归因；在此之前不把 12/18 宏平均与论文完整 18 段结果混写。Stage 3.4 的 7-Scenes 回环会自动排除有效位姿不足 50 帧的序列，因此不被该诊断阻塞。
 
 ETH3D 与论文绝对数值仍有差距，需将“相同代码内的策略相对比较”和“复现论文绝对值”分开陈述。后者继续检查 THIN_PRISM_FISHEYE 畸变/valid mask 协议，不阻塞 3.3C 的策略对比。
 
-## Stage 3.3C：TUM-dynamics 50 帧动态重建（当前阶段）
+## Stage 3.3C：TUM-dynamics 50 帧动态重建（已完成）
 
 论文补充实验在 TUM-dynamics 每个序列使用 50 帧。为保证因果顺序和确定性，本实验使用 MonST3R `prepare_tum.py` 生成的 `rgb_90` 前 50 帧；通过 `rgb.txt` 与 `depth.txt` 在 0.02 秒内最近邻关联原始深度，不复制深度文件。
 
@@ -66,6 +68,8 @@ ETH3D 与论文绝对数值仍有差距，需将“相同代码内的策略相�
 - 若 K4/K6 都在后半段明显退化而 full cache 稳定，则下一优先级是锚点更新机制，不是 CPU offload。
 - 若所有策略同向异常，先检查 RGB-depth-pose 关联及动态聚合评价协议，不据此调帧选择。
 
+八段均成功。50 帧总体 Overall 为 full 0.0672、K4 0.0695、old-DINO K6 0.0754、uniform K6 0.0838（越低越好）；K4 在质量、ATE 和资源之间是当前最强压缩方案，old-DINO K6 明显优于同 K 的 uniform K6，继续支持 DINO 选择本身的贡献。full cache 峰值 allocated 为 13.15 GB、FPS 5.68；K4 为 8.55 GB、FPS 12.08。该结果允许进入 Stage 3.4，但还不能排除 K4 固定早期锚点在 100 帧以上老化。
+
 运行顺序：
 
 ```bash
@@ -81,16 +85,52 @@ bash run_stage3_3c_recon.sh
 sbatch run_stage3_3c_recon_pro6000.sh
 ```
 
-## Stage 3.4：超长序列、锚点老化与回环
+## Stage 3.4：超长序列、锚点老化与回环（已实现，待集群运行）
 
-在 3.3C 后进行，不再用短序列推断长期稳定性。
+不再用短序列推断长期稳定性。正式矩阵仍为 full cache、Stage 3.2 K4、uniform K6、old-DINO K6；第一轮不加入新策略，避免一边诊断失败模式一边改选择器。
 
-1. Bonn 五段 110 帧连续序列，记录每 10 帧的 depth/pose/资源指标。
-2. 7-Scenes 每序列前 50 帧并拼接反向 50 帧形成回环，比较回到旧视角时的恢复能力。
-3. 对比 K4、K6、full cache；必要时加“周期更新稳定锚点”和“DINO 触发锚点替换”。
-4. 统计被选历史帧年龄、覆盖跨度、重复选择率和锚点驻留时间，确认失败来自容量不足还是锚点老化。
+### Stage 3.4A：Bonn 110 帧
+
+- 五段序列各做一次 110 帧因果推理，10/20/.../110 帧指标在同一次预测上分别做尺度/位姿对齐，不重复 11 次 GPU 推理。
+- 每个 prefix 报告 depth（AbsRel/RMSE/δ1）、pose（ATE/RPE）、KV/descriptor/output/input 显存来源、CUDA allocated/reserved、平均帧延迟和末帧延迟。
+- 完整序列报告真实推理峰值、FPS，并保存压缩轨迹与小型 JSON trace；不保存逐帧 `.npy` depth 或点云。
+
+### Stage 3.4B：7-Scenes 100 帧合成回环
+
+- 读取官方 TestSplit，只保留至少 50 个有限 GT pose 的序列；取前 50 个有效帧，再按完全反序拼接为 100 帧。被排除序列必须在日志中列明，不能静默计入失败平均。
+- 除全局 ATE/RPE 外，比较成对重访帧的位移误差、旋转误差，以及逐对独立尺度对齐后的预测 depth 一致性。
+- 10/20/.../100 帧记录资源曲线；50 帧以后专门观察回到旧视角时是否仍保留对应历史帧。
+
+两部分共同统计 retained frame 年龄、时间覆盖跨度、选择 churn、0 号锚点驻留率、累计不同历史帧数；回环部分额外统计 matching forward frame 的保留率。由这些指标区分“容量不足”“早期锚点老化”和“DINO 没有选中可重定位帧”。
+
+实现文件：
+
+- `src/eval/long_sequence/eval_stage3_4_long.py`：单次推理、prefix 质量/资源、回环与选择统计。
+- `scripts/check_stage3_4_data.py`：正式运行前检查 Bonn 五段和 7-Scenes 可用序列。
+- `scripts/summarize_stage3_4.py`：输出 `stage3_4_results.csv` 与 `stage3_4_sequence_results.csv`。
+- `run_stage3_4.sh` / `run_stage3_4_pro6000.sh`：四策略本地入口与 PRO6000 SLURM 入口。
+
+运行顺序：
+
+```bash
+python scripts/check_stage3_4_data.py
+
+# 可选：只做 Bonn 单序列 10 帧 smoke test（四种策略）
+STREAMVGGT_STAGE3_4_PARTS=bonn \
+STREAMVGGT_STAGE3_4_BONN_SEQUENCES=balloon2 \
+STREAMVGGT_STAGE3_4_MAX_FRAMES=10 \
+STREAMVGGT_STAGE3_4_BONN_PREFIX_FRAMES="5 10" \
+bash run_stage3_4.sh
+
+# 正式两部分 × 四策略
+sbatch run_stage3_4_pro6000.sh
+```
+
+若希望分成两个任务，可分别设置 `STREAMVGGT_STAGE3_4_PARTS=bonn` 和 `STREAMVGGT_STAGE3_4_PARTS=7scenes_loop` 后提交；结果目录兼容后续合并汇总。
 
 进入条件：3.3B 修复版无系统性数据失败，3.3C 至少 8 个序列全部得到定量结果。
+
+进入条件已满足：3.3C 为 8/8；3.3B 的剩余失败严格集中于相同的 7-Scenes 数据段，3.4B 已通过显式有效位姿筛选隔离该问题。
 
 ## Stage 3.5：DINO 选择器升级与最终消融
 
