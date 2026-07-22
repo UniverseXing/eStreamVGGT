@@ -358,9 +358,64 @@ sbatch run.sh
 
 若 70 帧突变消失但只小幅错过数值门槛，只允许一次预先声明的 bank 边界敏感性实验，再比较 `4/12/40` 与 `4/16/48`；不能连续针对单序列调阈值。若 ATE 仍约为 0.65，或 standard/temporal K8 无实质差异，则停止增加 K、camera window 或帧槽排列，转向显式的局部窗口对齐与全局 pose stitching。
 
+### Stage 3.5C-2 结论
+
+- `temporal_binned_dino_k8` 的结构 gate 全部通过，最终 IDs 为 `[0,33,68,103,106,107,108,109]`，near/middle/long 占用率为 1.00/0.968/1.00，最大时间缺口由 standard K8 的约 100 帧降为 35 帧。因此后续质量失败不是 bank 未工作。
+- 相对 standard DINO K8，分段 K8 的 AbsRel 从 0.0552 改善到 0.0515，平移/旋转 RPE 分别改善约 6.2%/9.6%；峰值 allocated 仍为 9.53 GB，FPS 为 full 的约 3.14 倍。DINO 有界 cache 的几何/资源主线仍成立。
+- 但 ATE 仍为 0.668，旋转仍为 22.46°，70 帧突变没有消失；完整质量 gate 和 pose-only gate 均失败。这触发预先声明的停止条件：不做 `4/12/40` 边界敏感性、不增加 K10/K12、不继续排列 cache slots。
+- 结论边界是“帧选择可改善几何和局部 pose，但不能单独维持该动态长序列的全局轨迹坐标”。下一步冻结 `temporal_binned_dino_k8` 作为 geometry 候选，仅做一次显式有界窗口 pose stitching 可行性实验。
+
+## Stage 3.6A：有界重叠窗口 Pose Stitching（当前阶段）
+
+目标不是继续改变 DINO 选择器，而是验证全局 ATE 是否来自窗口间隐式坐标/尺度漂移。仍只使用 Bonn `person_tracking2` 110 帧，矩阵为：
+
+1. `full_cache`：全局 pose 质量参照。
+2. `temporal_binned_dino_k8`：冻结的 raw streaming pose 参照。
+3. `window16_overlap4`：每个局部窗口 16 帧、相邻窗口重叠 4 帧，每次前进 12 帧。
+4. `window32_overlap8`：窗口 32、重叠 8，只作为更高上下文的诊断上界。
+
+窗口内部从空 cache 开始并使用 full context；相邻窗口只利用双方预测的重叠相机位姿估计 Sim(3)，不使用 GT：
+
+- 正常情况下用重叠相机中心的 Umeyama Sim(3)。
+- 相机中心协方差退化时，用重叠相机朝向的平均相对旋转、重叠位移尺度和中心平移回退。
+- 将整个新窗口变换到已有全局坐标，重叠帧保留先前全局结果，只追加非重叠帧。
+- 窗口大小固定，显存不随总序列长度增长；必须额外报告 overlap 重算、Sim(3) fallback、重叠残差和真实唯一帧 FPS。
+
+```bash
+# 16 帧检查可覆盖一个完整 K16 窗口，但不能验证拼接；至少 28 帧才包含一次 K16/O4 拼接
+env STREAMVGGT_STAGE3_6A_MAX_FRAMES=28 \
+    STREAMVGGT_STAGE3_6A_PREFIX_FRAMES="10 20 28" \
+    sbatch run.sh
+
+# 正式 110 帧
+sbatch run.sh
+```
+
+输出为：
+
+- `stage3_6a_results.csv`：最终/prefix pose、窗口重算倍率、FPS、显存和最大 overlap 残差。
+- `stage3_6a_gate.csv`：K16/K32 是否允许进入 Stage 3.3A。
+- 各方法目录中的 `trajectory.npz` 和 `stage3_6a_metrics.json`，用于检查轨迹与逐窗口对齐事件。
+
+### Stage 3.6A 决策门槛
+
+以同次 `full_cache` 为参照，窗口方案必须同时满足：
+
+1. ATE ≤ full × 2.0。
+2. 最终及所有 prefix 旋转 RPE ≤ full × 1.50；相邻 prefix 最大正向跳变 ≤5°，70 帧不再突变。
+3. 峰值 allocated <10240 MiB。
+4. 窗口和 overlap 固定且 `3 ≤ overlap < window`，不得随序列长度增加。
+5. 报告而不隐藏重算倍率、唯一帧 FPS、alignment fallback 次数及最大 overlap 平移/旋转残差。
+
+### 达成门槛后的动作
+
+- K16/O4 通过：优先选择最小窗口；geometry/depth 固定使用 temporal-DINO K8，pose 使用 K16/O4 stitching。先只增量跑 Stage 3.3A 的 Sintel、ScanNet、TUM pose，验证跨数据集后再决定是否组合回测 3.3B/C。
+- 只有 K32/O8 通过：若其峰值仍低于 10 GiB才允许进入 Stage 3.3A；否则只作为“全局 pose 需要更大上下文”的诊断，不进入最终方案。
+- K16/K32 均失败：停止扩展 pose 后端，明确论文结论边界；回到主线实现 GPU retained outputs 的真正流式释放，并验证 500/1000 帧端到端显存有界性，不再继续针对 `person_tracking2` 调参。
+
 ## Stage 3.5D：选择器定型与最终消融
 
-只有 Stage 3.5C-2 通过后才进行。候选保留固定 K8 和相同时间 bank，比较 DINO 与不使用 DINO 的 bank 内代表选择；稳定锚点是否更新只在新证据支持时作为独立消融，不与主策略同时改变。
+只有 Stage 3.6A 形成通过 gate 的 geometry+pose 组合并完成 Stage 3.3A 后才进行。候选保留固定 K8 和相同时间 bank，比较 DINO 与不使用 DINO 的 bank 内代表选择；稳定锚点是否更新只在新证据支持时作为独立消融，不与主策略同时改变。
 
 最终消融至少包含：
 
