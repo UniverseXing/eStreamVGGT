@@ -414,7 +414,7 @@ def get_examples_from_folder(images_folder):
             abs_path = os.path.abspath(file_path)
             image_files_set.add(abs_path)
     
-    image_files = sorted(list(image_files_set))
+    image_files = sorted(list(image_files_set))[:20]
     
     if not image_files:
         print(f"Warning: No images found in {images_folder}.")
@@ -439,7 +439,7 @@ def get_examples_from_folder(images_folder):
     examples.append(example)
     return examples
 
-building_folder = "examples/example_building/"
+building_folder = "data/eval/bonn/rgbd_bonn_dataset/rgbd_bonn_balloon2/rgb_110_sampled/"
 
 # -------------------------------------------------------------------------
 # 6) Build Gradio UI

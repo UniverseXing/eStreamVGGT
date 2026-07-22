@@ -10,13 +10,13 @@ from streamvggt.heads.camera_head import CameraHead
 from streamvggt.heads.dpt_head import DPTHead
 from streamvggt.heads.track_head import TrackHead
 from transformers.file_utils import ModelOutput
-from typing import Optional, Tuple, List, Any
+from typing import Optional, Tuple, List, Any, Callable
 from dataclasses import dataclass
 
 @dataclass
 class StreamVGGTOutput(ModelOutput):
     ress: Optional[List[dict]] = None
-    views: Optional[torch.Tensor] = None
+    views: Optional[List[dict]] = None
     memory_events: Optional[List[dict]] = None
     memory_trace: Optional[List[dict]] = None
     frame_inference_ms: Optional[List[float]] = None
@@ -496,6 +496,9 @@ class StreamVGGT(nn.Module, PyTorchModelHubMixin):
         return_memory_events: bool = False,
         return_memory_trace: bool = False,
         return_frame_timings: bool = False,
+        output_sink: Optional[Callable[[int, dict], None]] = None,
+        retain_outputs: bool = True,
+        retain_views: bool = True,
     ):
         if (
             cache_policy in (
@@ -551,7 +554,13 @@ class StreamVGGT(nn.Module, PyTorchModelHubMixin):
         memory_trace = []
         frame_timing_events = []
         retained_output_bytes = 0
-        input_tensor_bytes = _tensor_tree_nbytes(frames) if return_memory_trace else 0
+        frames_are_preloaded = isinstance(frames, (list, tuple))
+        input_tensor_bytes = (
+            _tensor_tree_nbytes(frames)
+            if return_memory_trace and frames_are_preloaded
+            else None
+        )
+        inference_device = None
 
         for i, frame in enumerate(frames):
             if return_frame_timings:
@@ -559,6 +568,16 @@ class StreamVGGT(nn.Module, PyTorchModelHubMixin):
                 timing_end = torch.cuda.Event(enable_timing=True)
                 timing_start.record()
             images = frame["img"].unsqueeze(0) 
+            inference_device = images.device
+            current_input_tensor_bytes = (
+                (
+                    input_tensor_bytes
+                    if input_tensor_bytes is not None
+                    else _tensor_tree_nbytes(frame)
+                )
+                if return_memory_trace
+                else 0
+            )
             use_rgb_features = cache_policy == "anchor_recent_image_diff"
             use_dino_features = cache_policy in (
                 "anchor_recent_dino_diverse",
@@ -743,9 +762,15 @@ class StreamVGGT(nn.Module, PyTorchModelHubMixin):
                     'track_conf': track_conf}
                 if query_points is not None else {})
             }
-            all_ress.append(frame_result)
+            if output_sink is not None:
+                output_sink(i, frame_result)
+            if retain_outputs:
+                all_ress.append(frame_result)
+                if return_memory_trace:
+                    retained_output_bytes += _tensor_tree_nbytes(frame_result)
+            if retain_views:
+                processed_frames.append(frame)
             if return_memory_trace:
-                retained_output_bytes += _tensor_tree_nbytes(frame_result)
                 memory_trace.append(
                     {
                         "frame_index": i,
@@ -759,23 +784,33 @@ class StreamVGGT(nn.Module, PyTorchModelHubMixin):
                         "aggregator_kv_mib": _tensor_tree_nbytes(past_key_values) / (1024 ** 2),
                         "camera_kv_mib": _tensor_tree_nbytes(past_key_values_camera) / (1024 ** 2),
                         "descriptor_mib": _tensor_tree_nbytes(cache_frame_features) / (1024 ** 2),
-                        "input_tensors_mib": input_tensor_bytes / (1024 ** 2),
+                        "input_tensors_mib": current_input_tensor_bytes / (1024 ** 2),
                         "retained_outputs_mib": retained_output_bytes / (1024 ** 2),
+                        "retained_views_mib": (
+                            _tensor_tree_nbytes(processed_frames) / (1024 ** 2)
+                            if retain_views
+                            else 0.0
+                        ),
+                        "input_mode": "preloaded" if frames_are_preloaded else "streaming",
+                        "output_mode": "retained" if retain_outputs else "sink",
                         "cuda_allocated_mib": torch.cuda.memory_allocated(images.device) / (1024 ** 2),
                         "cuda_reserved_mib": torch.cuda.memory_reserved(images.device) / (1024 ** 2),
                     }
                 )
-            processed_frames.append(frame)
             if return_frame_timings:
                 timing_end.record()
                 frame_timing_events.append((timing_start, timing_end))
 
         frame_inference_ms = []
         if return_frame_timings:
-            torch.cuda.synchronize(frames[0]["img"].device)
+            if inference_device is None:
+                raise ValueError("frames must contain at least one frame")
+            torch.cuda.synchronize(inference_device)
             frame_inference_ms = [
                 float(start.elapsed_time(end)) for start, end in frame_timing_events
             ]
+        elif inference_device is None:
+            raise ValueError("frames must contain at least one frame")
         
         output = StreamVGGTOutput(
             ress=all_ress,
