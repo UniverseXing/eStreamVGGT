@@ -1,6 +1,6 @@
 # StreamVGGT 固定显存帧选择实验计划
 
-更新日期：2026-07-21
+更新日期：2026-07-22
 
 ## 目标与实验原则
 
@@ -178,7 +178,7 @@ sbatch run.sh
 - FIFO K4 的 AbsRel 为 0.1402，而 Stage 3.2 K4、old-DINO K6 分别为 0.0452、0.0549，说明 DINO 长期帧仍是深度/几何质量的必要组成。
 - 当前实现用同一组 frame indices 同时裁剪 aggregator KV 与 camera-head KV。110 帧时 full aggregator KV 为 10353.75 MiB，camera KV 仅为 27.5 MiB；下一步应让 DINO 控制占主要显存的 aggregator cache，并独立寻找 camera cache 的最小有效时序预算。
 
-## Stage 3.5B：双 cache 解耦、新 DINO K6 与 Stage 3.3 回测门槛（当前阶段）
+## Stage 3.5B：双 cache 解耦、新 DINO K6 与 Stage 3.3 回测门槛（已完成）
 
 仍只在 Bonn `person_tracking2` 上运行 110 帧，每 10 帧报告 depth、pose、资源以及 aggregator/camera 各自的 retained IDs。Stage 3.5B 自包含地运行三个控制组，避免代码或集群环境变化使 gate 引用不可比的旧结果：
 
@@ -296,7 +296,7 @@ sbatch run.sh
 
 所有后续集群提交只修改根目录 `run.sh`，由它完成 SLURM 资源申请、Conda 环境激活并调用阶段内部脚本；不再创建硬件命名的 `*_pro6000.sh`。
 
-## Stage 3.5C-2：时间分段 DINO K8（当前阶段）
+## Stage 3.5C-2：时间分段 DINO K8（已完成）
 
 仍只运行 Bonn `person_tracking2` 110 帧和每 10 帧 prefix，矩阵为：
 
@@ -354,7 +354,7 @@ sbatch run.sh
 2. 只增量补跑新方法的 Stage 3.3A：Sintel、ScanNet、TUM pose。
 3. 再补 Stage 3.3B：NRGBD、ETH3D、原成功的同一组 12 个 7-Scenes 序列。
 4. 再补 Stage 3.3C：TUM-dynamics 八段。
-5. 三类任务均保持可接受后，进入 Stage 3.5D，同 K8 增加非 DINO 时间分段对照，验证收益来自 DINO 而不只是时间分桶；已有 full/K4/K6/uniform K6 不重跑。
+5. 原计划在三类任务可接受后进入同 K8 非 DINO 归因；该步骤已由 Stage 3.7 的最新决策取消，改为只做四组跨任务回测，并限制最终因果措辞。
 
 若 70 帧突变消失但只小幅错过数值门槛，只允许一次预先声明的 bank 边界敏感性实验，再比较 `4/12/40` 与 `4/16/48`；不能连续针对单序列调阈值。若 ATE 仍约为 0.65，或 standard/temporal K8 无实质差异，则停止增加 K、camera window 或帧槽排列，转向显式的局部窗口对齐与全局 pose stitching。
 
@@ -420,7 +420,7 @@ sbatch run.sh
 - K16/K32 的最大 overlap 旋转残差分别为 74.10°/53.60°，且 fallback 次数均为 0。失败不是中心协方差退化，而是窗口间方向预测不一致；仅用重叠相机中心估计 Sim(3) 不足以形成最终 pose 后端。
 - 冻结 `temporal_binned_dino_k8` 的 geometry 结论，停止 K、时间 bank、camera window、stitching window 与 pose graph 扩展。项目仍沿“DINO 有界 cache 优化几何推理显存”的主线推进，但最终论文必须明确动态长序列全局 pose 的限制。
 
-## Stage 3.6B：真正流式输出释放与 100/500/1000 帧显存验证（当前阶段）
+## Stage 3.6B：真正流式输出释放与 100/500/1000 帧显存验证（已完成）
 
 当前 K8 已将 aggregator KV 和 descriptor 固定，但旧推理路径仍有两个随序列增长的 GPU 来源：evaluator 会预先把全部输入图像搬到 GPU，`StreamVGGT.inference()` 也会在 `all_ress`/`processed_frames` 中保留全部逐帧输出与输入 view。Stage 3.6B 不再改变帧选择，而是移除这两个工程性线性项：
 
@@ -467,24 +467,76 @@ env STREAMVGGT_STAGE3_6B_BONN_FRAMES=10 \
 5. 单独报告 CPU RSS；1000 帧 RSS peak 不得比 500 帧高超过 256 MiB，防止把大输出从 GPU 隐藏到 CPU。
 6. 110 帧 streaming 端到端 FPS ≥同次 legacy K8 的 80%。
 
+### Stage 3.6B 结论
+
+- 五个 run 全部通过 gate。110 帧 legacy 与 stream 的 camera/depth SHA-256 完全一致，全部公共指标最大绝对差为 0，说明逐帧输入和 sink 释放没有改变推理数值。
+- 100/500/1000 帧的峰值 allocated 都为 8782.88 MiB，500→1000 帧增量为 0；aggregator KV 最大 753 MiB，证明端到端 GPU 显存已经有界，而不只是 cache 本身有界。
+- 最大输入 tensor 从 legacy 110 帧的 246.49 MiB 降为单帧 2.24 MiB；streaming retained outputs/views 都为 0。1000 相对 500 帧的 CPU RSS peak 只增加 21.04 MiB，没有把线性 GPU 输出转移到 CPU。
+- 110 帧 streaming/legacy 端到端 FPS 比为 1.399，超过 0.80 门槛。至此冻结 streaming release 路径和 `temporal_binned_dino_k8`，不再进行显存来源归因或 selector 内部归因。
+
+## Stage 3.7：四组 Stage 3.3 增量回测（当前阶段）
+
+完整 DINO 归因对当前决策价值有限，因此取消原先暂定的“相同 temporal bank 内 DINO/非 DINO”实验；Stage 3.7 的 A/B/C 现重新定义为 pose、静态重建、动态重建回测。最终对照固定为四组：
+
+1. `full_cache`：质量上界，复用已有 Stage 3.3。
+2. `stage3_2_k4`：最小高压缩 DINO 方案，复用已有 Stage 3.3。
+3. `old_dino_k6`：既有 K6 中综合表现最好，复用已有 Stage 3.3。
+4. `temporal_binned_dino_k8`：冻结的新 K8，仅补跑这一组。
+
+不纳入 `uniform_k6`、FIFO 和 split-camera 诊断组。`recent_dino_k6` 在 Bonn 的 AbsRel/旋转 RPE 为 0.0651/28.97°，弱于 old-DINO K6 的 0.0549/21.58°；`standard_dino_k8` 的 AbsRel/旋转 RPE 为 0.0552/24.85°，也被 temporal K8 的 0.0515/22.46°支配。因此新增计算只给 temporal K8，避免重跑已完成或已淘汰的方法。
+
+本阶段分三部分顺序执行：
+
+### Stage 3.7A：Pose 回测
+
+- 数据集：Sintel 14 段、ScanNet 6 段、TUM 8 段。
+- 保持原 Stage 3.3 pose evaluator、输入、分辨率和汇总语义不变，保证与旧三组直接比较。
+- 该实验用于检查跨数据集灾难性退化，不把 Bonn 110 帧 raw global pose 的问题宣称为已经解决。
+
+### Stage 3.7B：静态多视图重建回测
+
+- NRGBD 9 段、ETH3D 13 段。
+- 7-Scenes 精确使用旧 3.3B 成功的 12 段：`chess/seq-03`、`chess/seq-05`、`fire/seq-03`、`fire/seq-04`、`heads/seq-01`、`office/seq-02`、`pumpkin/seq-01`、`pumpkin/seq-07`、`redkitchen/seq-03`、`redkitchen/seq-04`、`stairs/seq-01`、`stairs/seq-04`。
+- 使用 dense protocol 和 4/6/8/10 prefix；即使其余 6 段投影深度已经修好，也不改变覆盖，避免与旧结果混入数据修复收益。
+
+### Stage 3.7C：动态重建回测
+
+- TUM-dynamics 原 8 段，每段前 50 帧，prefix 为 10/20/30/40/50。
+- 继续采用既有 `first_50`、RGB-depth-pose 关联和指标实现。
+
+这些静态序列只有约 3–20 帧，TUM 也只有 50 帧、刚触及 long bank。它们能回答跨数据集兼容性和重建质量，不能单独证明超长序列中的 DINO bank 行为；100/500/1000 帧有界性由 Stage 3.6B 单独支撑。
+
+正式运行只提交根目录入口：
+
+```bash
+sbatch run.sh
+```
+
+若任务中断，可只重跑指定部分；pose 还可设置 `STREAMVGGT_STAGE3_7_POSE_RESUME=1` 合并已有序列，重建部分则按所选 part 重新汇总：
+
+```bash
+env STREAMVGGT_STAGE3_7_PARTS="static dynamic" sbatch run.sh
+```
+
+输出为：
+
+- `stage3_7_pose_results.csv`、`stage3_7b_recon_results.csv`、`stage3_7c_recon_results.csv`：新 K8 的分任务原始汇总。
+- `stage3_7_comparison.csv`：旧三组与新 K8 归一后的四组最终对照。
+- `stage3_7_gate.csv`：覆盖、显存、几何质量和 pose 灾难保护门槛。
+
+### Stage 3.7 决策门槛
+
+1. 覆盖必须精确为 pose 14/6/8、静态 12/9/13、动态 8 段，且新 K8 无失败；7-Scenes 不允许悄悄扩为 18 段。
+2. 新 K8 在三类任务中的峰值 allocated 均 <10240 MiB。
+3. 每个静态数据集和动态 TUM 的 `mean_overall` 分别不得超过同数据集 K4/old-K6 中较优者的 1.10 倍。
+4. 每个静态数据集和动态 TUM 的 `mean_nc` 分别不得低于 K4/old-K6 中较优者 0.03。
+5. Pose 只设灾难保护：每个数据集的 ATE 和旋转 RPE 均不得超过 K4/old-K6 较优值的 2 倍。该项失败不反向否定已通过的 geometry，只把结论标记为 pose limitation。
+
 ### 达成门槛后的动作
 
-- 全部通过：冻结真正流式执行路径，进入 Stage 3.7A 的 geometry-only DINO 归因。使用完全相同的 K8 temporal banks，只改变 bank 内代表选择，对比 DINO 与非 DINO；增量运行已有 video depth、静态 MV recon 和动态 TUM recon，不再声称 raw global pose 已解决。
-- 数值等价失败：优先修复 sink/逐帧预处理语义，不能用容差掩盖不同输入或输出。
-- GPU 不平台：根据 trace 只修复仍增长的 input/output/view 或 cache 引用；不返回 pose/window 调参。
-- GPU 平台但 CPU RSS 失败：将 trace/pose 改为在线汇总或分块写盘后重跑同一矩阵，不改变选择器。
-- Stage 3.7A 若不能证明 DINO 相对同 K、同时间 bank 的非 DINO 基线有稳定几何收益，则不能把收益归因于 DINO，需要重新评估论文贡献。
+- 覆盖、显存、静态和动态 geometry 全部通过，且 pose 保护也通过：判为 `PASS_ALL_BACKTESTS`，冻结 temporal-DINO K8 为最终主候选，开始整理最终表格、选择日志可视化和论文结果描述。
+- Geometry 全部通过但 pose 保护失败：判为 `PASS_GEOMETRY_WITH_POSE_LIMITATION`。仍可形成“有界显存的 DINO-guided geometry/reconstruction”结论，但必须单列全局 pose 限制，不再开发新 pose cache 或 stitching。
+- 任一 geometry 指标失败：判为 `FAIL_GEOMETRY`。按失败数据集定位是静态/动态泛化问题，最终主方案回退到该数据集上较优的 K4 或 old-K6；不再新增 K、bank 或显存归因实验。
+- 任一覆盖不完整：判为 `FAIL_INCOMPLETE`，只补缺失序列，不能根据不完整均值做方法决策。
 
-## Stage 3.5D：原完整选择器定型与最终消融（不再触发）
-
-原计划要求 Stage 3.6A 形成通过 gate 的 geometry+pose 组合并完成 Stage 3.3A；该前提没有满足，因此不再执行面向“geometry+pose 全部通过”的完整 Stage 3.5D。DINO 与非 DINO 的必要归因被缩小为 Stage 3.7A，只支持 geometry/memory 范围的结论。候选保留固定 K8 和相同时间 bank，稳定锚点是否更新不再根据 `person_tracking2` 调整。
-
-原完整消融清单至少包含：
-
-- 相同 K 下 DINO vs uniform vs FIFO；优先复用已经完成的 uniform 结果，不重复运行。
-- K4 vs K6，分离“选择算法收益”和“容量收益”。
-- 固定锚点 vs 可更新锚点。
-- 有/无时间分段与多样性约束。
-- Video depth、pose、静态 MV recon、动态 TUM recon、长序列回环五类证据。
-
-由于 geometry+pose 前提已经失败，上述完整主结论不再成立。后续只有在 Stage 3.6B 证明端到端 GPU 有界、Stage 3.7A 又证明 DINO 相对同 K 非 DINO 基线有稳定几何收益时，才能形成明确限定在 geometry/memory 范围内的论文结论；全局 pose 失败作为限制单独报告。
+因为取消了同 K、同 temporal bank 的非 DINO 对照，最终措辞必须是“集成的 DINO-guided temporal K8 达到何种质量/显存折中”，不能声称时间分段 K8 的全部增益都由 DINO 单独造成。既有 old-DINO K6 对 uniform K6 的结果仍可作为较早预算下的独立 DINO 证据。

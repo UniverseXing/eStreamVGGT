@@ -43,6 +43,14 @@ if [[ -n "${STREAMVGGT_MV_SEQ_LIST:-}" ]]; then
     read -r -a sequence_args <<< "${STREAMVGGT_MV_SEQ_LIST}"
     args+=(--seq-list "${sequence_args[@]}")
 fi
+for dataset_name in 7scenes nrgbd eth3d tum; do
+    env_suffix="${dataset_name^^}"
+    env_suffix="${env_suffix//-/_}"
+    env_name="STREAMVGGT_MV_${env_suffix}_SEQ_LIST"
+    if [[ -n "${!env_name:-}" ]]; then
+        args+=(--dataset-seq-list "${dataset_name}=${!env_name}")
+    fi
+done
 if [[ -n "${STREAMVGGT_MV_7SCENES_ROOT:-}" ]]; then
     args+=(--data-root "7scenes=${STREAMVGGT_MV_7SCENES_ROOT}")
 fi

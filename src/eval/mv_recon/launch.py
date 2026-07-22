@@ -54,6 +54,16 @@ def get_args_parser():
         nargs="+",
         help="evaluate only these sequence identifiers (primarily for TUM/qualitative reruns)",
     )
+    parser.add_argument(
+        "--dataset-seq-list",
+        action="append",
+        default=[],
+        metavar="DATASET=SEQ1,SEQ2",
+        help=(
+            "filter one dataset without affecting the others; values may be "
+            "comma- or whitespace-separated and the option may be repeated"
+        ),
+    )
     parser.add_argument("--seed", type=int, default=0)
     parser.add_argument("--protocol", choices=("paper", "dense"), default="paper")
     parser.add_argument("--seven-scenes-kf-every", type=int, default=50)
@@ -86,6 +96,31 @@ def parse_root_overrides(values):
             raise ValueError(f"unknown dataset root override: {dataset}")
         roots[dataset] = osp.abspath(path)
     return roots
+
+
+def parse_dataset_sequence_lists(values):
+    selected = {}
+    for value in values:
+        if "=" not in value:
+            raise ValueError(
+                f"--dataset-seq-list must be DATASET=SEQ1,SEQ2, got {value!r}"
+            )
+        dataset, raw_sequences = value.split("=", 1)
+        dataset = dataset.lower()
+        if dataset not in DEFAULT_ROOTS:
+            raise ValueError(f"unknown dataset sequence filter: {dataset}")
+        sequences = [
+            item
+            for chunk in raw_sequences.split(",")
+            for item in chunk.split()
+            if item
+        ]
+        if not sequences:
+            raise ValueError(f"empty sequence filter for {dataset}")
+        if dataset in selected:
+            raise ValueError(f"duplicate sequence filter for {dataset}")
+        selected[dataset] = sequences
+    return selected
 
 
 def build_datasets(args, resolution, roots):
@@ -131,23 +166,49 @@ def build_datasets(args, resolution, roots):
             seed=args.seed,
         ),
     }
+    dataset_sequence_lists = parse_dataset_sequence_lists(args.dataset_seq_list)
+    unknown_filters = sorted(set(dataset_sequence_lists) - set(args.datasets))
+    if unknown_filters:
+        raise ValueError(
+            "sequence filters were provided for datasets that are not enabled: "
+            f"{unknown_filters}"
+        )
     datasets = {}
     for name in args.datasets:
         root = roots[name]
         if not osp.isdir(root):
             raise FileNotFoundError(f"missing {name} reconstruction root: {root}")
         datasets[name] = builders[name](root)
-        if args.seq_list:
+        dataset_specific = name in dataset_sequence_lists
+        requested_sequences = dataset_sequence_lists.get(name, args.seq_list)
+        if requested_sequences:
             available = list(getattr(datasets[name], "scene_list", []))
-            selected = [sequence for sequence in args.seq_list if sequence in available]
-            if not selected:
+            selected_sequences = list(
+                dict.fromkeys(
+                    sequence
+                    for sequence in requested_sequences
+                    if sequence in available
+                )
+            )
+            if dataset_specific:
+                missing = [
+                    sequence
+                    for sequence in requested_sequences
+                    if sequence not in available
+                ]
+                if missing:
+                    raise ValueError(
+                        f"requested sequences missing from {name}: {missing}; "
+                        f"available examples: {available[:8]}"
+                    )
+            elif not selected_sequences:
                 raise ValueError(
                     f"none of --seq-list {args.seq_list} exist in {name}; "
                     f"available examples: {available[:8]}"
                 )
-            datasets[name].scene_list = selected
+            datasets[name].scene_list = selected_sequences
             if hasattr(datasets[name], "scenes"):
-                datasets[name].scenes = selected
+                datasets[name].scenes = selected_sequences
     return datasets
 
 

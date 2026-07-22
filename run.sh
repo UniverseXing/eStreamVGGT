@@ -1,11 +1,11 @@
 #!/usr/bin/env bash
-#SBATCH --job-name=streamvggt-stage3.6b
+#SBATCH --job-name=streamvggt-stage3.7
 #SBATCH --gpus=6000ada:1
 #SBATCH --time=12:00:00
 #SBATCH --output=streamvggt-stage3-6000ada-%j.out
 #SBATCH --error=streamvggt-stage3-6000ada-%j.err
 
-# Runs the Stage 3.6B true-streaming memory scaling experiment.
+# Runs the incremental Stage 3.7 temporal-DINO K8 backtest.
 set -euo pipefail
 
 
@@ -18,6 +18,6 @@ echo "Node: $(hostname)"
 echo "Started: $(date --iso-8601=seconds)"
 nvidia-smi
 
-bash "run_stage3_6b.sh"
+bash "run_stage3_7.sh"
 
 echo "Finished: $(date --iso-8601=seconds)"
