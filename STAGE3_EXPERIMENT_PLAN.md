@@ -546,19 +546,20 @@ env STREAMVGGT_STAGE3_7_PARTS="static dynamic" sbatch run.sh
 - temporal K8 完整覆盖全部 pose、静态和动态序列，峰值 allocated 9384 MiB，全部 NC 和 pose 灾难保护通过；但 NRGBD Overall 0.09064 超过 0.07858 门槛，动态 TUM Overall 0.08069 超过 0.07649 门槛，因此正式决定为 `FAIL_GEOMETRY`，不能作为跨任务统一主方案。
 - 逐序列共同覆盖为 12 个 7-Scenes、9 个 NRGBD、13 个 ETH3D 和 8 个 TUM，共 42 段。动态 TUM 上 K4 赢 6/8，temporal K8 相对 K4 在 7/8 段退化；NRGBD 的 K8 则为 4 胜、4 负、1 平，均值失败主要由 `grey_white_room`、`kitchen` 等重尾场景造成。
 - 以每段最优 bounded 方法为 oracle，old K6 的平均/最大 regret 为 13.3%/60.1%，低于 K4 的 21.9%/207.8% 和 temporal K8 的 15.9%/106.5%。因此冻结角色为：old K6 是稳健默认，K4 是 compact/VideoDepth/动态配置，temporal K8 是 long-sequence/pose 扩展，full cache 只作参考。
-- Stage 1 已完成 Bonn 和 Sintel VideoDepth 跨数据集表。新 K4 相对 full 的 AbsRel 在 Bonn 仅差 0.78%，在 Sintel 改善 2.57%；同 K6 下 DINO 相对 uniform 的 AbsRel 分别改善 8.73%/2.54%。Stage 2.5/2.6 三次运行还证明质量结果确定、显存稳定。因此 Stage 4 不重跑这些已有组合。
+- Stage 1 已完成 Bonn 和 Sintel VideoDepth 跨数据集表。新 K4 相对 full 的 AbsRel 在 Bonn 仅差 0.78%，在 Sintel 改善 2.57%；同 K6 下 DINO 相对 uniform 的 AbsRel 分别改善 8.73%/2.54%。这些质量结论和 Stage 2.5/2.6 的重复稳定性仍作为历史证据保留，但 Stage 1 的性能数据来自 A6000，而 Stage 3 后续主体使用 RTX 6000 Ada，显存、FPS 和耗时不能直接并入同一硬件主表。因此 Stage 4A 在 6000 Ada 上重跑统一 VideoDepth 矩阵。
 
-## Stage 4A：KITTI 与 temporal K8 VideoDepth 补全（当前阶段）
+## Stage 4A：6000 Ada 统一 VideoDepth 矩阵（当前阶段）
 
-目标是在不改 selector、不重新选择 K 的前提下，增加未参与开发的户外 KITTI 域，并把 temporal K8 补入 Bonn/Sintel VideoDepth。KITTI 严格遵循 MonST3R 协议：13 条 KITTI depth-validation drive，左相机每条最多取前 110 个带 GT depth 的帧；评价继续使用现有 scale alignment、AbsRel、SqRel、RMSE、Log RMSE 和 δ1/2/3。
+目标是在不改 selector、不重新选择 K 的前提下，在同一 RTX 6000 Ada、相同代码和评价协议下形成 `3 数据集 × 4 配置 = 12` 组可直接比较的 VideoDepth 主表，同时增加未参与开发的户外 KITTI 域。KITTI 严格遵循 MonST3R 协议：13 条 KITTI depth-validation drive，左相机每条最多取前 110 个带 GT depth 的帧；评价继续使用现有 scale alignment、AbsRel、SqRel、RMSE、Log RMSE 和 δ1/2/3。
 
 阶段编号随本阶段插入统一顺延：原 Stage 4A/4B/4C 分别改名为 Stage 4B/4C/4D；可选的方法增强保持在 Stage 4E，不与当前结果补全混在一起。
 
-新增计算固定为：
+正式矩阵固定为：
 
-1. KITTI：`full_cache`、`stage3_2_k4`、`old_dino_k6`、`temporal_binned_dino_k8`。
-2. Bonn/Sintel：只补 `temporal_binned_dino_k8`。
-3. Bonn/Sintel 的 full、K4、old K6、uniform K6 全部复用 `stage1_video_depth_results.xlsx`；早期 standard K8 不能冒充 temporal K8。
+1. 数据集：Bonn 5 段、Sintel 23 段、KITTI 13 条 drive。
+2. 配置：`full_cache`、`stage3_2_k4`、`old_dino_k6`、`temporal_binned_dino_k8`。
+3. 共运行 12 组；不新增 uniform K6。Stage 1 A6000 表只作历史复现对照，不再注入 Stage 4A 汇总或性能结论；早期 standard K8 不能冒充 temporal K8。
+4. 每个 runtime JSON 必须记录 GPU 型号、PyTorch/CUDA 版本和 Slurm Job ID；最终 gate 要求 12 组 GPU 名完全一致且包含 `6000 Ada`。
 
 下载和准备在登录节点执行，不占 GPU：
 
@@ -580,7 +581,7 @@ sbatch run.sh
 
 ```bash
 env STREAMVGGT_STAGE4A_METHODS="temporal_binned_dino_k8" \
-    STREAMVGGT_STAGE4A_K8_DATASETS="kitti" \
+    STREAMVGGT_STAGE4A_DATASETS="kitti" \
     STREAMVGGT_STAGE4A_MAX_FRAMES=4 \
     STREAMVGGT_STAGE4A_SKIP_FINALIZE=1 \
     STREAMVGGT_STAGE4A_RESULTS_ROOT="$PWD/eval_results/video_depth_stage4a_smoke" \
@@ -589,23 +590,24 @@ env STREAMVGGT_STAGE4A_METHODS="temporal_binned_dino_k8" \
 
 输出为：
 
-- `stage4a_video_depth_results.csv`：Stage 1 冻结基线和 Stage 4A 新结果的统一表。
-- `stage4a_gate.csv`：K4、old K6、temporal K8 的 KITTI/跨域门槛。
+- `stage4a_video_depth_results.csv`：12 组同卡 VideoDepth 质量、显存、速度和运行环境主表。
+- `stage4a_gate.csv`：K4、old K6、temporal K8 在三数据集上的逐项门槛。
 - `eval_results/video_depth/*stage4a_*`：逐 drive runtime/memory、depth prediction 和 scale-aligned 结果。
 
 ### Stage 4A 决策门槛
 
-1. KITTI 四组必须覆盖相同的 13 条 drive、相同总帧数且无 OOM；temporal K8 的 Bonn/Sintel 必须分别覆盖 5/23 段且无 OOM。
-2. KITTI 每个 bounded 方法的 AbsRel ≤同次 full ×1.15，δ1 ≥full−0.03；门槛按方法分别报告，不因为某个候选失败而否定其他候选。
-3. KITTI 每个 bounded 方法的 peak allocated 和 reserved 都必须低于同次 full。Stage 4A 使用旧 VideoDepth 保留输出语义以保证质量协议一致，因此不重新要求 legacy evaluator 的 reserved <10 GiB；真正流式的 10 GiB/长度平台结论仍由 Stage 3.6B 支撑。
-4. temporal K8 在 Bonn/Sintel 的 AbsRel ≤该数据集 K4/old-K6 较优者 ×1.10，δ1 ≥二者较优值−0.03。
-5. KITTI 是冻结后的 held-out 域。任何失败只进入结果和限制，不允许据此调整 K、DINO相似度、temporal bank边界或数据抽样。
+1. 12 组 GPU 名必须完全一致且包含 `6000 Ada`；任何 A6000 或缺失 GPU provenance 的旧结果都不得混入。
+2. 四组必须在 Bonn/Sintel/KITTI 分别完整覆盖 5/23/13 段、无 OOM，并在同一数据集处理完全相同的总帧数。
+3. 每个 bounded 方法在每个数据集都要求 AbsRel ≤同次同卡 full ×1.15，δ1 ≥同次 full−0.03；三个数据集分别判断，不能用平均值掩盖单域失败。
+4. 每个 bounded 方法在每个数据集的 peak allocated 和 reserved 都必须严格低于同次同卡 full。legacy VideoDepth evaluator 不追加 reserved <10 GiB 的绝对门槛；真正流式的 10 GiB/长度平台结论仍由 Stage 3.6B 支撑。
+5. temporal K8 的主方案晋级另要求：三个数据集的 AbsRel 均 ≤同数据集 K4/old-K6 较优者 ×1.10，δ1 均 ≥二者较优值−0.03。基础门槛通过但该项失败时记为 `PASS_SPECIALIST_ONLY`，继续保留 long-sequence/pose specialist 身份，不提升为统一默认。
+6. KITTI 是冻结后的 held-out 域。任何失败只进入结果和限制，不允许据此调整 K、DINO 相似度、temporal bank 边界或数据抽样。
 
-达成门槛后：通过者进入 Stage 4B 的最终统计/Pareto 表。若 temporal K8 只在 pose/长序列通过而 VideoDepth 失败，继续作为 specialist 报告，不提升为默认方法；若 old K6/K4 在 KITTI 通过，则分别保留 robust-default/compact 角色。
+达成门槛后：K4、old K6 中通过三域基础门槛者进入 Stage 4B 的最终统计/Pareto 表，分别竞争 compact 和 robust-default 角色；temporal K8 只有额外竞争性门槛也通过才竞争统一主方案，否则按 specialist 报告。任一方法单域失败仍保留完整结果，但不得宣称跨域通过。
 
 ## Stage 4B：最终统计定型
 
-不运行新模型。统一 Stage 1–4A 的逐序列结果，输出 mean/median/std、paired bootstrap 95% CI、win/tie/loss、normalized regret 和质量—allocated—reserved—FPS Pareto。补取已有 uniform K6 reconstruction JSON，完成同 K 的 DINO/非 DINO 配对统计；不新增 attribution 组。
+不运行新模型。VideoDepth 性能主表只采用 Stage 4A 的 6000 Ada 同卡结果；Stage 1 A6000 结果单列为历史复现，不混算硬件指标。再统一其余任务的逐序列结果，输出 mean/median/std、paired bootstrap 95% CI、win/tie/loss、normalized regret 和质量—allocated—reserved—FPS Pareto。补取已有 uniform K6 reconstruction JSON，完成同 K 的 DINO/非 DINO 配对统计；不新增 attribution 组。
 
 ## Stage 4C：冻结后的未见长序列验证
 

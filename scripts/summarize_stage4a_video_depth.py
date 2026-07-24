@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Merge frozen Stage 1 baselines with incremental Stage 4A VideoDepth runs."""
+"""Summarize the same-GPU Stage 4A VideoDepth matrix."""
 
 import argparse
 import csv
@@ -14,6 +14,10 @@ FIELDS = (
     "stage",
     "cache_policy",
     "cache_window_size",
+    "gpu_name",
+    "torch_version",
+    "cuda_version",
+    "slurm_job_id",
     "num_sequences",
     "num_ok",
     "num_oom",
@@ -36,8 +40,15 @@ METHOD_ORDER = {
     "stage3_2_k4": 1,
     "old_dino_k6": 2,
     "temporal_binned_dino_k8": 3,
-    "uniform_k6": 4,
 }
+
+DATASETS = ("bonn", "kitti", "sintel")
+METHODS = (
+    "full_cache",
+    "stage3_2_k4",
+    "old_dino_k6",
+    "temporal_binned_dino_k8",
+)
 
 
 def method_from_directory(name):
@@ -62,15 +73,10 @@ def dataset_from_directory(name):
 def main():
     parser = argparse.ArgumentParser("Summarize Stage 4A VideoDepth")
     parser.add_argument("--results-root", default="eval_results/video_depth")
-    parser.add_argument("--baselines", default="stage4a_video_depth_baselines.json")
     parser.add_argument("--output", default="stage4a_video_depth_results.csv")
     args = parser.parse_args()
 
     rows = []
-    with open(args.baselines) as handle:
-        for baseline in json.load(handle):
-            rows.append({field: baseline.get(field, "") for field in FIELDS})
-
     pattern = os.path.join(args.results_root, "*stage4a_*", "runtime_memory_rank0.json")
     for runtime_path in sorted(glob.glob(pattern)):
         result_dir = os.path.dirname(runtime_path)
@@ -91,6 +97,10 @@ def main():
             stage="stage4a",
             cache_policy=runtime.get("cache_policy"),
             cache_window_size=runtime.get("cache_window_size"),
+            gpu_name=runtime.get("gpu_name"),
+            torch_version=runtime.get("torch_version"),
+            cuda_version=runtime.get("cuda_version"),
+            slurm_job_id=runtime.get("slurm_job_id"),
             num_sequences=runtime.get("num_sequences"),
             num_ok=runtime.get("num_ok"),
             num_oom=runtime.get("num_oom"),
@@ -116,6 +126,13 @@ def main():
         if key in seen:
             raise RuntimeError(f"duplicate Stage 4A row: {key}")
         seen.add(key)
+    expected = {(dataset, method) for dataset in DATASETS for method in METHODS}
+    if seen != expected:
+        missing = sorted(expected - seen)
+        unexpected = sorted(seen - expected)
+        raise RuntimeError(
+            f"incomplete Stage 4A matrix: missing={missing}, unexpected={unexpected}"
+        )
     rows.sort(key=lambda row: (row["dataset"], METHOD_ORDER[row["method"]]))
 
     with open(args.output, "w", newline="") as handle:
