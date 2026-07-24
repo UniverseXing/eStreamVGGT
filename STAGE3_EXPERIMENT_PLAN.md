@@ -1,6 +1,6 @@
 # StreamVGGT 固定显存帧选择实验计划
 
-更新日期：2026-07-22
+更新日期：2026-07-24
 
 ## 目标与实验原则
 
@@ -474,7 +474,7 @@ env STREAMVGGT_STAGE3_6B_BONN_FRAMES=10 \
 - 最大输入 tensor 从 legacy 110 帧的 246.49 MiB 降为单帧 2.24 MiB；streaming retained outputs/views 都为 0。1000 相对 500 帧的 CPU RSS peak 只增加 21.04 MiB，没有把线性 GPU 输出转移到 CPU。
 - 110 帧 streaming/legacy 端到端 FPS 比为 1.399，超过 0.80 门槛。至此冻结 streaming release 路径和 `temporal_binned_dino_k8`，不再进行显存来源归因或 selector 内部归因。
 
-## Stage 3.7：四组 Stage 3.3 增量回测（当前阶段）
+## Stage 3.7：四组 Stage 3.3 增量回测（已完成）
 
 完整 DINO 归因对当前决策价值有限，因此取消原先暂定的“相同 temporal bank 内 DINO/非 DINO”实验；Stage 3.7 的 A/B/C 现重新定义为 pose、静态重建、动态重建回测。最终对照固定为四组：
 
@@ -540,3 +540,81 @@ env STREAMVGGT_STAGE3_7_PARTS="static dynamic" sbatch run.sh
 - 任一覆盖不完整：判为 `FAIL_INCOMPLETE`，只补缺失序列，不能根据不完整均值做方法决策。
 
 因为取消了同 K、同 temporal bank 的非 DINO 对照，最终措辞必须是“集成的 DINO-guided temporal K8 达到何种质量/显存折中”，不能声称时间分段 K8 的全部增益都由 DINO 单独造成。既有 old-DINO K6 对 uniform K6 的结果仍可作为较早预算下的独立 DINO 证据。
+
+### Stage 3.7 结论
+
+- temporal K8 完整覆盖全部 pose、静态和动态序列，峰值 allocated 9384 MiB，全部 NC 和 pose 灾难保护通过；但 NRGBD Overall 0.09064 超过 0.07858 门槛，动态 TUM Overall 0.08069 超过 0.07649 门槛，因此正式决定为 `FAIL_GEOMETRY`，不能作为跨任务统一主方案。
+- 逐序列共同覆盖为 12 个 7-Scenes、9 个 NRGBD、13 个 ETH3D 和 8 个 TUM，共 42 段。动态 TUM 上 K4 赢 6/8，temporal K8 相对 K4 在 7/8 段退化；NRGBD 的 K8 则为 4 胜、4 负、1 平，均值失败主要由 `grey_white_room`、`kitchen` 等重尾场景造成。
+- 以每段最优 bounded 方法为 oracle，old K6 的平均/最大 regret 为 13.3%/60.1%，低于 K4 的 21.9%/207.8% 和 temporal K8 的 15.9%/106.5%。因此冻结角色为：old K6 是稳健默认，K4 是 compact/VideoDepth/动态配置，temporal K8 是 long-sequence/pose 扩展，full cache 只作参考。
+- Stage 1 已完成 Bonn 和 Sintel VideoDepth 跨数据集表。新 K4 相对 full 的 AbsRel 在 Bonn 仅差 0.78%，在 Sintel 改善 2.57%；同 K6 下 DINO 相对 uniform 的 AbsRel 分别改善 8.73%/2.54%。Stage 2.5/2.6 三次运行还证明质量结果确定、显存稳定。因此 Stage 4 不重跑这些已有组合。
+
+## Stage 4A：KITTI 与 temporal K8 VideoDepth 补全（当前阶段）
+
+目标是在不改 selector、不重新选择 K 的前提下，增加未参与开发的户外 KITTI 域，并把 temporal K8 补入 Bonn/Sintel VideoDepth。KITTI 严格遵循 MonST3R 协议：13 条 KITTI depth-validation drive，左相机每条最多取前 110 个带 GT depth 的帧；评价继续使用现有 scale alignment、AbsRel、SqRel、RMSE、Log RMSE 和 δ1/2/3。
+
+阶段编号随本阶段插入统一顺延：原 Stage 4A/4B/4C 分别改名为 Stage 4B/4C/4D；可选的方法增强保持在 Stage 4E，不与当前结果补全混在一起。
+
+新增计算固定为：
+
+1. KITTI：`full_cache`、`stage3_2_k4`、`old_dino_k6`、`temporal_binned_dino_k8`。
+2. Bonn/Sintel：只补 `temporal_binned_dino_k8`。
+3. Bonn/Sintel 的 full、K4、old K6、uniform K6 全部复用 `stage1_video_depth_results.xlsx`；早期 standard K8 不能冒充 temporal K8。
+
+下载和准备在登录节点执行，不占 GPU：
+
+```bash
+bash scripts/download_stage4a_kitti.sh
+python scripts/prepare_stage4a_kitti.py --root data/eval/kitti --mode hardlink
+python scripts/check_stage4a_kitti.py --root data/eval/kitti
+```
+
+下载脚本使用 KITTI 官方 S3 上的 annotated depth 和 MonST3R 指定的 13 个 raw drive，支持 `wget -c` 断点续传。准备脚本默认使用 hardlink，不复制第二份图像/深度数据；源压缩包保留在 `data/eval/kitti/downloads`，确认正式结果后再人工决定是否清理。
+
+正式运行：
+
+```bash
+sbatch run.sh
+```
+
+可选 4 帧 smoke；必须使用独立输出目录并跳过正式汇总，防止 smoke 与正式结果重名：
+
+```bash
+env STREAMVGGT_STAGE4A_METHODS="temporal_binned_dino_k8" \
+    STREAMVGGT_STAGE4A_K8_DATASETS="kitti" \
+    STREAMVGGT_STAGE4A_MAX_FRAMES=4 \
+    STREAMVGGT_STAGE4A_SKIP_FINALIZE=1 \
+    STREAMVGGT_STAGE4A_RESULTS_ROOT="$PWD/eval_results/video_depth_stage4a_smoke" \
+    sbatch run.sh
+```
+
+输出为：
+
+- `stage4a_video_depth_results.csv`：Stage 1 冻结基线和 Stage 4A 新结果的统一表。
+- `stage4a_gate.csv`：K4、old K6、temporal K8 的 KITTI/跨域门槛。
+- `eval_results/video_depth/*stage4a_*`：逐 drive runtime/memory、depth prediction 和 scale-aligned 结果。
+
+### Stage 4A 决策门槛
+
+1. KITTI 四组必须覆盖相同的 13 条 drive、相同总帧数且无 OOM；temporal K8 的 Bonn/Sintel 必须分别覆盖 5/23 段且无 OOM。
+2. KITTI 每个 bounded 方法的 AbsRel ≤同次 full ×1.15，δ1 ≥full−0.03；门槛按方法分别报告，不因为某个候选失败而否定其他候选。
+3. KITTI 每个 bounded 方法的 peak allocated 和 reserved 都必须低于同次 full。Stage 4A 使用旧 VideoDepth 保留输出语义以保证质量协议一致，因此不重新要求 legacy evaluator 的 reserved <10 GiB；真正流式的 10 GiB/长度平台结论仍由 Stage 3.6B 支撑。
+4. temporal K8 在 Bonn/Sintel 的 AbsRel ≤该数据集 K4/old-K6 较优者 ×1.10，δ1 ≥二者较优值−0.03。
+5. KITTI 是冻结后的 held-out 域。任何失败只进入结果和限制，不允许据此调整 K、DINO相似度、temporal bank边界或数据抽样。
+
+达成门槛后：通过者进入 Stage 4B 的最终统计/Pareto 表。若 temporal K8 只在 pose/长序列通过而 VideoDepth 失败，继续作为 specialist 报告，不提升为默认方法；若 old K6/K4 在 KITTI 通过，则分别保留 robust-default/compact 角色。
+
+## Stage 4B：最终统计定型
+
+不运行新模型。统一 Stage 1–4A 的逐序列结果，输出 mean/median/std、paired bootstrap 95% CI、win/tie/loss、normalized regret 和质量—allocated—reserved—FPS Pareto。补取已有 uniform K6 reconstruction JSON，完成同 K 的 DINO/非 DINO 配对统计；不新增 attribution 组。
+
+## Stage 4C：冻结后的未见长序列验证
+
+至少选择 3 条未参与 selector 开发的真实长序列，固定 100/250/500/1000 帧。K4、old K6、temporal K8 全长度运行，full cache 只运行到成功上限并如实记录 OOM。500→1000 帧 allocated 和 CPU RSS 各不得增长超过 256 MiB；任何失败不得触发新的 K/bank 搜索。
+
+## Stage 4D：定性结果、失败分析与论文资产
+
+固定选择成功与失败场景，生成点云、depth error、retained-frame 时间线和 memory/quality 曲线。重点包括 K8 成功的 7-Scenes/ETH3D、失败的 `grey_white_room`、`walking_halfsphere`、`sitting_rpy`，以及 K8 逆转成功的 `walking_rpy`、`staircase`。最终同步生成主表、消融表、运行稳定性表和可复现实验清单。
+
+## Stage 4E：可选二区增强，不自动触发
+
+只有 Stage 4A–D 完整后仍决定冲击更强方法创新，才研究最大预算不超过 K8 的在线策略路由；专家仅限现有 K4/old-K6/temporal-K8，不再创造手工 K。必须使用不含数据集名称的在线信号和 leave-one-dataset-out 验证，并预先要求相对 old K6 平均 normalized regret 至少下降 20%、最大 regret 不超过 60.1%。达不到即停止，不影响以 bounded-cache family 和完整系统证据投稿。

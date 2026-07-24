@@ -307,6 +307,8 @@ def main(args):
         get_video_results()
     elif args.eval_dataset == "kitti":
 
+        kitti_root = os.environ.get("STREAMVGGT_KITTI_ROOT", "../data/eval/kitti")
+
         def depth_read(filename):
             # loads depth map D from png file
             # and returns it as a numpy array,
@@ -321,7 +323,10 @@ def main(args):
             return depth
 
         depth_pathes = glob.glob(
-            "../data/eval/kitti/depth_selection/val_selection_cropped/groundtruth_depth_gathered/*/*.png"
+            os.path.join(
+                kitti_root,
+                "depth_selection/val_selection_cropped/groundtruth_depth_gathered/*/*.png",
+            )
         )
         depth_pathes = sorted(depth_pathes)
         pred_pathes = glob.glob(

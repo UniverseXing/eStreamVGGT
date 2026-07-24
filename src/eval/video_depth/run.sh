@@ -6,6 +6,7 @@ workdir='..'
 model_name='streamvggt'
 ckpt_name='checkpoints'
 model_weights="${workdir}/ckpt/${ckpt_name}.pth"
+results_root="${STREAMVGGT_VIDEO_DEPTH_OUTPUT_ROOT:-${workdir}/eval_results/video_depth}"
 read -r -a datasets <<< "${STREAMVGGT_EVAL_DATASETS:-sintel bonn kitti}"
 
 cache_suffix=""
@@ -30,7 +31,7 @@ if [[ -n "${STREAMVGGT_MAX_FRAMES:-}" ]]; then
 fi
 
 for data in "${datasets[@]}"; do
-    output_dir="${workdir}/eval_results/video_depth/${data}_${model_name}${cache_suffix}"
+    output_dir="${results_root}/${data}_${model_name}${cache_suffix}"
     echo "$output_dir"
     CUDA_LAUNCH_BLOCKING=1 accelerate launch --num_processes 1  ../src/eval/video_depth/launch.py \
         --weights "$model_weights" \

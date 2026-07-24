@@ -37,6 +37,7 @@ slurm-*.out
 *.xlsx
 *.xlsm
 *.ods
+*tar.gz
 
 # Datasets, checkpoints, and generated results
 /ckpt/

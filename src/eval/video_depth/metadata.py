@@ -3,6 +3,9 @@ import glob
 from tqdm import tqdm
 
 
+KITTI_ROOT = os.environ.get("STREAMVGGT_KITTI_ROOT", "../data/eval/kitti")
+
+
 def bonn_seq_dir(img_path, seq, kind):
     seq_root = os.path.join(img_path, f"rgbd_bonn_{seq}")
     for dirname in (f"{kind}_110_sampled", f"{kind}_110", kind):
@@ -27,7 +30,10 @@ dataset_metadata = {
         "process_func": None,  # Not used in mono depth estimation
     },
     "kitti": {
-        "img_path": "../data/eval/kitti/depth_selection/val_selection_cropped/image_gathered",  # Default path
+        "img_path": os.path.join(
+            KITTI_ROOT,
+            "depth_selection/val_selection_cropped/image_gathered",
+        ),
         "mask_path": None,
         "dir_path_func": lambda img_path, seq: os.path.join(img_path, seq),
         "gt_traj_func": lambda img_path, anno_path, seq: None,
