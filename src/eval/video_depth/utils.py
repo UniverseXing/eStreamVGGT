@@ -17,6 +17,13 @@ import imageio.v2 as iio
 from matplotlib.figure import Figure
 
 
+def get_colormap(cmap_name):
+    """Return a colormap across old and new Matplotlib releases."""
+    if hasattr(mpl, "colormaps"):
+        return mpl.colormaps.get_cmap(cmap_name)
+    return cm.get_cmap(cmap_name)
+
+
 def save_focals(cam_dict, path):
     # convert focal to txt
     focals = cam_dict["focal"]
@@ -107,7 +114,7 @@ def get_vertical_colorbar(h, vmin, vmax, cmap_name="jet", label=None, cbar_preci
 
     # Do some plotting.
     ax = fig.add_subplot(111)
-    cmap = cm.get_cmap(cmap_name)
+    cmap = get_colormap(cmap_name)
     norm = mpl.colors.Normalize(vmin=vmin, vmax=vmax)
 
     tick_cnt = 6
@@ -177,7 +184,7 @@ def colorize_np(
     x = (x - vmin) / (vmax - vmin)
     # x = np.clip(x, 0., 1.)
 
-    cmap = cm.get_cmap(cmap_name)
+    cmap = get_colormap(cmap_name)
     x_new = cmap(x)[:, :, :3]
 
     if mask is not None:
