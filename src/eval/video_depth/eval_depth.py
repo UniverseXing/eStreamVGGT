@@ -13,6 +13,59 @@ import json
 from eval.video_depth.metadata import dataset_metadata
 
 
+def write_depth_results(args, sequence_metrics):
+    if not sequence_metrics:
+        raise RuntimeError(f"no {args.eval_dataset} sequence metrics were computed")
+
+    gathered_depth_metrics = [item["metrics"] for item in sequence_metrics]
+    average_metrics = {
+        key: float(
+            np.average(
+                [metrics[key] for metrics in gathered_depth_metrics],
+                weights=[
+                    metrics["valid_pixels"] for metrics in gathered_depth_metrics
+                ],
+            )
+        )
+        for key in gathered_depth_metrics[0]
+        if key != "valid_pixels"
+    }
+    sequence_payload = []
+    for item in sequence_metrics:
+        metrics = {
+            key: int(value) if key == "valid_pixels" else float(value)
+            for key, value in item["metrics"].items()
+        }
+        sequence_payload.append(
+            {
+                "sequence": item["sequence"],
+                "num_frames": int(item["num_frames"]),
+                "metrics": metrics,
+            }
+        )
+
+    depth_log_path = f"{args.output_dir}/result_{args.align}.json"
+    sequence_log_path = (
+        f"{args.output_dir}/result_{args.align}_sequences.json"
+    )
+    print("Average depth evaluation metrics:", average_metrics)
+    with open(depth_log_path, "w") as handle:
+        json.dump(average_metrics, handle)
+    with open(sequence_log_path, "w") as handle:
+        json.dump(
+            {
+                "dataset": args.eval_dataset,
+                "align": args.align,
+                "num_sequences": len(sequence_payload),
+                "weighted_average": average_metrics,
+                "sequences": sequence_payload,
+            },
+            handle,
+            indent=2,
+        )
+    print(f"Wrote per-sequence depth metrics to {sequence_log_path}")
+
+
 def bonn_seq_dir(seq, kind):
     seq_root = f"../data/eval/bonn/rgbd_bonn_dataset/rgbd_bonn_{seq}"
     for dirname in (f"{kind}_110_sampled", f"{kind}_110", kind):
@@ -114,7 +167,7 @@ def main(args):
             grouped_pred_depth = group_by_directory(pred_pathes)
 
             grouped_gt_depth = group_by_directory(depth_pathes)
-            gathered_depth_metrics = []
+            sequence_metrics = []
 
             for key in tqdm(grouped_pred_depth.keys()):
                 pd_pathes = grouped_pred_depth[key]
@@ -170,22 +223,15 @@ def main(args):
                             post_clip_max=70,
                         )
                     )
-                gathered_depth_metrics.append(depth_results)
-
-            depth_log_path = f"{args.output_dir}/result_{args.align}.json"
-            average_metrics = {
-                key: np.average(
-                    [metrics[key] for metrics in gathered_depth_metrics],
-                    weights=[
-                        metrics["valid_pixels"] for metrics in gathered_depth_metrics
-                    ],
+                sequence_metrics.append(
+                    {
+                        "sequence": key,
+                        "num_frames": len(pd_pathes),
+                        "metrics": depth_results,
+                    }
                 )
-                for key in gathered_depth_metrics[0].keys()
-                if key != "valid_pixels"
-            }
-            print("Average depth evaluation metrics:", average_metrics)
-            with open(depth_log_path, "w") as f:
-                f.write(json.dumps(average_metrics))
+
+            write_depth_results(args, sequence_metrics)
 
         get_video_results()
     elif args.eval_dataset == "bonn":
@@ -231,7 +277,7 @@ def main(args):
         def get_video_results():
             grouped_pred_depth = group_by_directory(pred_pathes)
             grouped_gt_depth = group_by_directory(depth_pathes, idx=-2)
-            gathered_depth_metrics = []
+            sequence_metrics = []
             for key in tqdm(grouped_gt_depth.keys()):
                 pd_pathes = grouped_pred_depth[key[10:]]
                 gt_pathes = grouped_gt_depth[key]
@@ -282,27 +328,20 @@ def main(args):
                             use_gpu=True,
                         )
                     )
-                gathered_depth_metrics.append(depth_results)
+                sequence_metrics.append(
+                    {
+                        "sequence": key[10:],
+                        "num_frames": len(pd_pathes),
+                        "metrics": depth_results,
+                    }
+                )
 
                 # seq_len = gt_depth.shape[0]
                 # error_map = error_map.reshape(seq_len, -1, error_map.shape[-1]).cpu()
                 # error_map_colored = colorize(error_map, range=(error_map.min(), error_map.max()), append_cbar=True)
                 # ImageSequenceClip([x for x in (error_map_colored.numpy()*255).astype(np.uint8)], fps=10).write_videofile(f'{args.output_dir}/errormap_{key}_{args.align}.mp4', fps=10)
 
-            depth_log_path = f"{args.output_dir}/result_{args.align}.json"
-            average_metrics = {
-                key: np.average(
-                    [metrics[key] for metrics in gathered_depth_metrics],
-                    weights=[
-                        metrics["valid_pixels"] for metrics in gathered_depth_metrics
-                    ],
-                )
-                for key in gathered_depth_metrics[0].keys()
-                if key != "valid_pixels"
-            }
-            print("Average depth evaluation metrics:", average_metrics)
-            with open(depth_log_path, "w") as f:
-                f.write(json.dumps(average_metrics))
+            write_depth_results(args, sequence_metrics)
 
         get_video_results()
     elif args.eval_dataset == "kitti":
@@ -337,7 +376,7 @@ def main(args):
         def get_video_results():
             grouped_pred_depth = group_by_directory(pred_pathes)
             grouped_gt_depth = group_by_directory(depth_pathes)
-            gathered_depth_metrics = []
+            sequence_metrics = []
             for key in tqdm(grouped_pred_depth.keys()):
                 pd_pathes = grouped_pred_depth[key]
                 gt_pathes = grouped_gt_depth[key]
@@ -387,22 +426,15 @@ def main(args):
                             use_gpu=True,
                         )
                     )
-                gathered_depth_metrics.append(depth_results)
-
-            depth_log_path = f"{args.output_dir}/result_{args.align}.json"
-            average_metrics = {
-                key: np.average(
-                    [metrics[key] for metrics in gathered_depth_metrics],
-                    weights=[
-                        metrics["valid_pixels"] for metrics in gathered_depth_metrics
-                    ],
+                sequence_metrics.append(
+                    {
+                        "sequence": key,
+                        "num_frames": len(pd_pathes),
+                        "metrics": depth_results,
+                    }
                 )
-                for key in gathered_depth_metrics[0].keys()
-                if key != "valid_pixels"
-            }
-            print("Average depth evaluation metrics:", average_metrics)
-            with open(depth_log_path, "w") as f:
-                f.write(json.dumps(average_metrics))
+
+            write_depth_results(args, sequence_metrics)
 
         get_video_results()
 

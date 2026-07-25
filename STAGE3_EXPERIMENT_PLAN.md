@@ -1,6 +1,6 @@
 # StreamVGGT 固定显存帧选择实验计划
 
-更新日期：2026-07-24
+更新日期：2026-07-25
 
 ## 目标与实验原则
 
@@ -605,9 +605,40 @@ env STREAMVGGT_STAGE4A_METHODS="temporal_binned_dino_k8" \
 
 达成门槛后：K4、old K6 中通过三域基础门槛者进入 Stage 4B 的最终统计/Pareto 表，分别竞争 compact 和 robust-default 角色；temporal K8 只有额外竞争性门槛也通过才竞争统一主方案，否则按 specialist 报告。任一方法单域失败仍保留完整结果，但不得宣称跨域通过。
 
+### Stage 4A 结论
+
+- 12 组均在同一 RTX 6000 Ada、PyTorch 2.3.1/CUDA 12.1 和同一 Slurm 作业中完成；Bonn/KITTI/Sintel 精确覆盖 5/13/23 段、每种方法共 2883 帧且无 OOM。
+- K4 和 old K6 通过全部三域基础门槛。K4 在 Bonn/KITTI/Sintel 的 AbsRel 分别为 0.07545/0.13337/0.31605，三个数据集都优于 old K6 和 temporal K8；KITTI 相对 full 的 AbsRel 改善 22.75%，δ1 提升 10.68 个百分点。
+- K4 三域合计推理时间 336.80 秒、加权 FPS 8.56，而 full 为 545.03 秒/5.29 FPS；最大 allocated/reserved 从 full 的 21641/44804 MiB 降为 10566/11558 MiB。K4 冻结为 VideoDepth/compact 主方案，old K6 继续作为跨 reconstruction 的 robust default。
+- temporal K8 在 KITTI 的 AbsRel/δ1 为 0.19230/0.67373，δ1 低于 0.69143 基础门槛；相对 K4 的 KITTI AbsRel 退化 44.19%。正式决定为 `FAIL`，不能作为统一主方案，只保留 long-sequence/pose specialist 和失败案例，不再调整 K、temporal bin 或 DINO 阈值。
+
 ## Stage 4B：最终统计定型
 
-不运行新模型。VideoDepth 性能主表只采用 Stage 4A 的 6000 Ada 同卡结果；Stage 1 A6000 结果单列为历史复现，不混算硬件指标。再统一其余任务的逐序列结果，输出 mean/median/std、paired bootstrap 95% CI、win/tie/loss、normalized regret 和质量—allocated—reserved—FPS Pareto。补取已有 uniform K6 reconstruction JSON，完成同 K 的 DINO/非 DINO 配对统计；不新增 attribution 组。
+当前先完成 Stage 4B-VD，不运行模型推理。利用 Stage 4A 已保存的逐帧 `.npy` prediction 重新运行纯 depth evaluation，把 evaluator 内部已经按序列计算的指标写入 `result_scale_sequences.json`，再和每个目录现有的 `runtime_memory_rank0.json` 按序列严格配对。
+
+正式统计口径：
+
+1. 固定 41 条序列 ×4 方法，共 164 条记录；四方法在同一序列必须帧数完全相同，任何缺失、OOM、运行时/质量序列名不一致都直接失败。
+2. 每个数据集/方法输出逐序列 mean、median、sample std 和 10000 次 paired bootstrap 95% CI，bootstrap seed 固定为 0。该统计使用“序列等权”；Stage 4A 的 `result_scale.json` 继续保留为官方有效像素加权总指标，二者不能混称。
+3. 对四方法的所有两两组合，在 AbsRel、RMSE、δ1、inference time 和 peak allocated 上输出 paired advantage CI 与 win/tie/loss。只有 CI 完全位于零的一侧才能写“显著更优”；否则写“aggregate 更好但 paired CI 未排除零”。
+4. AbsRel 和 δ1 分别计算逐数据集及全部 41 段的 normalized regret、oracle wins；Pareto 使用 AbsRel、peak allocated 和 total inference time 三维共同判断。
+5. Stage 1 A6000 结果只单列为历史复现，不混算硬件指标；不新增 uniform、K、bank 或 attribution 推理。
+
+集群运行：
+
+```bash
+sbatch run.sh
+```
+
+该作业依次对现有 12 个 Stage 4A 输出目录执行纯 `eval_depth.py --align scale`，不会调用 StreamVGGT 模型。输出为：
+
+- `stage4b_video_depth_sequence_results.csv`：164 条质量—运行时配对记录。
+- `stage4b_video_depth_statistics.csv`：逐数据集/方法/指标的描述统计和 bootstrap CI。
+- `stage4b_video_depth_paired_comparison.csv`：两两 paired CI 与 win/tie/loss。
+- `stage4b_video_depth_regret.csv`：逐域和全域 normalized regret。
+- `stage4b_pareto.csv`：质量—allocated—时间 Pareto。
+
+Stage 4B-VD 完整生成后，不根据显著性重新调 selector：K4 继续作为 VideoDepth 主方案，old K6 继续作为跨任务 robust default，K8 继续作为 specialist。若 paired CI 不支持“优于”，论文措辞降级为“匹配/保持”；只有输出覆盖不完整才补跑纯评价。随后统一 pose、静态/动态 reconstruction 和 long-sequence 已有结果，完成跨任务最终主表，再进入 Stage 4C。
 
 ## Stage 4C：冻结后的未见长序列验证
 
