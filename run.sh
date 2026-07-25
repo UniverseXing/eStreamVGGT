@@ -1,11 +1,11 @@
 #!/usr/bin/env bash
-#SBATCH --job-name=streamvggt-stage4b
+#SBATCH --job-name=streamvggt-stage4c
 #SBATCH --gpus=6000ada:1
-#SBATCH --time=06:00:00
-#SBATCH --output=streamvggt-stage4b-6000ada-%j.out
-#SBATCH --error=streamvggt-stage4b-6000ada-%j.err
+#SBATCH --time=24:00:00
+#SBATCH --output=streamvggt-stage4c-6000ada-%j.out
+#SBATCH --error=streamvggt-stage4c-6000ada-%j.err
 
-# Runs Stage 4B VideoDepth per-sequence evaluation and statistics.
+# Runs Stage 4C frozen unseen long-sequence validation.
 set -euo pipefail
 
 
@@ -18,6 +18,6 @@ echo "Node: $(hostname)"
 echo "Started: $(date --iso-8601=seconds)"
 nvidia-smi
 
-bash "run_stage4b_video_depth.sh"
+bash "run_stage4c.sh"
 
 echo "Finished: $(date --iso-8601=seconds)"

@@ -695,9 +695,73 @@ python scripts/summarize_stage4b_cross_task.py
 
 达成门槛后的动作是只携带 K4、old K6 和 temporal K8 进入 Stage 4C；full cache 作为质量/资源参考运行到成功上限。不得重新搜索 K、temporal bin、DINO 阈值或按 Stage 4C 结果调参。若 Stage 4C 暴露失败，只报告失败域并收缩 claim。
 
-## Stage 4C：冻结后的未见长序列验证
+## Stage 4C：冻结后的未见长序列验证（当前阶段）
 
-至少选择 3 条未参与 selector 开发的真实长序列，固定 100/250/500/1000 帧。K4、old K6、temporal K8 全长度运行，full cache 只运行到成功上限并如实记录 OOM。500→1000 帧 allocated 和 CPU RSS 各不得增长超过 256 MiB；任何失败不得触发新的 K/bank 搜索。
+本阶段不再复用参与过 selector 开发或前序回测的 Bonn、7-Scenes test、TUM dynamics 序列，固定使用三条此前未进入本项目实验矩阵的 TUM RGB-D 原始真实长序列：
+
+1. `rgbd_dataset_freiburg1_room`：办公室大范围闭环轨迹。
+2. `rgbd_dataset_freiburg2_desk`：多桌面、包含多次闭环。
+3. `rgbd_dataset_freiburg3_long_office_household`：办公室/家庭环境长闭环。
+
+每条序列按 TUM 官方 RGB timestamp 与 mocap ground truth 最近邻关联，最大时间差固定 0.02 秒；使用前 100/250/500/1000 个有效关联帧。该阶段评价真实长序列 pose 和系统资源，不重复 Stage 4A/B 已完成的 VideoDepth 像素指标。
+
+下载与检查在登录节点运行：
+
+```bash
+bash scripts/download_stage4c_tum.sh
+python scripts/check_stage4c_data.py --root data/eval/stage4c_tum
+```
+
+下载脚本只从官方 archive 解出本阶段需要的 `rgb/`、`rgb.txt` 和 `groundtruth.txt`，不解压未使用的 depth。空间紧张时可设置 `STREAMVGGT_STAGE4C_DELETE_ARCHIVES=1`，让每个 archive 解出后立即删除；否则保留压缩包以支持复用。
+
+正式矩阵为：
+
+1. `stage3_2_k4`、`old_dino_k6`、`temporal_binned_dino_k8` 必须完整运行三序列 ×四长度，共 36 个 bounded run。
+2. `full_cache` 使用相同逐帧输入和 sink 输出，只让 cache 本身保持无界；每条序列从 100 帧递增运行，首次 OOM/失败写入 JSON 后停止更长 prefix，并报告最大成功长度。
+3. 每个 prefix 独立进程运行，保证 500 与 1000 帧的 CUDA peak 和 CPU RSS 可直接比较。不得用一次 1000 帧运行的最终 peak 冒充四个 prefix。
+4. cache 配置完全冻结：K4=`anchor_recent_dino_diverse_2old_1recent/4`，old K6=`anchor_recent_dino_diverse/6`，temporal K8=`temporal_binned_dino_k8/8`。
+
+正式提交只使用根目录入口，且保留既有 Conda 激活方式：
+
+```bash
+sbatch run.sh
+```
+
+本地 smoke 可以只运行单序列、10/20 帧和 K4，并写入独立目录；它不通过 `sbatch`，也不产生正式 gate：
+
+```bash
+env STREAMVGGT_STAGE4C_METHODS="stage3_2_k4" \
+    STREAMVGGT_STAGE4C_SEQUENCES="rgbd_dataset_freiburg1_room" \
+    STREAMVGGT_STAGE4C_LENGTHS="10 20" \
+    STREAMVGGT_STAGE4C_RESULTS_ROOT="$PWD/eval_results/stage4c_smoke" \
+    STREAMVGGT_STAGE4C_SKIP_GATE=1 \
+    bash run_stage4c.sh
+```
+
+正式输出为：
+
+- `stage4c_results.csv`：逐方法、序列和长度的 pose、吞吐、CUDA/RSS、streaming 语义、cache trace 和运行环境。
+- `stage4c_gate.csv`：三个 bounded 角色的逐项决定，以及 full cache 每条序列的最大成功/首次失败长度。
+- `eval_results/stage4c_tum_long/<method>/<sequence>/<frames>/`：`stage4c_metrics.json`、小型 trajectory 和 memory trace。
+
+### Stage 4C 决策门槛
+
+每个 bounded 方法分别判断，必须同时满足：
+
+1. 12/12 个方法内 run 完整成功，processed frames 与请求长度严格相同；所有成功结果来自同一 GPU 型号且必须包含 `6000 Ada`。
+2. 输入必须为 `streaming`、输出必须为 `sink`，retained outputs/views 都为 0；cache window/policy 必须与冻结配置完全一致。
+3. 三序列所有 prefix 的 peak allocated <12288 MiB。
+4. 每条序列 1000 相对 500 帧的 peak allocated 增长 ≤256 MiB；CPU RSS peak 增长也 ≤256 MiB。
+5. 全部 pose evaluation 成功。对每个序列/prefix，以三个 bounded 方法中较优值为 oracle，ATE 和旋转 RPE 都不得超过 oracle 的 2 倍；这是灾难保护而非新的方法选择规则。
+6. full cache 至少在每条序列成功完成 100 帧；其 OOM/失败是资源参考，不作为 bounded gate 失败，也不得删去失败记录。
+
+### 达成门槛后的动作
+
+- K4 PASS：确认最终 `primary_bounded_deployment` 具备未见真实长序列的端到端有界性，进入 Stage 4D 论文资产与最终表格。
+- old K6 PASS：保留 `robust_bounded_alternative`；失败则把该角色收缩到 Stage 3.3/3.7 已验证的重建范围，不用新参数补救。
+- temporal K8 PASS：保留 `long_sequence_pose_specialist`；失败则撤销 specialist claim，但不反向影响 K4 的主方案结论。
+- 任一方法只因 pose 2×保护失败：其内存有界结论仍可单独报告，质量 claim 标记为 limitation。
+- 任何结果都不得触发新的 K、bank、DINO threshold、序列抽样或按 held-out 数据调参；失败只用于收缩适用范围。
 
 ## Stage 4D：定性结果、失败分析与论文资产
 
