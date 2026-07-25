@@ -548,7 +548,7 @@ env STREAMVGGT_STAGE3_7_PARTS="static dynamic" sbatch run.sh
 - 以每段最优 bounded 方法为 oracle，old K6 的平均/最大 regret 为 13.3%/60.1%，低于 K4 的 21.9%/207.8% 和 temporal K8 的 15.9%/106.5%。因此冻结角色为：old K6 是稳健默认，K4 是 compact/VideoDepth/动态配置，temporal K8 是 long-sequence/pose 扩展，full cache 只作参考。
 - Stage 1 已完成 Bonn 和 Sintel VideoDepth 跨数据集表。新 K4 相对 full 的 AbsRel 在 Bonn 仅差 0.78%，在 Sintel 改善 2.57%；同 K6 下 DINO 相对 uniform 的 AbsRel 分别改善 8.73%/2.54%。这些质量结论和 Stage 2.5/2.6 的重复稳定性仍作为历史证据保留，但 Stage 1 的性能数据来自 A6000，而 Stage 3 后续主体使用 RTX 6000 Ada，显存、FPS 和耗时不能直接并入同一硬件主表。因此 Stage 4A 在 6000 Ada 上重跑统一 VideoDepth 矩阵。
 
-## Stage 4A：6000 Ada 统一 VideoDepth 矩阵（当前阶段）
+## Stage 4A：6000 Ada 统一 VideoDepth 矩阵（已完成）
 
 目标是在不改 selector、不重新选择 K 的前提下，在同一 RTX 6000 Ada、相同代码和评价协议下形成 `3 数据集 × 4 配置 = 12` 组可直接比较的 VideoDepth 主表，同时增加未参与开发的户外 KITTI 域。KITTI 严格遵循 MonST3R 协议：13 条 KITTI depth-validation drive，左相机每条最多取前 110 个带 GT depth 的帧；评价继续使用现有 scale alignment、AbsRel、SqRel、RMSE、Log RMSE 和 δ1/2/3。
 
@@ -612,7 +612,7 @@ env STREAMVGGT_STAGE4A_METHODS="temporal_binned_dino_k8" \
 - K4 三域合计推理时间 336.80 秒、加权 FPS 8.56，而 full 为 545.03 秒/5.29 FPS；最大 allocated/reserved 从 full 的 21641/44804 MiB 降为 10566/11558 MiB。K4 冻结为 VideoDepth/compact 主方案，old K6 继续作为跨 reconstruction 的 robust default。
 - temporal K8 在 KITTI 的 AbsRel/δ1 为 0.19230/0.67373，δ1 低于 0.69143 基础门槛；相对 K4 的 KITTI AbsRel 退化 44.19%。正式决定为 `FAIL`，不能作为统一主方案，只保留 long-sequence/pose specialist 和失败案例，不再调整 K、temporal bin 或 DINO 阈值。
 
-## Stage 4B：最终统计定型
+## Stage 4B：最终统计定型（已完成）
 
 当前先完成 Stage 4B-VD，不运行模型推理。利用 Stage 4A 已保存的逐帧 `.npy` prediction 重新运行纯 depth evaluation，把 evaluator 内部已经按序列计算的指标写入 `result_scale_sequences.json`，再和每个目录现有的 `runtime_memory_rank0.json` 按序列严格配对。
 
@@ -639,6 +639,61 @@ sbatch run.sh
 - `stage4b_pareto.csv`：质量—allocated—时间 Pareto。
 
 Stage 4B-VD 完整生成后，不根据显著性重新调 selector：K4 继续作为 VideoDepth 主方案，old K6 继续作为跨任务 robust default，K8 继续作为 specialist。若 paired CI 不支持“优于”，论文措辞降级为“匹配/保持”；只有输出覆盖不完整才补跑纯评价。随后统一 pose、静态/动态 reconstruction 和 long-sequence 已有结果，完成跨任务最终主表，再进入 Stage 4C。
+
+### Stage 4B-VD 结论
+
+- 41 条序列 ×4 方法共 164 条记录完整。K4 是 Bonn、KITTI、Sintel 三域唯一同时位于 AbsRel—allocated—时间 Pareto 前沿的 bounded 方法。
+- K4 相对 full 的 KITTI AbsRel 显著更好；Bonn 和 Sintel 的 paired CI 未排除零，因此只能写“保持/匹配”，不能写显著提升。Bonn 的 full 在 δ1 上仍有约 0.33 个百分点的显著优势，需要保留为细粒度限制。
+- 在 bounded-only 逐序列 oracle 下，K4 的 AbsRel 平均 regret 为 2.41%，31/41 段获胜；old K6 为 10.52%，K8 为 16.73%。K4 的最坏 regret 仍达到 59.86%，主要失败场景包括 Sintel `mountain_1` 和 `temple_2`，因此必须继续做冻结后的真实长序列验证，而不能宣称所有序列占优。
+
+### Stage 4B-X：跨任务角色与 claim audit
+
+本部分不运行模型，也不修改 selector。脚本直接汇总 Stage 4B-VD、Stage 3.3/3.7 pose、Stage 3.7 逐序列 reconstruction archive、Stage 3.6B 长序列 gate 和 Stage 4A 候选资格：
+
+```bash
+python scripts/summarize_stage4b_cross_task.py
+```
+
+不需要 GPU 或 Slurm，因此根目录 `run.sh` 保持不变。输出为：
+
+- `stage4b_cross_task_summary.csv`：40 个核心任务—数据集—方法单元，加 1 条 K8 长序列平台证据。
+- `stage4b_cross_task_regret.csv`：VideoDepth、pose、静态/动态 reconstruction 的 bounded-only 逐单元、数据集、任务和跨任务 regret。
+- `stage4b_method_roles.csv`：冻结后的四方法角色及其资格、胜场、regret 和资源证据。
+- `stage4b_claim_audit.csv`：论文中允许/禁止使用的措辞，以及进入 Stage 4C 的 gate。
+
+证据粒度必须明确区分：VideoDepth 和 reconstruction 使用共同覆盖的逐序列结果；当前 pose 本地只保存完整数据集汇总，因此 pose 行标记为 `dataset_aggregate`，不得伪称逐序列显著性。跨任务核心覆盖固定为：
+
+1. VideoDepth：Bonn、KITTI、Sintel。
+2. Pose：ScanNet、Sintel、TUM。
+3. 静态 reconstruction：7-Scenes、NRGBD、ETH3D。
+4. 动态 reconstruction：TUM。
+5. 共 10 个 benchmark ×4 方法 = 40 个核心汇总单元；缺少任一单元即停止角色冻结。
+
+角色决策采用“门槛优先”，不能由事后平均值反向改写：
+
+1. 先应用 Stage 3.7/Stage 4A 的预注册资格；失败者不能竞争统一主方案。
+2. 在 Stage 4A 合格的 bounded 方法中，以 10 个 benchmark 主指标的 bounded-only oracle 胜场决定 primary，宏平均 regret 只作平局处理。
+3. 任务级 Pareto、逐序列 regret 和最坏 regret 用于描述适用范围和备选角色。
+4. 不同任务的 AbsRel、ATE 和 Overall 即使都归一化，也仍是异质指标。跨任务宏平均只能作风险摘要，不能单独作为方法选择 gate。
+
+### Stage 4B-X 决策门槛与结论
+
+进入 Stage 4C 必须同时满足：
+
+1. 40/40 个核心单元覆盖完整，VideoDepth/reconstruction 的方法间序列集合一致。
+2. K4 在全部 10 个 benchmark 上 allocated 均低于 full，且 Stage 4B-VD 三域 Pareto 和 paired claim 审计通过。
+3. Stage 3.6B 1000 帧有界 streaming gate 保持 PASS。
+4. 方法角色不推翻既有 gate：Stage 4A 不合格者只能保留 specialist 身份。
+
+实际结果全部满足：
+
+- K4 和 old K6 是 Stage 4A 唯二合格的 bounded 候选。K4 获得 7/10 个 benchmark 主指标 oracle 胜场，old K6 为 1/10，因此冻结 K4 为 `primary_bounded_deployment`。
+- old K6 在静态 reconstruction 的任务级平均 regret 为 13.40%，低于 K4 的 26.51%，继续冻结为 `robust_bounded_alternative`；这不代表它是 VideoDepth Pareto 方法。
+- temporal K8 获得 2/10 个 benchmark 胜场且 pose 平均 regret 最低，但已经失败 Stage 3.7 geometry 与 Stage 4A KITTI gate，只能冻结为 `long_sequence_pose_specialist`。
+- K8 的朴素跨任务宏平均 regret 为 13.71%，低于 K4 的 15.21% 和 old K6 的 20.18%。该结果作为异质任务汇总的局限如实报告，不能据此把已失败预注册门槛的 K8 提升为统一默认。
+- claim audit 的覆盖、K4 VideoDepth default、K4 cross-task primary、old K6 robust alternative 和 Stage 4C readiness 均为 PASS；K8 specialist 为 `PASS_LIMITED`，DINO 因缺少 K4/K8 同 K 非 DINO 因果对照保持 `LIMITED`。
+
+达成门槛后的动作是只携带 K4、old K6 和 temporal K8 进入 Stage 4C；full cache 作为质量/资源参考运行到成功上限。不得重新搜索 K、temporal bin、DINO 阈值或按 Stage 4C 结果调参。若 Stage 4C 暴露失败，只报告失败域并收缩 claim。
 
 ## Stage 4C：冻结后的未见长序列验证
 
