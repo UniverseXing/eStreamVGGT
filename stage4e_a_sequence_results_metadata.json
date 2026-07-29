@@ -1,0 +1,18 @@
+{
+  "sequences": [
+    "rgbd_dataset_freiburg1_room",
+    "rgbd_dataset_freiburg2_desk",
+    "rgbd_dataset_freiburg3_long_office_household"
+  ],
+  "lengths": [
+    250,
+    500,
+    1000
+  ],
+  "variants": [
+    "direct_k4_geometry_k8_pose",
+    "component_k4_translation_k8_rotation"
+  ],
+  "fusion_uses_ground_truth": false,
+  "resource_values_are_online_measurements": false
+}

@@ -797,7 +797,7 @@ sbatch run.sh
 该作业是 CPU 作业，读取服务器上既有的：
 
 ```text
-eval_results/stage4c_tum_long/<method>/<sequence>/<frames>/trajectories/<sequence>.npz
+eval_results/stage4c_tum_long/<method>/<sequence>/<frames>/trajectory.npz
 ```
 
 输出为：

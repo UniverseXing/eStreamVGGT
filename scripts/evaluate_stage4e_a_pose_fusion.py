@@ -97,22 +97,29 @@ def trajectory_path(
     results_root, method, sequence, frames, recorded_result_dir=None
 ):
     filename = sequence.replace("/", "_") + ".npz"
-    candidates = []
+    run_dirs = []
     if recorded_result_dir:
-        candidates.append(
-            osp.join(recorded_result_dir, "trajectories", filename)
-        )
-    candidates.append(
+        run_dirs.append(recorded_result_dir)
+    run_dirs.append(
         osp.join(
             results_root,
             method,
             sequence,
             str(frames),
-            "trajectories",
-            filename,
         )
     )
-    return next((path for path in candidates if osp.isfile(path)), candidates[-1])
+    candidates = []
+    for run_dir in run_dirs:
+        # Stage 4C's dedicated evaluator writes trajectory.npz directly in
+        # each run directory. Keep the generic long-sequence layout as a
+        # fallback for results produced by older evaluators.
+        candidates.extend(
+            (
+                osp.join(run_dir, "trajectory.npz"),
+                osp.join(run_dir, "trajectories", filename),
+            )
+        )
+    return next((path for path in candidates if osp.isfile(path)), candidates[0])
 
 
 def load_trajectory(path):
@@ -481,6 +488,12 @@ def main():
         json.dump(metadata, handle, indent=2)
     print(f"Wrote {len(output_rows)} Stage 4E-A rows to {args.output}")
     print(f"Wrote Stage 4E-A summary to {args.summary_output}")
+    failures = [row for row in output_rows if row["status"] != "ok"]
+    if failures:
+        raise RuntimeError(
+            f"{len(failures)}/{len(output_rows)} Stage 4E-A rows failed; "
+            f"inspect {args.output}"
+        )
 
 
 if __name__ == "__main__":
