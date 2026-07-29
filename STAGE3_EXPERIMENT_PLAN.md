@@ -771,11 +771,77 @@ env STREAMVGGT_STAGE4C_METHODS="stage3_2_k4" \
 - 12 个序列—长度单元中，K4 获得 8 个 ATE 最优；temporal K8 则获得 11 个 translation RPE 最优和 11 个 rotation RPE 最优。该结果说明 K4 更擅长全局轨迹位置，K8 更擅长局部运动，但直接用 K8 pose 并不自动保留 K4 的 ATE。
 - 因此保留 K4 的 `primary_bounded_deployment` 系统角色，但必须将真实超长序列 pose 写成明确限制；temporal K8 仍只作为 pose specialist。为判断两种优势是否能在不重新训练、不调 selector 的情况下组合，先插入 Stage 4E-A 的小型离线筛查；Stage 4D 暂不扩展新实验。
 
-## Stage 4D：定性结果、失败分析与论文资产（待 Stage 4E-A 决策）
+## Stage 4D：冻结后的论文资产与失败分析（当前阶段）
 
-固定选择成功与失败场景，生成点云、depth error、retained-frame 时间线和 memory/quality 曲线。重点包括 K8 成功的 7-Scenes/ETH3D、失败的 `grey_white_room`、`walking_halfsphere`、`sitting_rpy`，以及 K8 逆转成功的 `walking_rpy`、`staircase`。最终同步生成主表、消融表、运行稳定性表和可复现实验清单。
+Stage 4E-A 已排除朴素 K4/K8 输出融合，因此本阶段回到论文收敛，不再运行模型、不新增候选、不修改 selector。Stage 4D 是 CPU-only 的确定性资产流水线：把 Stage 4A/B 的跨域和统计结果、Stage 4C 的未见长序列轨迹/资源、Stage 4E-A 的负结果统一转换为论文表格、矢量图、案例审计和来源哈希。
 
-## Stage 4E-A：K4/K8 离线可组合性筛查（当前阶段）
+核心输入固定为：
+
+1. `stage4b_cross_task_summary.csv` 的 41 行（40 个核心 task-dataset-method 单元加 K8 长序列平台证据）、`stage4b_cross_task_regret.csv` 的 81 行和四个冻结角色。
+2. Stage 4A/B 的 12 个 VideoDepth Pareto 单元及 paired significance；不能把 Bonn/Sintel 的 `NO_CLEAR_DIFFERENCE` 改写成显著提升。
+3. Stage 4C 的 36 个成功 bounded run、3 个 full-cache 100 帧成功和 3 个约 195 帧 OOM，以及服务器上对应的 `trajectory.npz`、`memory_trace.json`。
+4. Stage 4E-A 的 18 个成功离线组合单元和“两个候选均不进入 Stage 4E-B”的冻结决定。
+
+### 固定案例与资产
+
+长序列 trajectory 案例在看图前按指标冻结，不再人工挑最好看的结果：
+
+1. `freiburg1_room/250`：K8 同时改善 K4 的 ATE 与局部 RPE，作为 specialist 成功案例。
+2. `freiburg2_desk/500`：K4 ATE 更好、K8 局部 RPE 更好，展示全局/局部目标分离。
+3. `freiburg3_long_office_household/500`：K8 rotation/translation RPE 更好但 ATE 为 K4 的 2.34 倍，作为全局漂移失败案例。
+4. `freiburg3_long_office_household/1000`：固定画 K4/old-K6/K8 retained-frame timeline，展示三种有界 cache 的实际历史覆盖。
+
+正式生成：
+
+- 表格：VideoDepth 主表、跨任务长表、冻结角色表、长序列 pose/资源表；CSV 用于复核，LaTeX 用于论文。
+- 图：三域 VideoDepth quality-memory Pareto、跨任务 regret、Stage 4C 显存/FPS scaling、三序列 pose-vs-length、三个冻结 trajectory 案例、1000 帧 cache timeline、Stage 4E-A 融合失败比值。
+- 审计：`stage4d_results.csv` 固定允许/禁止措辞，`stage4d_case_audit.csv` 记录案例选择依据，source/asset manifest 记录输入和产物 SHA256。
+
+正式运行只使用根目录入口：
+
+```bash
+sbatch run.sh
+```
+
+这是 4 CPU、16 GiB、1 小时的无 GPU 作业。默认从：
+
+```text
+eval_results/stage4c_tum_long/<method>/<sequence>/<frames>/
+```
+
+读取 Stage 4C 的 `trajectory.npz` 和 `memory_trace.json`。脚本也优先接受 `stage4c_results.csv` 中保存的绝对 `result_dir`，因而兼容 `/projects/streamVGGT` 与真实挂载路径不同的情况。
+
+本地没有 Stage 4C server artifacts 时，只能做表格和五组定量图的 partial smoke；该模式明确跳过正式 gate，不能作为 Stage 4D 完成结果：
+
+```bash
+env STREAMVGGT_STAGE4D_ALLOW_MISSING_SERVER_ASSETS=1 \
+    STREAMVGGT_STAGE4D_OUTPUT_ROOT="$PWD/paper_assets/stage4d_smoke" \
+    bash run_stage4d.sh
+```
+
+正式输出为：
+
+- `stage4d_results.csv`：最终结论和 claim 边界。
+- `stage4d_case_audit.csv`：四个预注册案例及 source availability。
+- `stage4d_asset_manifest.csv`：每个论文资产的相对路径、大小和 SHA256。
+- `stage4d_gate.csv`：来源覆盖、冻结角色、E-A stop decision、案例和文件哈希 gate。
+- `paper_assets/stage4d/tables/`、`paper_assets/stage4d/figures/`：可直接复核的 CSV/LaTeX 与 PNG/PDF。
+- `stage4d_paper_assets.tar.gz`：上述正式资产的便携归档。
+
+### Stage 4D 完成门槛
+
+1. 来源覆盖必须精确为 cross-task 41 行、角色 4 行、Stage 4C 42 行、Stage 4E-A 18 行，且 E-A 18 行全部成功。
+2. 角色必须保持 `full=reference`、`K4=primary`、`old K6=robust alternative`、`temporal K8=pose specialist`，不能在制图阶段重新排名。
+3. Stage 4C 必须保持 36/36 bounded 成功以及 full cache 3 成功/3 OOM 的原始证据；不得删除 OOM 点来美化曲线。
+4. 必须重新确认 direct 的最坏 ATE ratio >1.10、component 的最坏 translation-RPE ratio >1.10，确保 Stage 4E-B 仍被停止。
+5. 四个固定案例必须全部找到服务器 source；三个 trajectory 案例要求 K4/K6/K8 共 9 条轨迹，timeline 要求三组 1000 帧 trace。
+6. 22 个核心 CSV/LaTeX/PNG/PDF/manifest 资产必须存在、非空，manifest 中的 SHA256 必须逐文件复算一致。
+
+全部满足时决定为 `PASS_PAPER_ASSETS_FROZEN`，随后冻结实验仓库，进入论文写作、图注、related work 和投稿格式整理。失败时只修复缺失路径、制图或表格格式；不得补跑新模型、重选案例、调 K/DINO/bank 或放松既有质量门槛。
+
+早期 reconstruction 正式 run 只有在显式启用 `--save-artifacts` 时才保存对齐点云。原始点云不存在时，不为生成“漂亮图”重跑并改变现有完成门槛；若服务器恰好保留 `.ply/.npy`，可在核心 gate 通过后作为 Stage 4D supplementary qualitative export，且必须沿用预注册的成功/失败序列而非再次择优。
+
+## Stage 4E-A：K4/K8 离线可组合性筛查（已完成）
 
 本阶段只回答一个窄问题：能否让 K4 保留较好的全局位置/geometry，同时使用 temporal K8 较好的局部姿态信息。它不是新的模型主实验，也不声称已经实现在线双分支；直接复用 Stage 4C 保存的 K4/K8 trajectory，不重新运行网络、不使用 GPU、不调整 K、DINO 或 temporal bank。
 
@@ -834,4 +900,12 @@ env STREAMVGGT_STAGE4E_A_SEQUENCES="rgbd_dataset_freiburg1_room" \
 - 两者都通过：优先实现 component 版本，因为它保留 K4 的全局位置；direct 仅作消融。
 - 两者任一质量门槛失败，不得修改融合权重、按序列路由或用 held-out 结果调参；两个候选都失败则停止 Stage 4E 方法增强，直接进入 Stage 4D，以 K4 主方案、old K6 robust alternative、K8 pose specialist 的现有结论投稿。
 
-若 Stage 4E-B 在线实测通过，Stage 4E-C 才考虑不含数据集名称的在线路由和 leave-one-dataset-out 验证，并沿用此前预注册的增强门槛：相对 old K6 平均 normalized regret 至少下降 20%、最大 regret 不超过 60.1%。未达到就不把路由写成最终方法。
+预注册时另规定：只有 Stage 4E-B 在线实测通过，Stage 4E-C 才考虑不含数据集名称的在线路由和 leave-one-dataset-out 验证，并要求相对 old K6 平均 normalized regret 至少下降 20%、最大 regret 不超过 60.1%。实际 A 阶段已双双失败，因此该分支不再触发。
+
+### Stage 4E-A 结论
+
+- 两个候选均完成 9/9 单元，K4/K8 trajectory 重算与 Stage 4C 的最大绝对误差为 0；元数据确认融合不使用 ground truth。
+- `direct_k4_geometry_k8_pose` 完整复现 K8 的局部 RPE，但只有 4/9 单元满足 ATE ≤K4×1.10，`freiburg3_long_office_household/500` 最坏达到 2.3396 倍，决定为 `FAIL: ate`。
+- `component_k4_translation_k8_rotation` 在 9/9 单元保留 K4 ATE、复现 K8 rotation RPE，但只有 1/9 单元保留 K8 translation RPE，最坏达到 K8 的 3.7725 倍，决定为 `FAIL: translation_rpe`。这证明 camera centers 与 rotations 不能作为互不相关的矩阵分量拼接来获得两侧优势。
+- 顺序 peak proxy 8782.88 MiB、一阶在线 peak projection 9159.38 MiB、最低 dual-FPS proxy 4.90 均通过筛查，但元数据明确标记它们不是在线实测；资源可行不能覆盖质量失败。
+- 按预注册动作取消 Stage 4E-B/4E-C，不修改融合权重、不增加按序列路由、不在三条 held-out TUM 上继续开发。该负结果转入 Stage 4D 失败分析，最终方法角色保持 K4 primary、old K6 robust alternative、K8 pose specialist。
