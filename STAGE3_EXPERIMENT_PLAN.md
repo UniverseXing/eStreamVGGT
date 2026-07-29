@@ -695,7 +695,7 @@ python scripts/summarize_stage4b_cross_task.py
 
 达成门槛后的动作是只携带 K4、old K6 和 temporal K8 进入 Stage 4C；full cache 作为质量/资源参考运行到成功上限。不得重新搜索 K、temporal bin、DINO 阈值或按 Stage 4C 结果调参。若 Stage 4C 暴露失败，只报告失败域并收缩 claim。
 
-## Stage 4C：冻结后的未见长序列验证（当前阶段）
+## Stage 4C：冻结后的未见长序列验证（已完成）
 
 本阶段不再复用参与过 selector 开发或前序回测的 Bonn、7-Scenes test、TUM dynamics 序列，固定使用三条此前未进入本项目实验矩阵的 TUM RGB-D 原始真实长序列：
 
@@ -763,10 +763,75 @@ env STREAMVGGT_STAGE4C_METHODS="stage3_2_k4" \
 - 任一方法只因 pose 2×保护失败：其内存有界结论仍可单独报告，质量 claim 标记为 limitation。
 - 任何结果都不得触发新的 K、bank、DINO threshold、序列抽样或按 held-out 数据调参；失败只用于收缩适用范围。
 
-## Stage 4D：定性结果、失败分析与论文资产
+### Stage 4C 结论
+
+- 三个 bounded 方法全部完成 3 序列 ×4 长度，共 36/36 个 run；均保持 streaming input、sink output 和冻结后的 cache 配置。full cache 三条序列都只成功到 100 帧，并在请求 250 帧、实际处理到约 195 帧时 OOM。
+- K4、old K6、temporal K8 的最大 peak allocated 分别为 8026.32、8406.07、8782.88 MiB；每个方法从 500 到 1000 帧的 GPU 增量都为 0 MiB，CPU RSS 最大增量分别仅 0.68、1.66、4.35 MiB。因此三组的系统有界性通过，且明显区别于 full cache。
+- 三组的正式候选 gate 都只因 pose catastrophe 失败，而不是覆盖、显存或流式语义失败。K4/old K6 在 `freiburg1_room/250` 的 rotation RPE 分别达到 bounded oracle 的 13.36/10.91 倍；temporal K8 在 `freiburg3_long_office_household/500` 的 ATE 达到 oracle 的 2.34 倍。
+- 12 个序列—长度单元中，K4 获得 8 个 ATE 最优；temporal K8 则获得 11 个 translation RPE 最优和 11 个 rotation RPE 最优。该结果说明 K4 更擅长全局轨迹位置，K8 更擅长局部运动，但直接用 K8 pose 并不自动保留 K4 的 ATE。
+- 因此保留 K4 的 `primary_bounded_deployment` 系统角色，但必须将真实超长序列 pose 写成明确限制；temporal K8 仍只作为 pose specialist。为判断两种优势是否能在不重新训练、不调 selector 的情况下组合，先插入 Stage 4E-A 的小型离线筛查；Stage 4D 暂不扩展新实验。
+
+## Stage 4D：定性结果、失败分析与论文资产（待 Stage 4E-A 决策）
 
 固定选择成功与失败场景，生成点云、depth error、retained-frame 时间线和 memory/quality 曲线。重点包括 K8 成功的 7-Scenes/ETH3D、失败的 `grey_white_room`、`walking_halfsphere`、`sitting_rpy`，以及 K8 逆转成功的 `walking_rpy`、`staircase`。最终同步生成主表、消融表、运行稳定性表和可复现实验清单。
 
-## Stage 4E：可选二区增强，不自动触发
+## Stage 4E-A：K4/K8 离线可组合性筛查（当前阶段）
 
-只有 Stage 4A–D 完整后仍决定冲击更强方法创新，才研究最大预算不超过 K8 的在线策略路由；专家仅限现有 K4/old-K6/temporal-K8，不再创造手工 K。必须使用不含数据集名称的在线信号和 leave-one-dataset-out 验证，并预先要求相对 old K6 平均 normalized regret 至少下降 20%、最大 regret 不超过 60.1%。达不到即停止，不影响以 bounded-cache family 和完整系统证据投稿。
+本阶段只回答一个窄问题：能否让 K4 保留较好的全局位置/geometry，同时使用 temporal K8 较好的局部姿态信息。它不是新的模型主实验，也不声称已经实现在线双分支；直接复用 Stage 4C 保存的 K4/K8 trajectory，不重新运行网络、不使用 GPU、不调整 K、DINO 或 temporal bank。
+
+实验固定使用 Stage 4C 的三条 TUM 长序列和 250/500/1000 三个 prefix，共 9 个序列—长度单元。100 帧只用于 full-cache 吞吐参考，不放进融合质量门槛。先重新评价保存的 K4/K8 trajectory，并要求与 `stage4c_results.csv` 的 ATE/RPE 数值误差不超过 `1e-5`，以排除拿错轨迹或 evaluator 漂移。
+
+固定比较两个无需训练、无需 ground truth 的候选：
+
+1. `direct_k4_geometry_k8_pose`：geometry/depth 角色仍归 K4，但最终相机 trajectory 直接采用 K8。它的 pose 指标应精确复现 K8，是最简单的上下界和一致性检查；Stage 4E-A 尚不重新生成 K4 点云，因此不能用这一行声称完成了跨 head 的 3D 一致性验证。
+2. `component_k4_translation_k8_rotation`：保留 K4 camera centers/translation，使用 K8 rotation；只用两条预测轨迹第一帧的相对旋转把 K8 orientation 放入 K4 初始 gauge，全程不看 ground truth、不学习融合权重。它用于直接测试“K4 全局位置 + K8 局部旋转”是否真的可组合。
+
+这里不尝试只给 K4 camera head 扩大 cache。Stage 3.5B 已显示 K4 coupled 与“K4 aggregator + full camera cache”的 ATE 分别为 0.6666/0.6668、rotation RPE 为 41.67°/41.24°，说明主要上下文瓶颈不在 camera KV。若后续在线实现，必须明确维护两套 aggregator state；不能把 camera-only cache 冒充 K8 pose 分支。
+
+集群正式运行只提交根目录入口：
+
+```bash
+sbatch run.sh
+```
+
+该作业是 CPU 作业，读取服务器上既有的：
+
+```text
+eval_results/stage4c_tum_long/<method>/<sequence>/<frames>/trajectories/<sequence>.npz
+```
+
+输出为：
+
+- `stage4e_a_results.csv`：两候选的均值、最坏 ratio 和资源代理摘要。
+- `stage4e_a_sequence_results.csv`：两候选 ×9 单元的 K4/K8 基线、融合后 ATE/RPE，以及资源代理量。
+- `stage4e_a_gate.csv`：逐候选的质量、资源代理和 Stage 4E-B 资格。
+- `eval_results/stage4e_a_pose_fusion/`：融合后 trajectory，供失败定位和后续实现核对。
+
+若只想在服务器上检查一个单元，可在已激活 `StreamVGGT` 环境后直接运行，不能把该结果作为正式 gate：
+
+```bash
+env STREAMVGGT_STAGE4E_A_SEQUENCES="rgbd_dataset_freiburg1_room" \
+    STREAMVGGT_STAGE4E_A_LENGTHS="250" \
+    bash run_stage4e_a.sh
+```
+
+### Stage 4E-A 决策门槛
+
+每个候选独立判定，必须同时满足：
+
+1. 9/9 个单元成功，K4/K8 重算指标与 Stage 4C 的最大绝对误差 ≤`1e-5`。
+2. 每个单元的融合 ATE ≤同单元 K4 ATE ×1.10；不能用跨序列平均掩盖一个长序列崩溃。
+3. 每个单元的 translation RPE 和 rotation RPE 分别 ≤同单元 K8 对应指标 ×1.10。
+4. 两次 Stage 4C 推理顺序执行的 peak proxy，以及 `K8 peak + K4 aggregator KV` 的一阶在线 peak projection 都必须 <12288 MiB。
+5. 每个单元按 `K4 inference_sec + K8 inference_sec` 得到的 dual-FPS proxy，都必须高于三条 full-cache 100 帧 run 的平均 FPS。
+
+第 4、5 项只用于决定是否值得实现。它们来自两次既有运行的代理计算，不是在线双分支的真实显存/吞吐结果，也不能进入论文系统性能主表。
+
+### 达成门槛后的动作
+
+- `component_k4_translation_k8_rotation` 通过：进入 Stage 4E-B，只实现这一种冻结的双 aggregator 在线分支，并在相同三序列上实测显存/吞吐/pose；随后补最小 reconstruction consistency 回测。Stage 4E-B 必须重新满足 <12288 MiB、长度平台和正式质量门槛，才能进入最终方法。
+- 只有 `direct_k4_geometry_k8_pose` 通过：Stage 4E-B 走更简单的 K4 geometry + K8 pose 输出，但必须优先验证相机—深度/点云坐标一致性；若 reconstruction 退化则立即停止。
+- 两者都通过：优先实现 component 版本，因为它保留 K4 的全局位置；direct 仅作消融。
+- 两者任一质量门槛失败，不得修改融合权重、按序列路由或用 held-out 结果调参；两个候选都失败则停止 Stage 4E 方法增强，直接进入 Stage 4D，以 K4 主方案、old K6 robust alternative、K8 pose specialist 的现有结论投稿。
+
+若 Stage 4E-B 在线实测通过，Stage 4E-C 才考虑不含数据集名称的在线路由和 leave-one-dataset-out 验证，并沿用此前预注册的增强门槛：相对 old K6 平均 normalized regret 至少下降 20%、最大 regret 不超过 60.1%。未达到就不把路由写成最终方法。
