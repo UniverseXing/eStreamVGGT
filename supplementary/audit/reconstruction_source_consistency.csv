@@ -1,0 +1,4 @@
+task,dataset,method,field,sequence_json_value,final_summary_csv_value,resolution
+dynamic,tum,K8,total_inference_sec,37.03117617126554,38.84561528894119,aggregate_and_sequence_use_json; old_summary_csv_timing_not_used
+dynamic,tum,K8,fps_inference,10.801709298944203,10.297172461414828,aggregate_and_sequence_use_json; old_summary_csv_timing_not_used
+dynamic,tum,K8,mean_final_frame_ms,90.4088716506958,91.78569221496582,aggregate_and_sequence_use_json; old_summary_csv_timing_not_used

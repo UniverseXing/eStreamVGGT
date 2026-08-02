@@ -22,6 +22,19 @@ class StreamVGGTOutput(ModelOutput):
     frame_inference_ms: Optional[List[float]] = None
 
 
+_CACHE_POLICY_ALIASES = {
+    # Canonical paper-facing names. The legacy implementation names remain
+    # accepted so existing experiment manifests stay reproducible.
+    "anchor_recent_dino_diverse_k4": "anchor_recent_dino_diverse_2old_1recent",
+    "anchor_recent_dino_diverse_k6": "anchor_recent_dino_diverse",
+    "anchor_recent_dino_diverse_k8": "temporal_binned_dino_k8",
+}
+
+
+def _canonical_cache_policy(policy):
+    return _CACHE_POLICY_ALIASES.get(policy, policy)
+
+
 def _tensor_tree_nbytes(value, seen_storages=None):
     """Count unique tensor storage bytes without synchronizing tensor values."""
     if seen_storages is None:
@@ -77,6 +90,7 @@ def _split_old_recent(num_cached_frames, max_cache_frames):
 
 
 def _old_recent_layout(num_cached_frames, max_cache_frames, policy):
+    policy = _canonical_cache_policy(policy)
     if policy == "anchor_recent_dino_diverse_2old_1recent":
         if max_cache_frames != 4:
             raise ValueError(
@@ -198,6 +212,7 @@ def _temporal_bank_frame_ids(frame_ids):
 
 
 def _candidate_similarity_log(frame_features, frame_ids, max_cache_frames, policy):
+    policy = _canonical_cache_policy(policy)
     if frame_features is None:
         return []
     if policy == "temporal_binned_dino_k8":
@@ -246,6 +261,12 @@ def _cache_keep_frame_indices(
     adaptive_similarity_threshold=0.99,
     adaptive_min_gap=8,
 ):
+    requested_policy = policy
+    policy = _canonical_cache_policy(policy)
+    if requested_policy == "anchor_recent_dino_diverse_k6" and max_cache_frames != 6:
+        raise ValueError(
+            "anchor_recent_dino_diverse_k6 requires cache_window_size=6"
+        )
     if (
         policy in (
             "anchor_recent_dino_diverse_2old_1recent",
@@ -500,8 +521,16 @@ class StreamVGGT(nn.Module, PyTorchModelHubMixin):
         retain_outputs: bool = True,
         retain_views: bool = True,
     ):
+        canonical_cache_policy = _canonical_cache_policy(cache_policy)
         if (
-            cache_policy in (
+            cache_policy == "anchor_recent_dino_diverse_k6"
+            and cache_window_size != 6
+        ):
+            raise ValueError(
+                "anchor_recent_dino_diverse_k6 requires cache_window_size=6"
+            )
+        if (
+            canonical_cache_policy in (
                 "anchor_recent_dino_diverse_2old_1recent",
                 "anchor_stable_adaptive_recent",
             )
@@ -511,13 +540,16 @@ class StreamVGGT(nn.Module, PyTorchModelHubMixin):
                 f"{cache_policy} requires cache_window_size=4"
             )
         if (
-            cache_policy == "anchor_recent_dino_diverse_1old_3recent"
+            canonical_cache_policy == "anchor_recent_dino_diverse_1old_3recent"
             and cache_window_size != 6
         ):
             raise ValueError(
                 f"{cache_policy} requires cache_window_size=6"
             )
-        if cache_policy == "temporal_binned_dino_k8" and cache_window_size != 8:
+        if (
+            canonical_cache_policy == "temporal_binned_dino_k8"
+            and cache_window_size != 8
+        ):
             raise ValueError(f"{cache_policy} requires cache_window_size=8")
         if camera_cache_policy is None and camera_cache_window_size is not None:
             raise ValueError(
@@ -578,8 +610,8 @@ class StreamVGGT(nn.Module, PyTorchModelHubMixin):
                 if return_memory_trace
                 else 0
             )
-            use_rgb_features = cache_policy == "anchor_recent_image_diff"
-            use_dino_features = cache_policy in (
+            use_rgb_features = canonical_cache_policy == "anchor_recent_image_diff"
+            use_dino_features = canonical_cache_policy in (
                 "anchor_recent_dino_diverse",
                 "dino_diverse",
                 "anchor_recent_dino_diverse_2old_1recent",
@@ -778,7 +810,7 @@ class StreamVGGT(nn.Module, PyTorchModelHubMixin):
                         "camera_retained_frame_ids": camera_cache_frame_ids.tolist(),
                         "temporal_bank_frame_ids": (
                             _temporal_bank_frame_ids(cache_frame_ids)
-                            if cache_policy == "temporal_binned_dino_k8"
+                            if canonical_cache_policy == "temporal_binned_dino_k8"
                             else {}
                         ),
                         "aggregator_kv_mib": _tensor_tree_nbytes(past_key_values) / (1024 ** 2),

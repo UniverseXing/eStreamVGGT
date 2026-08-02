@@ -9,6 +9,8 @@ import os
 
 
 FIELDS = (
+    "run_scope",
+    "run_id",
     "method",
     "status",
     "error",
@@ -84,7 +86,50 @@ def main():
         "--results-root", default="eval_results/stage4c_tum_long"
     )
     parser.add_argument("--output", default="stage4c_results.csv")
+    parser.add_argument(
+        "--include-cell",
+        action="append",
+        default=[],
+        metavar="METHOD|SEQUENCE|FRAMES",
+        help="include exactly one planned cell; may be repeated",
+    )
+    parser.add_argument(
+        "--expected-run-id",
+        action="append",
+        default=[],
+        metavar="METHOD|SEQUENCE|FRAMES|RUN_ID",
+        help="require the caller-generated run identifier for a planned cell",
+    )
+    parser.add_argument("--require-consistent-provenance", action="store_true")
+    parser.add_argument("--require-pose-success", action="store_true")
+    parser.add_argument(
+        "--expected-run-scope", choices=("frozen", "debug_subset")
+    )
     args = parser.parse_args()
+
+    included = set()
+    for value in args.include_cell:
+        fields = value.split("|")
+        if len(fields) != 3:
+            raise ValueError(f"invalid --include-cell value: {value!r}")
+        key = (fields[0], fields[1], int(fields[2]))
+        if key in included:
+            raise ValueError(f"duplicate --include-cell value: {value!r}")
+        included.add(key)
+
+    expected_run_ids = {}
+    for value in args.expected_run_id:
+        fields = value.split("|", 3)
+        if len(fields) != 4 or not fields[3]:
+            raise ValueError(f"invalid --expected-run-id value: {value!r}")
+        key = (fields[0], fields[1], int(fields[2]))
+        if key in expected_run_ids:
+            raise ValueError(f"duplicate --expected-run-id cell: {key}")
+        expected_run_ids[key] = fields[3]
+    if expected_run_ids and set(expected_run_ids) != included:
+        raise ValueError(
+            "--expected-run-id cells must exactly match --include-cell cells"
+        )
 
     paths = sorted(
         glob.glob(
@@ -105,10 +150,51 @@ def main():
             payload.get("sequence"),
             int(payload.get("num_frames", 0)),
         )
+        if included and key not in included:
+            continue
+        expected_run_id = expected_run_ids.get(key)
+        if expected_run_id is not None and payload.get("run_id") != expected_run_id:
+            raise RuntimeError(
+                f"stale Stage 4C result for {key}: expected run_id "
+                f"{expected_run_id!r}, found {payload.get('run_id')!r}"
+            )
         if key in seen:
             raise ValueError(f"duplicate Stage 4C result: {key}")
         seen.add(key)
         rows.append(flatten(payload, os.path.dirname(path)))
+    if included and seen != included:
+        raise RuntimeError(
+            "missing planned Stage 4C result(s): "
+            f"{sorted(included - seen)}"
+        )
+    if args.expected_run_scope is not None:
+        mismatched_scope = [
+            (row.get("method"), row.get("sequence"), row.get("num_frames"), row.get("run_scope"))
+            for row in rows
+            if row.get("run_scope") != args.expected_run_scope
+        ]
+        if mismatched_scope:
+            raise RuntimeError(
+                f"Stage 4C run_scope mismatch; expected {args.expected_run_scope}: "
+                f"{mismatched_scope}"
+            )
+    if args.require_consistent_provenance:
+        for field in ("gpu_name", "torch_version", "cuda_version", "python_version"):
+            values = {row.get(field) for row in rows}
+            if len(values) != 1 or next(iter(values), None) in (None, ""):
+                raise RuntimeError(
+                    f"inconsistent Stage 4C {field}: {sorted(values, key=str)}"
+                )
+    if args.require_pose_success:
+        failed_pose = [
+            (row.get("method"), row.get("sequence"), row.get("num_frames"))
+            for row in rows
+            if row.get("status") == "ok" and row.get("pose_status") != "ok"
+        ]
+        if failed_pose:
+            raise RuntimeError(
+                f"successful Stage 4C inference with failed pose metric: {failed_pose}"
+            )
     rows.sort(
         key=lambda row: (
             row["method"],

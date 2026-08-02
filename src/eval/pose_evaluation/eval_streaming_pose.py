@@ -1,6 +1,7 @@
 import argparse
 import json
 import os
+import platform
 import sys
 import time
 import traceback
@@ -85,7 +86,37 @@ def main():
     previous_results = []
     if args.resume and os.path.isfile(metrics_path):
         with open(metrics_path) as handle:
-            previous_results = json.load(handle).get("sequences", [])
+            previous_payload = json.load(handle)
+        previous_summary = previous_payload.get("summary", {})
+        expected_resume_metadata = {
+            "dataset": args.dataset,
+            "cache_window_size": args.cache_window,
+            "cache_policy": "full_cache" if args.cache_window is None else args.cache_policy,
+            "gpu_name": torch.cuda.get_device_name(device),
+            "torch_version": str(torch.__version__),
+            "cuda_version": torch.version.cuda or "",
+            "python_version": platform.python_version(),
+            "input_size": args.size,
+            "stride": args.stride,
+            "requested_max_frames": args.max_frames,
+        }
+        mismatches = {
+            key: (previous_summary.get(key), expected)
+            for key, expected in expected_resume_metadata.items()
+            if previous_summary.get(key) != expected
+        }
+        if mismatches:
+            details = ", ".join(
+                f"{key}: existing={observed!r}, current={expected!r}"
+                for key, (observed, expected) in mismatches.items()
+            )
+            raise RuntimeError(
+                "cannot resume pose results produced with different or missing "
+                f"configuration/provenance ({details}); rerun without --resume"
+            )
+        previous_results = previous_payload.get("sequences", [])
+        if not isinstance(previous_results, list):
+            raise RuntimeError(f"invalid existing sequence list in {metrics_path}")
         print(f"Loaded {len(previous_results)} existing sequence results from {metrics_path}")
 
     sequence_results = []
@@ -193,6 +224,15 @@ def main():
         "dataset": args.dataset,
         "cache_window_size": args.cache_window,
         "cache_policy": "full_cache" if args.cache_window is None else args.cache_policy,
+        "gpu_name": torch.cuda.get_device_name(device),
+        "torch_version": str(torch.__version__),
+        "cuda_version": torch.version.cuda or "",
+        "python_version": platform.python_version(),
+        "slurm_job_id": os.environ.get("SLURM_JOB_ID", ""),
+        "hostname": platform.node(),
+        "input_size": args.size,
+        "stride": args.stride,
+        "requested_max_frames": args.max_frames,
         "num_sequences": len(sequence_results),
         "num_successful": len(successful),
         "num_failed": len(failed),

@@ -2,6 +2,7 @@ import argparse
 import json
 import os
 import os.path as osp
+import platform
 import sys
 import time
 import traceback
@@ -572,6 +573,17 @@ def main(args):
     }
     payload = {
         "model_name": args.model_name,
+        "gpu_name": torch.cuda.get_device_name(device),
+        "torch_version": str(torch.__version__),
+        "cuda_version": torch.version.cuda or "",
+        "python_version": platform.python_version(),
+        "slurm_job_id": os.environ.get("SLURM_JOB_ID"),
+        "hostname": platform.node(),
+        "input_size": args.size,
+        "use_proj": args.use_proj,
+        "max_scenes": args.max_scenes,
+        "max_frames": args.max_frames,
+        "icp_threshold": args.icp_threshold,
         "protocol": args.protocol,
         "sampling_strides": sampling_strides,
         "prefix_frames": sorted(set(args.prefix_frames)),

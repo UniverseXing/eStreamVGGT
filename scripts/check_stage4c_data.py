@@ -2,6 +2,7 @@
 """Check frozen Stage 4C raw TUM RGB-D sequence coverage."""
 
 import argparse
+import math
 import os
 
 
@@ -12,14 +13,17 @@ SEQUENCES = (
 )
 
 
-def read_timestamps(path):
-    values = []
+def read_rows(path):
+    rows = []
     with open(path) as handle:
         for line in handle:
             stripped = line.strip()
             if stripped and not stripped.startswith("#"):
-                values.append(float(stripped.split()[0]))
-    return values
+                fields = stripped.split()
+                rows.append((float(fields[0]), fields[1:]))
+    if not rows:
+        raise ValueError(f"no records in {path}")
+    return rows
 
 
 def association_count(root, sequence, max_difference):
@@ -30,18 +34,34 @@ def association_count(root, sequence, max_difference):
         raise FileNotFoundError(
             f"{sequence}: expected rgb.txt and groundtruth.txt"
         )
-    rgb = read_timestamps(rgb_path)
-    gt = read_timestamps(gt_path)
+    rgb = read_rows(rgb_path)
+    gt = read_rows(gt_path)
+    gt_timestamps = [row[0] for row in gt]
     count = 0
     gt_index = 0
-    for timestamp in rgb:
+    for timestamp, rgb_fields in rgb:
+        if not rgb_fields:
+            raise ValueError(f"{sequence}: RGB row has no image path")
         while (
             gt_index + 1 < len(gt)
-            and abs(gt[gt_index + 1] - timestamp)
-            <= abs(gt[gt_index] - timestamp)
+            and abs(gt_timestamps[gt_index + 1] - timestamp)
+            <= abs(gt_timestamps[gt_index] - timestamp)
         ):
             gt_index += 1
-        if abs(gt[gt_index] - timestamp) <= max_difference:
+        if abs(gt_timestamps[gt_index] - timestamp) <= max_difference:
+            pose_fields = gt[gt_index][1]
+            if len(pose_fields) != 7:
+                raise ValueError(
+                    f"{sequence}: expected 7 pose values, found {len(pose_fields)}"
+                )
+            pose = [float(value) for value in pose_fields]
+            if not all(math.isfinite(value) for value in pose):
+                raise ValueError(f"{sequence}: non-finite ground-truth pose")
+            image_path = os.path.join(sequence_root, rgb_fields[0])
+            if not os.path.isfile(image_path):
+                raise FileNotFoundError(
+                    f"{sequence}: missing associated RGB image {image_path}"
+                )
             count += 1
     return count
 

@@ -15,7 +15,6 @@ trimesh
 tensorboard
 pyglet<2
 viser
-gradio
 lpips
 hydra-core
 h5py
@@ -23,5 +22,3 @@ accelerate
 transformers
 scikit-learn
 gsplat
-evo
-open3d

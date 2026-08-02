@@ -22,6 +22,7 @@ env/
 # Local tool and Gradio state
 .codex/
 .gradio/
+/input_images_*/
 *.pem
 
 # Logs and scheduler output
@@ -30,14 +31,15 @@ env/
 *.err
 slurm-*.out
 
-# CSV and spreadsheet files
+# Local tabular results and spreadsheets
 *.csv
 *.tsv
 *.xls
 *.xlsx
 *.xlsm
 *.ods
-*tar.gz
+*.tar.gz
+*.tgz
 
 # Datasets, checkpoints, and generated results
 /ckpt/
@@ -60,3 +62,15 @@ slurm-*.out
 
 # Locally downloaded papers
 /*.pdf
+
+# Internal manuscript drafts and intermediate paper assets
+/PAPER_*.md
+/paper_assets/
+
+# Curated, release-ready supplementary material is intentionally versioned.
+# Raw source archives remain ignored by the archive rules above.
+!/supplementary/
+!/supplementary/**/
+!/supplementary/**/*.csv
+!/supplementary/**/*.pdf
+!/supplementary/**/README.md

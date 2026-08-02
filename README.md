@@ -1,212 +1,225 @@
-<div align="center">
-<h1>Streaming 4D Visual Geometry Transformer</h1>
-</div>
+# eStreamVGGT
 
-### [Paper](https://arxiv.org/abs/2507.11539)  | [Project Page](https://wzzheng.net/StreamVGGT)  | [Online Demo](https://huggingface.co/spaces/lch01/StreamVGGT)
+**DINO-guided bounded-memory streaming 3D perception built on StreamVGGT**
 
->Streaming 4D Visual Geometry Transformer
+eStreamVGGT is a training-free extension of
+[StreamVGGT](https://github.com/wzzheng/StreamVGGT). It replaces the unbounded
+historical key-value (KV) cache with a small, frame-level cache selected from
+the existing DINO features, couples the retained history of the aggregator and
+camera head, and supports streaming input/output release for long sequences.
 
->Dong Zhuo<sup>\*</sup>, [Wenzhao Zheng](https://wzzheng.net/)<sup>*</sup>$\dagger$,  Jiahe Guo, Yuqi Wu, [Jie Zhou](https://scholar.google.com/citations?user=6a79aPwAAAAJ&hl=en&authuser=1), [Jiwen Lu](http://ivg.au.tsinghua.edu.cn/Jiwen_Lu/)
+This is an independent research extension, not an official release by the
+StreamVGGT authors. The original architecture, checkpoint, paper, project page,
+and demo remain the work of the upstream authors:
 
-<sup>*</sup> Equal contribution. $\dagger$ Project leader.
+- [StreamVGGT paper](https://arxiv.org/abs/2507.11539)
+- [StreamVGGT project page](https://wzzheng.net/StreamVGGT)
+- [StreamVGGT repository](https://github.com/wzzheng/StreamVGGT)
+- [Upstream checkpoint](https://huggingface.co/lch01/StreamVGGT/)
 
+The eStreamVGGT paper and project citation are coming soon.
 
-**StreamVGGT**, a causal transformer architecture for **real-time streaming 4D visual geometry perception** compatiable with LLM-targeted attention mechanism (e.g., [FlashAttention](https://github.com/Dao-AILab/flash-attention)), delivers both fast inference and high-quality 4D reconstruction.
+## What this repository adds
 
-## About eStreamVGGT
+- Fixed-budget DINO-guided cache configurations with 4, 6, or 8 retained frame
+  states.
+- Coupled pruning of aggregator and camera-head KV caches.
+- A streaming-release path that does not retain consumed inputs or dense
+  per-frame outputs.
+- Reproducible evaluation entry points for VideoDepth, camera pose,
+  multi-view reconstruction, and 1000-frame streaming.
+- CSV-only supplementary tables, figures, source hashes, and audit records.
 
-This repository is an experimental extension of the original
-[StreamVGGT](https://github.com/wzzheng/StreamVGGT). It adds bounded-memory
-streaming inference with configurable cache sizes and frame-selection policies,
-along with evaluation scripts for scalability, memory usage, camera pose, video
-depth, and multi-view reconstruction. The original full-cache behavior remains
-available for comparison.
+No additional training or modified checkpoint is required.
 
-> **Work in progress:** Experiments are still ongoing, and the implementation,
-> evaluation settings, and reported results may continue to change.
+## Frozen configurations
 
-## News
+The following names are the public configuration identifiers used by the
+reproduction scripts and generated metadata.
 
-- **[2025/7/18]** [Demo](https://huggingface.co/spaces/lch01/StreamVGGT) and [checkpoints](https://huggingface.co/lch01/StreamVGGT/) released on Hugging Face; demo code is available for local launch.
-- **[2025/7/15]** Paper released on [arXiv](https://arxiv.org/abs/2507.11539).
-- **[2025/7/14]** Release the code for **fine-tuning VGGT**.
-- **[2025/7/13]** Check out [Point3R](https://github.com/YkiWu/Point3R) for another streaming 3D reconstruction work of ours!
-- **[2025/7/13]** Distillation code for VGGT is released.
-- **[2025/7/13]** Inference code with [FlashAttention-2](https://github.com/Dao-AILab/flash-attention) is released.
-- **[2025/7/13]** Training/evaluation code release.
+| Display name | Configuration identifier | Retained frame states | Intended role |
+|---|---|---:|---|
+| Full cache | `full_cache` | Unbounded | Quality/resource reference only |
+| K4 | `anchor_recent_dino_diverse_k4` | 4 | Primary compact configuration |
+| K6 | `anchor_recent_dino_diverse_k6` | 6 | Reconstruction-oriented robust alternative |
+| K8 | `anchor_recent_dino_diverse_k8` | 8 | Long-sequence local-pose specialist |
 
-## Overview
+K4 combines a stable anchor, DINO-diverse historical states, and the current
+context. K6 assigns additional capacity to recent context. Once warmed up, K8
+uses an anchor, long/middle/near temporal landmarks, and four recent frames.
+The value of `K` limits cached frame states, not the total input length.
 
-Given a sequence of images, unlike offline models that require reprocessing the entire sequence and reconstructing the entire scene upon receiving each new image, our StreamVGGT employs temporal
-causal attention and leverages cached memory token to support efficient incremental on-the-fly reconstruction, enabling interative and real-time online applitions.
+## Results snapshot
 
-<img src="./assets/teaser_v2_01.png" alt="overview" style="width: 100%;" />
+The table below reports the frozen VideoDepth results on one NVIDIA RTX 6000
+Ada GPU. AbsRel is lower-is-better; allocated memory is the maximum CUDA memory
+allocated by the run. K6 and K8, all other metrics, sequence-level values, and
+paired statistics are available in [`supplementary/`](supplementary/).
 
-### On-the-Fly Online Reconstruction from Streaming Inputs
+| Dataset | Method | AbsRel ↓ | FPS ↑ | Peak allocated GiB ↓ |
+|---|---|---:|---:|---:|
+| Bonn | Full cache | 0.0746 | 3.08 | 21.13 |
+| Bonn | K4 | 0.0755 | 7.63 | 10.32 |
+| KITTI | Full cache | 0.1726 | 5.99 | 12.43 |
+| KITTI | K4 | 0.1334 | 9.06 | 8.00 |
+| Sintel | Full cache | 0.3232 | 6.87 | 10.30 |
+| Sintel | K4 | 0.3161 | 8.54 | 7.90 |
 
-<img src="./assets/results.png" alt="overview" style="width: 100%;" />
+On three held-out TUM RGB-D sequences, full cache completed the 100-frame runs
+but exhausted GPU memory while processing the requested 250-frame runs at
+about frame 195. K4, K6, and K8 completed every 1000-frame run. Their maximum
+1000-frame allocated peaks were 8026, 8406, and 8783 MiB, respectively, with
+zero additional GPU peak from 500 to 1000 frames. Memory boundedness does not,
+by itself, imply that pose error remains bounded; the pose limitations and
+per-sequence results are reported in the supplementary package.
 
-### Installation
+These resource values are hardware- and software-dependent. Reproduce method
+comparisons on the same GPU and environment rather than comparing isolated
+numbers across machines.
 
-1. Clone StreamVGGT
+## Quick start
+
 ```bash
-git clone https://github.com/wzzheng/StreamVGGT.git
-cd StreamVGGT
-```
-2. Create conda environment
-```bash
+git clone https://github.com/UniverseXing/eStreamVGGT.git
+cd eStreamVGGT
+
 conda create -n StreamVGGT python=3.11 cmake=3.14.0
-conda activate StreamVGGT 
-```
-
-3. Install requirements
-```bash
-pip install -r requirements.txt
+conda activate StreamVGGT
+python -m pip install -r requirements_eval.txt
 conda install 'llvm-openmp<16'
 ```
 
-### Download Checkpoints
-Please download pretrained teacher model from [here](https://huggingface.co/facebook/VGGT-1B/blob/main/model.pt).
-
-The checkpoint of StreamVGGT is also available at both [Hugging Face](https://huggingface.co/lch01/StreamVGGT/) and [Tsinghua cloud](https://cloud.tsinghua.edu.cn/d/d6ad8f36fcd541bcb246/).
-
-
-## Data Preparation
-### Training Datasets
-Our training data includes 14 datasets. Please download the datasets from their official sources and refer to [CUT3R](https://github.com/CUT3R/CUT3R/blob/main/docs/preprocess.md) for processing these datasets.
-
-  - [ARKitScenes](https://github.com/apple/ARKitScenes) 
-  - [BlendedMVS](https://github.com/YoYo000/BlendedMVS)
-  - [CO3Dv2](https://github.com/facebookresearch/co3d)
-  - [MegaDepth](https://www.cs.cornell.edu/projects/megadepth/)
-  - [MVS-Synth](https://phuang17.github.io/DeepMVS/mvs-synth.html)
-  - [ScanNet++](https://kaldir.vc.in.tum.de/scannetpp/) 
-  - [ScanNet](http://www.scan-net.org/ScanNet/)
-  - [Spring](https://spring-benchmark.org/)
-  - [Hypersim](https://github.com/apple/ml-hypersim)
-  - [WildRGB-D](https://github.com/wildrgbd/wildrgbd/)
-  - [WayMo Open dataset](https://github.com/waymo-research/waymo-open-dataset)
-  - [Virtual KITTI 2](https://europe.naverlabs.com/research/computer-vision/proxy-virtual-worlds-vkitti-2/)
-  - [OmniObject3D](https://omniobject3d.github.io/)
-  - [PointOdyssey](https://pointodyssey.com/)
-
-### Evaluation Datasets
-Please refer to [MonST3R](https://github.com/Junyi42/monst3r/blob/main/data/evaluation_script.md) and [Spann3R](https://github.com/HengyiWang/spann3r/blob/main/docs/data_preprocess.md) to prepare Sintel, Bonn, KITTI, NYU-v2, ScanNet, 7scenes and Neural-RGBD datasets.
-
-## Folder Structure
-The overall folder structure should be organized as follows：
-```
-StreamVGGT
-├── ckpt/
-|   ├── model.pt
-|   └── checkpoints.pth
-├── config/
-|   ├── ...
-├── data/
-│   ├── eval/
-|   |   ├── 7scenes
-|   |   ├── bonn
-|   |   ├── kitti
-|   |   ├── neural_rgbd
-|   |   ├── nyu-v2
-|   |   ├── scannetv2
-|   |   └── sintel
-│   ├── train/
-│   │   ├── processed_arkitscenes
-|   |   ├── ...
-└── src/
-    ├── ...
-```
-
-## Finetuning VGGT
-We also provide the following commands to fine-tune VGGT (excluding the track head) if you like. 
-```bash
-cd src/
-NCCL_DEBUG=TRACE TORCH_DISTRIBUTED_DEBUG=DETAIL HYDRA_FULL_ERROR=1 accelerate launch --multi_gpu --main_process_port 26902 ./finetune.py --config-name finetune
-```
-
-## Training StreamVGGT
-We provide the following commands for training.
+Download the original StreamVGGT `checkpoints.pth` from the
+[upstream checkpoint page](https://huggingface.co/lch01/StreamVGGT/) and place
+it at:
 
 ```bash
-cd src/
-NCCL_DEBUG=TRACE TORCH_DISTRIBUTED_DEBUG=DETAIL HYDRA_FULL_ERROR=1 accelerate launch --multi_gpu --main_process_port 26902 ./train.py --config-name train
+hf download lch01/StreamVGGT checkpoints.pth --local-dir ckpt
 ```
 
-## Evaluation
-The evaluation code follows [MonST3R](https://github.com/Junyi42/monst3r/blob/main/data/evaluation_script.md), [CUT3R](https://github.com/CUT3R/CUT3R/blob/main/docs/eval.md) and [VGGT](https://github.com/facebookresearch/vggt).
+Then run the small validation entry point:
 
 ```bash
-cd src/
+bash scripts/reproduce/smoke_test.sh
 ```
-### Monodepth
+
+See [`docs/INSTALLATION.md`](docs/INSTALLATION.md) for the complete environment
+setup and [`docs/DATASETS.md`](docs/DATASETS.md) before running full benchmarks.
+
+## Reproducing the evaluation
+
+The public wrappers are ordinary Bash scripts: they do not contain SLURM
+directives, module commands, user-specific paths, or Conda activation. Activate
+the intended environment before invoking them.
+
+| Entry point | Purpose |
+|---|---|
+| `scripts/reproduce/smoke_test.sh` | Validate imports, checkpoint access, method mappings, and a short inference path |
+| `scripts/reproduce/download_kitti.sh` | Download, prepare, and validate the frozen KITTI VideoDepth protocol |
+| `scripts/reproduce/download_tum_long.sh` | Download and validate the three held-out raw-TUM sequences |
+| `scripts/reproduce/run_video_depth.sh` | Bonn, KITTI, and Sintel VideoDepth evaluation |
+| `scripts/reproduce/run_pose.sh` | Sintel, ScanNet, and TUM camera-pose evaluation |
+| `scripts/reproduce/run_reconstruction.sh` | 7-Scenes, NRGBD, ETH3D, and TUM reconstruction evaluation |
+| `scripts/reproduce/run_long_sequence.sh` | Raw-TUM 100/250/500/1000-frame streaming evaluation |
+| `scripts/reproduce/build_supplementary.sh` | Rebuild supplementary CSV tables and figures from frozen sources |
+| `scripts/reproduce/run_all.sh` | Run the selected evaluation groups in sequence |
+
+For example:
+
 ```bash
-bash eval/monodepth/run.sh 
+bash scripts/reproduce/run_video_depth.sh
+
+# Inspect the commands for one dataset and method without allocating a GPU.
+DRY_RUN=1 \
+DATASETS=bonn \
+METHODS=anchor_recent_dino_diverse_k4 \
+  bash scripts/reproduce/run_video_depth.sh
 ```
 
-Results will be saved in `eval_results/monodepth/${data}_${model_name}/metric.json`.
+The benchmark wrappers evaluate `full_cache`,
+`anchor_recent_dino_diverse_k4`,
+`anchor_recent_dino_diverse_k6`, and
+`anchor_recent_dino_diverse_k8` unless their documented method selection is
+overridden. The smoke test intentionally runs one bounded method. Full details,
+overrides, output files, frozen protocols, and expected failure behavior are in
+[`docs/REPRODUCIBILITY.md`](docs/REPRODUCIBILITY.md).
+By default, inference results are written below `eval_results/reproduce/`.
 
-### VideoDepth
+## Repository layout
+
+```text
+eStreamVGGT/
+├── ckpt/                       # local checkpoints (not redistributed)
+├── data/eval/                  # local evaluation datasets
+├── docs/                       # installation, data, and reproduction guides
+├── scripts/reproduce/          # stable public reproduction entry points
+├── src/streamvggt/             # model and bounded-cache implementation
+├── src/eval/                   # task evaluators
+└── supplementary/              # CSV tables, PDF figures, and provenance
+```
+
+The historical `run_stage*.sh` files document the internal experiment
+development process. New users should use `scripts/reproduce/`; stage-numbered
+scripts are not the stable public interface.
+
+## Supplementary package
+
+[`supplementary/README.md`](supplementary/README.md) describes 16 CSV tables,
+six PDF figures, claim/data audits, and SHA256 manifests. The release-ready
+generated assets are committed to the repository and can be inspected without
+the private experiment workspace.
+
+An exact rebuild additionally needs every frozen source CSV/archive listed in
+`supplementary/source_manifest.csv`. Those raw sources are not committed to Git;
+stage them at the recorded paths first, then run:
+
 ```bash
-bash eval/video_depth/run.sh 
+bash scripts/reproduce/build_supplementary.sh
 ```
 
-Results will be saved in `eval_results/video_depth/${data}_${model_name}/result_scale.json`.
+If a source is unavailable, the builder reports the missing file instead of
+silently producing a partial formal package. `SKIP_FIGURES=1` removes the raw
+figure-source requirement but still requires the source tables.
 
-### Multi-view Reconstruction
-```bash
-bash eval/mv_recon/run.sh 
-```
+Stage 4E-A output-level fusion was a stopped negative experiment and is not
+included in the final supplementary package.
 
-Results are saved under `eval_results/mv_recon/streamvggt_${run_tag}/`, including
-per-dataset `metrics.json`, point clouds, trajectories, and the merged
-`reconstruction_metrics.json`.
+## Documentation
 
-### Camera Pose Estimation
-1. Install the required dependencies:
-```bash
-pip install pycolmap==3.10.0 pyceres==2.3
-git clone https://github.com/cvg/LightGlue.git
-cd LightGlue
-python -m pip install -e .
-cd ..
-```
-2. Please refer to [VGGT](https://github.com/facebookresearch/vggt) to prepare the co3d dataset.
+- [Installation and checkpoint setup](docs/INSTALLATION.md)
+- [Evaluation dataset layouts](docs/DATASETS.md)
+- [End-to-end reproducibility guide](docs/REPRODUCIBILITY.md)
+- [Relationship to upstream StreamVGGT](docs/UPSTREAM.md)
 
-3. Run the evaluation code:
-```bash
-python eval/pose_evaluation/test_co3d.py --co3d_dir /YOUR/CO3D/PATH --co3d_anno_dir /YOUR/CO3D/ANNO/PATH --seed 0
-```
+## Training and demo
 
-## Demo
-We provide a demo for StreamVGGT, based on the demo code from [VGGT](https://github.com/facebookresearch/vggt). You can follow the instructions below to launch it locally or try it out directly on [Hugging Face](https://huggingface.co/spaces/lch01/StreamVGGT).
-```bash
-pip install -r requirements_demo.txt
-python demo_gradio.py
-```
+The focus of this repository is training-free bounded-cache inference and its
+evaluation. The original training, fine-tuning, and Gradio demo code is
+retained for compatibility. For the authoritative training and demo
+instructions, use the
+[upstream StreamVGGT documentation](https://github.com/wzzheng/StreamVGGT).
 
-**Note**: While StreamVGGT typically reconstructs a scene in under one second, 3D point visualization may take much longer due to slower third-party rendering.
+## License and attribution
 
-## Acknowledgements
-Our code is based on the following brilliant repositories:
+This repository retains the upstream
+[CC BY-NC-SA 4.0 license](LICENSE.txt). Dataset, checkpoint, and third-party
+component licenses apply separately. See [`docs/UPSTREAM.md`](docs/UPSTREAM.md)
+for the provenance of the base repository and a summary of eStreamVGGT changes.
 
-[DUSt3R](https://github.com/naver/dust3r)
-[MonST3R](https://github.com/Junyi42/monst3r.git)
-[Spann3R](https://github.com/HengyiWang/spann3r.git)
-[CUT3R](https://github.com/CUT3R/CUT3R)
-[VGGT](https://github.com/facebookresearch/vggt)
-[Point3R](https://github.com/YkiWu/Point3R)
+If this code is useful, please cite the original StreamVGGT paper. A separate
+eStreamVGGT citation will be added when its paper is public.
 
-Many thanks to these authors!
-
-## Citation
-
-If you find this project helpful, please consider citing the following paper:
-```
+```bibtex
 @article{streamVGGT,
-      title={Streaming 4D Visual Geometry Transformer}, 
-      author={Dong Zhuo and Wenzhao Zheng and Jiahe Guo and Yuqi Wu and Jie Zhou and Jiwen Lu},
-      journal={arXiv preprint arXiv:2507.11539},
-      year={2025}
+  title={Streaming 4D Visual Geometry Transformer},
+  author={Dong Zhuo and Wenzhao Zheng and Jiahe Guo and Yuqi Wu and Jie Zhou and Jiwen Lu},
+  journal={arXiv preprint arXiv:2507.11539},
+  year={2025}
 }
 ```
+
+## Acknowledgements
+
+eStreamVGGT inherits substantial code and evaluation infrastructure from
+StreamVGGT and its dependencies, including VGGT, DUSt3R, MonST3R, Spann3R,
+CUT3R, and Point3R. We thank their authors and contributors.

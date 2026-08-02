@@ -1,0 +1,7 @@
+figure,recommended_use,status,source,required_action,size_bytes,sha256
+fig_video_depth_pareto.pdf,main-candidate: VideoDepth quality-memory-time Pareto,ready,frozen CSV files,none,18763,12c0ac429e5e9c32716d3e95bc864f78bd24b5de52fd58bc4eb8d0a648365592
+fig_cross_task_regret.pdf,supplementary: cross-task normalised regret,ready,frozen CSV files,none,14014,af9b7d8a9065960ed50fc00ed62881ba486eb23104ec8cefe7b303ec8a833a71
+fig_stage4c_scaling.pdf,main-candidate: long-sequence resource scaling,ready,frozen CSV files,none,19841,9d51f95a8e87de6aada5254cd65833a3806c8e2d599566fec28e503edcd7e7a3
+fig_stage4c_pose_scaling.pdf,supplementary: pose metrics versus prefix length,ready,frozen CSV files,none,29067,3c2da897b3c341c79cb0fe824c93fa9132b1c1a238a89a50733894089369b796
+fig_stage4c_trajectories.pdf,main-candidate: frozen trajectory cases,ready,stage4_supp_figure_sources.tar.gz,none,50301,06a52070262c88671647c68ae5711a06965e1e7683c1d5ed11c549bf59b27258
+fig_stage4c_cache_timeline.pdf,supplementary: retained-frame timeline,ready,stage4_supp_figure_sources.tar.gz,none,47515,cac85acbfcdfb866e23695757df0a96a4011fcf3561e2ca06bf9385805dca413

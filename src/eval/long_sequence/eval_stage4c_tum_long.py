@@ -31,12 +31,22 @@ from eval.pose_evaluation.trajectory_metrics import evaluate_trajectory
 
 REPO_ROOT = osp.abspath(osp.join(osp.dirname(__file__), "../../.."))
 DEFAULT_ROOT = osp.join(REPO_ROOT, "data/eval/stage4c_tum")
-METHOD_CONFIGS = {
+PUBLIC_METHOD_CONFIGS = {
     "full_cache": (None, "fifo"),
+    "anchor_recent_dino_diverse_k4": (4, "anchor_recent_dino_diverse_k4"),
+    "anchor_recent_dino_diverse_k6": (6, "anchor_recent_dino_diverse_k6"),
+    "anchor_recent_dino_diverse_k8": (8, "anchor_recent_dino_diverse_k8"),
+}
+
+# Keep the frozen experiment identifiers accepted so the historical Stage 4C
+# commands and result manifests remain reproducible. New commands should use
+# the paper-facing names above.
+LEGACY_METHOD_CONFIGS = {
     "stage3_2_k4": (4, "anchor_recent_dino_diverse_2old_1recent"),
     "old_dino_k6": (6, "anchor_recent_dino_diverse"),
     "temporal_binned_dino_k8": (8, "temporal_binned_dino_k8"),
 }
+METHOD_CONFIGS = {**PUBLIC_METHOD_CONFIGS, **LEGACY_METHOD_CONFIGS}
 
 
 def parse_args():
@@ -49,6 +59,17 @@ def parse_args():
     parser.add_argument("--max-frames", type=int, required=True)
     parser.add_argument("--size", type=int, default=518)
     parser.add_argument("--max-association-difference", type=float, default=0.02)
+    parser.add_argument(
+        "--run-scope",
+        choices=("frozen", "debug_subset"),
+        default="frozen",
+        help="label whether this cell follows the frozen matrix or an explicit debug override",
+    )
+    parser.add_argument(
+        "--run-id",
+        default="",
+        help="optional caller-generated identifier used to reject stale result files",
+    )
     return parser.parse_args()
 
 
@@ -126,7 +147,7 @@ def provenance():
     gpu_name = torch.cuda.get_device_name(0) if torch.cuda.is_available() else ""
     return {
         "gpu_name": gpu_name,
-        "torch_version": torch.__version__,
+        "torch_version": str(torch.__version__),
         "cuda_version": torch.version.cuda,
         "python_version": platform.python_version(),
         "slurm_job_id": os.environ.get("SLURM_JOB_ID", ""),
@@ -142,6 +163,7 @@ def main():
     os.makedirs(args.output_dir, exist_ok=True)
     metrics_path = osp.join(args.output_dir, "stage4c_metrics.json")
     result = {
+        "run_scope": args.run_scope,
         "method": args.method,
         "status": "failed",
         "dataset": "tum_rgbd_raw",
@@ -150,6 +172,7 @@ def main():
         "cache_window_size": cache_window,
         "cache_policy": "full_cache" if cache_window is None else cache_policy,
         "mode": "stream_release",
+        "run_id": args.run_id,
         **provenance(),
     }
 

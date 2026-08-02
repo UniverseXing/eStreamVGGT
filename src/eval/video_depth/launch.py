@@ -8,6 +8,7 @@ import numpy as np
 import torch
 import argparse
 import json
+import platform
 
 from copy import deepcopy
 from eval.video_depth.metadata import dataset_metadata
@@ -254,12 +255,18 @@ def eval_pose_estimation_dist(args, model, img_path, save_dir=None, mask_path=No
         os.makedirs(save_dir, exist_ok=True)
         ok_stats = [item for item in runtime_stats if item["status"] == "ok"]
         summary = {
+            "dataset": args.eval_dataset,
             "gpu_name": (
                 torch.cuda.get_device_name(device) if device.type == "cuda" else str(device)
             ),
-            "torch_version": torch.__version__,
-            "cuda_version": torch.version.cuda,
+            "torch_version": str(torch.__version__),
+            "cuda_version": torch.version.cuda or "",
+            "python_version": platform.python_version(),
             "slurm_job_id": os.environ.get("SLURM_JOB_ID"),
+            "hostname": platform.node(),
+            "input_size": args.size,
+            "pose_eval_stride": args.pose_eval_stride,
+            "no_crop": args.no_crop,
             "num_sequences": len(runtime_stats),
             "num_ok": len(ok_stats),
             "num_oom": len(runtime_stats) - len(ok_stats),

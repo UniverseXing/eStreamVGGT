@@ -1,0 +1,9 @@
+# Core model, training, and demo dependencies.
+-r requirements.txt
+
+# Paper evaluation and supplementary-asset dependencies.
+# Keep these unpinned so they can resolve against the pinned PyTorch/NumPy
+# baseline above on each supported platform.
+imageio
+evo
+open3d

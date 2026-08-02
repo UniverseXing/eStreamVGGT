@@ -208,7 +208,20 @@ def save_figure(fig, figures_dir, stem, top=0.97):
     outputs = []
     for extension in ("png", "pdf"):
         path = osp.join(figures_dir, f"{stem}.{extension}")
-        fig.savefig(path, dpi=220, bbox_inches="tight")
+        save_options = {}
+        if extension == "pdf":
+            # Matplotlib otherwise inserts the wall-clock creation time into
+            # every PDF.  Fixed document metadata keeps repeated frozen-asset
+            # builds byte-for-byte reproducible.
+            fixed_date = datetime(2000, 1, 1, tzinfo=timezone.utc)
+            save_options["metadata"] = {
+                "Title": stem,
+                "Creator": "eStreamVGGT supplementary asset builder",
+                "Producer": "Matplotlib",
+                "CreationDate": fixed_date,
+                "ModDate": fixed_date,
+            }
+        fig.savefig(path, dpi=220, bbox_inches="tight", **save_options)
         outputs.append(path)
     plt.close(fig)
     return outputs
