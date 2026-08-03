@@ -316,22 +316,18 @@ bash scripts/reproduce/build_supplementary.sh
 ```
 
 This command performs no model inference. It deterministically rebuilds the
-CSV tables, PDF figures, audits, and SHA256 manifests under `supplementary/`
-from frozen result sources and archived trajectory/memory inputs.
+15 complete result tables and the normalised-regret/oracle-win calculation note
+under `supplementary/` from the author-side result sources.
 
-Stage 4E-A fusion outputs are deliberately excluded from the final package.
-
-Supplementary-builder controls are `OUTPUT_ROOT` (default `supplementary`),
-`FIGURE_SOURCE_ARCHIVE` (default `stage4_supp_figure_sources.tar.gz`), and
-`SKIP_FIGURES=1` for a CSV-only build.
+The only supplementary-builder control is `OUTPUT_ROOT` (default
+`supplementary`).
 
 The repository commits the already generated supplementary package, but not
-all raw experiment-source CSV/tar archives. To reproduce the asset build
-itself, first stage every file and matching SHA256 listed in
-`supplementary/source_manifest.csv` at the expected repository-relative path.
-The builder fails with a missing-source report when that author-side source
-bundle is absent; a fresh clone is therefore sufficient to inspect and verify
-the committed assets, but not to regenerate all of them from raw results.
+all raw experiment-source CSV/tar archives. The builder checks that every
+required source is present at its default repository-relative path and fails
+with a missing-source report rather than generating a partial package. A fresh
+clone is therefore sufficient to inspect the committed supplementary results,
+but not to rebuild them from the private author-side result bundle.
 
 ### Selected or complete suite
 
@@ -385,8 +381,8 @@ masks and still label the output as a reproduction of the frozen table.
 
 ## Outputs and provenance
 
-Keep raw result directories until the aggregate tables and manifests have been
-built. The key machine-readable products are:
+Keep raw result directories until the aggregate tables have been built. The key
+machine-readable products are:
 
 - VideoDepth prediction directories and `result_scale.json` outputs;
 - VideoDepth `video_depth_results.csv`;
@@ -395,20 +391,20 @@ built. The key machine-readable products are:
   static/TUM CSV files;
 - long-sequence `stage4c_metrics.json`, trajectory NPZ, memory traces, and
   `long_sequence_results.csv`; and
-- supplementary `source_manifest.csv` and `asset_manifest.csv`.
+- the complete CSV files under `supplementary/tables/`.
 
 Each formal run should retain:
 
 - canonical method name and cache window;
-- checkpoint path or hash;
+- checkpoint path;
 - dataset/sequence and number of processed frames;
 - GPU name, PyTorch/CUDA/Python versions, and job identifier when available;
 - inference time and allocated/reserved CUDA peaks; and
 - explicit success, metric failure, or OOM status.
 
-Generated results should not be committed wholesale to Git. Commit compact
-tables, figures, manifests, and the minimum raw trajectory/memory sources
-needed to verify the published claims.
+Generated results should not be committed wholesale to Git. Commit the compact
+supplementary tables and calculation note needed to support the published
+claims.
 
 ## Comparing with the frozen results
 

@@ -28,7 +28,8 @@ The eStreamVGGT paper and project citation are coming soon.
   per-frame outputs.
 - Reproducible evaluation entry points for VideoDepth, camera pose,
   multi-view reconstruction, and 1000-frame streaming.
-- CSV-only supplementary tables, figures, source hashes, and audit records.
+- CSV supplementary tables with complete results and an exact note for
+  normalised regret/oracle-win calculations.
 
 No additional training or modified checkpoint is required.
 
@@ -121,7 +122,7 @@ the intended environment before invoking them.
 | `scripts/reproduce/run_pose.sh` | Sintel, ScanNet, and TUM camera-pose evaluation |
 | `scripts/reproduce/run_reconstruction.sh` | 7-Scenes, NRGBD, ETH3D, and TUM reconstruction evaluation |
 | `scripts/reproduce/run_long_sequence.sh` | Raw-TUM 100/250/500/1000-frame streaming evaluation |
-| `scripts/reproduce/build_supplementary.sh` | Rebuild supplementary CSV tables and figures from frozen sources |
+| `scripts/reproduce/build_supplementary.sh` | Rebuild supplementary CSV tables and calculation note from result sources |
 | `scripts/reproduce/run_all.sh` | Run the selected evaluation groups in sequence |
 
 For example:
@@ -155,7 +156,7 @@ eStreamVGGT/
 ├── scripts/reproduce/          # stable public reproduction entry points
 ├── src/streamvggt/             # model and bounded-cache implementation
 ├── src/eval/                   # task evaluators
-└── supplementary/              # CSV tables, PDF figures, and provenance
+└── supplementary/              # Complete CSV results and calculation note
 ```
 
 The historical `run_stage*.sh` files document the internal experiment
@@ -164,25 +165,21 @@ scripts are not the stable public interface.
 
 ## Supplementary package
 
-[`supplementary/README.md`](supplementary/README.md) describes 16 CSV tables,
-six PDF figures, claim/data audits, and SHA256 manifests. The release-ready
-generated assets are committed to the repository and can be inspected without
-the private experiment workspace.
+[`supplementary/README.md`](supplementary/README.md) indexes 15 CSV tables with
+the complete VideoDepth, pose, reconstruction, cross-task, and long-sequence
+results. [`supplementary/CALCULATION_METHODS.md`](supplementary/CALCULATION_METHODS.md)
+defines the normalised-regret equations, bounded-oracle scope, tie rule,
+evaluation units, and aggregation procedure.
 
-An exact rebuild additionally needs every frozen source CSV/archive listed in
-`supplementary/source_manifest.csv`. Those raw sources are not committed to Git;
-stage them at the recorded paths first, then run:
+The generated package is committed to the repository. Rebuilding it requires
+the author-side result CSV/archives at their documented default paths:
 
 ```bash
 bash scripts/reproduce/build_supplementary.sh
 ```
 
 If a source is unavailable, the builder reports the missing file instead of
-silently producing a partial formal package. `SKIP_FIGURES=1` removes the raw
-figure-source requirement but still requires the source tables.
-
-Stage 4E-A output-level fusion was a stopped negative experiment and is not
-included in the final supplementary package.
+silently producing a partial package.
 
 ## Documentation
 

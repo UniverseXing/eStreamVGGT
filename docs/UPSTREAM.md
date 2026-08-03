@@ -37,7 +37,7 @@ This repository adds or substantially extends:
 - robust trajectory metrics and task-specific failure records;
 - VideoDepth, pose, reconstruction, and held-out long-sequence protocols;
 - same-GPU resource/quality audits and frozen decision gates; and
-- deterministic paper/supplementary asset builders with source hashes.
+- a builder for the complete supplementary CSV results and calculation note.
 
 The bounded methods change state management at inference time. They use the
 original StreamVGGT checkpoint and do not claim a separately trained model.

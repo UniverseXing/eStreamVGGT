@@ -1,5 +1,0 @@
-case_id,asset_type,sequence,num_frames,rationale,required_methods,source_available
-k8_local_pose_success,trajectory,rgbd_dataset_freiburg1_room,250,K8 improves both global ATE and local RPE over K4.,stage3_2_k4 old_dino_k6 temporal_binned_dino_k8,yes
-k4_global_pose_advantage,trajectory,rgbd_dataset_freiburg2_desk,500,K4 retains lower ATE while K8 has lower local RPE.,stage3_2_k4 old_dino_k6 temporal_binned_dino_k8,yes
-k8_global_drift_failure,trajectory,rgbd_dataset_freiburg3_long_office_household,500,K8 local RPE improves but ATE is 2.34x K4.,stage3_2_k4 old_dino_k6 temporal_binned_dino_k8,yes
-temporal_retention_timeline,cache_timeline,rgbd_dataset_freiburg3_long_office_household,1000,Compare frozen K4/K6/K8 retained-frame histories at 1000 frames.,stage3_2_k4 old_dino_k6 temporal_binned_dino_k8,yes

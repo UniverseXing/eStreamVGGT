@@ -1,22 +1,20 @@
 #!/usr/bin/env python3
-"""Build CSV-only supplementary tables and collect frozen PDF figures.
+"""Build the paper's supplementary result tables and calculation note.
 
-This script performs no model inference, metric recomputation, selector tuning,
-or Stage 4E-A processing.  It validates and reorganises the frozen Stage 3/4
-artifacts used by the paper into a compact, auditable supplementary package.
+This script performs no model inference, selector tuning, or Stage 4E-A
+processing. It validates and reorganises the frozen Stage 3/4 results used by
+the paper. The public supplementary package is deliberately limited to the
+complete result tables and the definitions of normalised regret/oracle wins.
 """
 
 from __future__ import annotations
 
 import argparse
 import csv
-import hashlib
 import io
 import math
-import os
 import shutil
 import tarfile
-import tempfile
 from pathlib import Path, PurePosixPath
 
 
@@ -65,17 +63,6 @@ LONG_SEQUENCE_LABELS = {
     "rgbd_dataset_freiburg3_long_office_household": "F3-LongOffice",
 }
 
-CSV_FIGURES = {
-    "fig_video_depth_pareto.pdf": "main-candidate: VideoDepth quality-memory-time Pareto",
-    "fig_cross_task_regret.pdf": "supplementary: cross-task normalised regret",
-    "fig_stage4c_scaling.pdf": "main-candidate: long-sequence resource scaling",
-    "fig_stage4c_pose_scaling.pdf": "supplementary: pose metrics versus prefix length",
-}
-SERVER_SOURCE_FIGURES = {
-    "fig_stage4c_trajectories.pdf": "main-candidate: frozen trajectory cases",
-    "fig_stage4c_cache_timeline.pdf": "supplementary: retained-frame timeline",
-}
-
 POSE_SUMMARY_FIELDS = (
     "num_sequences",
     "num_successful",
@@ -114,7 +101,7 @@ RECON_SUMMARY_FIELDS = (
 
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(
-        description="Build frozen supplementary CSV tables and collect PDFs."
+        description="Build frozen supplementary CSV tables and calculation note."
     )
     parser.add_argument(
         "--video-depth-summary", default="stage4a_video_depth_results(1).csv"
@@ -155,23 +142,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument(
         "--cross-task-regret", default="stage4b_cross_task_regret.csv"
     )
-    parser.add_argument("--method-roles", default="stage4b_method_roles.csv")
-    parser.add_argument("--claim-audit", default="stage4b_claim_audit.csv")
-    parser.add_argument("--stage4a-gate", default="stage4a_gate.csv")
     parser.add_argument("--long-results", default="stage4c_results.csv")
-    parser.add_argument("--long-gate", default="stage4c_gate.csv")
-    parser.add_argument("--case-audit", default="stage4d_case_audit.csv")
-    parser.add_argument("--stage4d-gate", default="stage4d_gate.csv")
-    parser.add_argument(
-        "--figure-source-archive",
-        default="stage4_supp_figure_sources.tar.gz",
-        help="Raw Stage 4C trajectories and memory traces for the final figures.",
-    )
-    parser.add_argument(
-        "--skip-figures",
-        action="store_true",
-        help="Build tables only when matplotlib/evo are unavailable.",
-    )
     parser.add_argument("--output-root", default="supplementary")
     return parser.parse_args()
 
@@ -184,18 +155,15 @@ def read_csv(path: Path) -> list[dict[str, str]]:
 def write_csv(path: Path, fields: list[str] | tuple[str, ...], rows) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
     with path.open("w", newline="", encoding="utf-8") as handle:
-        writer = csv.DictWriter(handle, fieldnames=fields, extrasaction="ignore")
+        writer = csv.DictWriter(
+            handle,
+            fieldnames=fields,
+            extrasaction="ignore",
+            lineterminator="\n",
+        )
         writer.writeheader()
         writer.writerows(rows)
     print(f"Wrote {len(rows):4d} rows: {path}")
-
-
-def sha256(path: Path) -> str:
-    digest = hashlib.sha256()
-    with path.open("rb") as handle:
-        for chunk in iter(lambda: handle.read(1024 * 1024), b""):
-            digest.update(chunk)
-    return digest.hexdigest()
 
 
 def normalise_method(value: str) -> str:
@@ -249,17 +217,9 @@ def required_paths(args: argparse.Namespace) -> list[Path]:
         "recon_archive",
         "cross_task_summary",
         "cross_task_regret",
-        "method_roles",
-        "claim_audit",
-        "stage4a_gate",
         "long_results",
-        "long_gate",
-        "case_audit",
-        "stage4d_gate",
     )
     paths = [Path(getattr(args, name)) for name in names]
-    if not args.skip_figures:
-        paths.append(Path(args.figure_source_archive))
     missing = [str(path) for path in paths if not path.is_file()]
     if missing:
         raise FileNotFoundError("missing required inputs:\n  " + "\n  ".join(missing))
@@ -514,28 +474,36 @@ def build_pose(args, tables_dir: Path) -> None:
     write_csv(tables_dir / "table_s07_pose_sequences.csv", list(sequences[0]), sequences)
 
     # Compact policy ablation retained for supplementary review only.
-    ablation_labels = {
-        "full_cache": "Full cache",
-        "anchor_recent_dino_diverse_2old_1recent": "K4",
-        "anchor_recent_dino_diverse": "K6",
-        "anchor_recent_uniform": "Uniform K6",
-        "fifo": "FIFO K6",
+    ablation_methods = {
+        "full_cache": ("Full cache", "full_cache"),
+        "anchor_recent_dino_diverse_2old_1recent": (
+            "K4",
+            "anchor_recent_dino_diverse_k4",
+        ),
+        "anchor_recent_dino_diverse": (
+            "K6",
+            "anchor_recent_dino_diverse_k6",
+        ),
+        "anchor_recent_uniform": ("Uniform K6", "anchor_recent_uniform"),
+        "fifo": ("FIFO K6", "fifo"),
     }
     ablation = []
     for row in read_csv(Path(args.pose_summary)):
         policy = row["cache_policy"]
-        if policy not in ablation_labels:
+        if policy not in ablation_methods:
             continue
+        method_label, public_policy = ablation_methods[policy]
         ablation.append(
             {
                 "dataset": row["dataset"],
-                "method": ablation_labels[policy],
-                "cache_policy": policy,
+                "method": method_label,
+                "cache_policy": public_policy,
                 "cache_window_size": row["cache_window_size"],
                 **{field: row.get(field, "") for field in POSE_SUMMARY_FIELDS},
             }
         )
-    ablation.sort(key=lambda r: (r["dataset"], list(ablation_labels.values()).index(r["method"])))
+    method_order = [label for label, _ in ablation_methods.values()]
+    ablation.sort(key=lambda r: (r["dataset"], method_order.index(r["method"])))
     write_csv(tables_dir / "table_s08_pose_policy_ablation.csv", list(ablation[0]), ablation)
 
 
@@ -566,7 +534,7 @@ def expected_recon_csv(args, task: str) -> dict[tuple[str, str], dict[str, str]]
     return selected
 
 
-def build_reconstruction(args, tables_dir: Path, audit_dir: Path) -> None:
+def build_reconstruction(args, tables_dir: Path) -> None:
     expected_static = expected_recon_csv(args, "static")
     expected_dynamic = expected_recon_csv(args, "dynamic")
     members = json_members(Path(args.recon_archive))
@@ -578,7 +546,6 @@ def build_reconstruction(args, tables_dir: Path, audit_dir: Path) -> None:
     sequence_rows = []
     seen_method_tasks = set()
     sequence_pairing = {}
-    consistency_notes = []
     timing_fields = {"total_inference_sec", "fps_inference", "mean_final_frame_ms"}
     for member_name, payload in members:
         policy = payload.get("cache_policy")
@@ -606,17 +573,9 @@ def build_reconstruction(args, tables_dir: Path, audit_dir: Path) -> None:
                             f"reconstruction JSON/CSV mismatch for "
                             f"{(dataset, method_id)} {field}"
                         )
-                    consistency_notes.append(
-                        {
-                            "task": task,
-                            "dataset": dataset,
-                            "method": METHOD_LABELS[method_id],
-                            "field": field,
-                            "sequence_json_value": clean_number(summary.get(field)),
-                            "final_summary_csv_value": clean_number(expected.get(field)),
-                            "resolution": "aggregate_and_sequence_use_json; old_summary_csv_timing_not_used",
-                        }
-                    )
+                    # The sequence JSON is the source for the complete table.
+                    # A historical aggregate CSV may differ slightly in timing
+                    # while retaining identical quality, pose and coverage.
             item = {
                 "task": task,
                 "dataset": dataset,
@@ -706,12 +665,6 @@ def build_reconstruction(args, tables_dir: Path, audit_dir: Path) -> None:
     write_csv(tables_dir / "table_s10_dynamic_reconstruction_summary.csv", list(dynamic_summaries[0]), dynamic_summaries)
     write_csv(tables_dir / "table_s11_reconstruction_prefixes.csv", list(prefix_rows[0]), prefix_rows)
     write_csv(tables_dir / "table_s12_reconstruction_sequences.csv", list(sequence_rows[0]), sequence_rows)
-    if consistency_notes:
-        write_csv(
-            audit_dir / "reconstruction_source_consistency.csv",
-            list(consistency_notes[0]),
-            consistency_notes,
-        )
 
 
 def normalise_method_field(row: dict[str, str], field: str = "method") -> dict[str, str]:
@@ -729,7 +682,17 @@ def normalise_method_field(row: dict[str, str], field: str = "method") -> dict[s
     return item
 
 
-def strip_fields(row: dict[str, str], fields=("source", "result_dir", "slurm_job_id", "hostname")):
+def strip_fields(
+    row: dict[str, str],
+    fields=(
+        "source",
+        "result_dir",
+        "slurm_job_id",
+        "hostname",
+        "coverage_ok",
+        "camera_pose_sha256",
+    ),
+):
     return {key: value for key, value in row.items() if key not in fields}
 
 
@@ -753,13 +716,6 @@ def build_cross_task_and_long(args, tables_dir: Path) -> None:
         item = normalise_method_field(row)
         regret_rows.append(item)
     write_csv(tables_dir / "table_s14_cross_task_regret.csv", list(regret_rows[0]), regret_rows)
-
-    role_rows = []
-    for row in read_csv(Path(args.method_roles)):
-        role_rows.append(normalise_method_field(row))
-    if {row["method_id"] for row in role_rows} != set(FINAL_METHODS):
-        raise ValueError("method role table does not cover exactly the four final methods")
-    write_csv(tables_dir / "table_s15_method_roles.csv", list(role_rows[0]), role_rows)
 
     long_rows = []
     source = read_csv(Path(args.long_results))
@@ -790,150 +746,93 @@ def build_cross_task_and_long(args, tables_dir: Path) -> None:
         ):
             raise ValueError(f"unexpected full-cache ceiling for {sequence}")
     long_rows.sort(key=lambda r: (LONG_SEQUENCES.index(r["sequence"]), int(r["num_frames"]), METHOD_ORDER[r["method_id"]]))
-    write_csv(tables_dir / "table_s16_long_sequence_results.csv", list(long_rows[0]), long_rows)
+    write_csv(tables_dir / "table_s15_long_sequence_results.csv", list(long_rows[0]), long_rows)
 
 
-def copy_audits(args, audit_dir: Path) -> None:
-    sources = {
-        "stage4a_gate.csv": Path(args.stage4a_gate),
-        "stage4c_gate.csv": Path(args.long_gate),
-        "claim_audit.csv": Path(args.claim_audit),
-        "case_audit.csv": Path(args.case_audit),
-        "stage4d_gate.csv": Path(args.stage4d_gate),
-    }
-    audit_dir.mkdir(parents=True, exist_ok=True)
-    for name, source in sources.items():
-        shutil.copyfile(source, audit_dir / name)
+def write_calculation_methods(output_root: Path) -> None:
+    content = r"""# Normalised Regret and Oracle Wins
 
+This note defines exactly how the values in
+`tables/table_s14_cross_task_regret.csv` were calculated.
 
-def expected_figure_source_members() -> set[str]:
-    prefix = "eval_results/stage4c_tum_long"
-    methods = ("stage3_2_k4", "old_dino_k6", "temporal_binned_dino_k8")
-    trajectory_cases = (
-        ("rgbd_dataset_freiburg1_room", 250),
-        ("rgbd_dataset_freiburg2_desk", 500),
-        ("rgbd_dataset_freiburg3_long_office_household", 500),
-    )
-    members = {
-        f"{prefix}/{method}/{sequence}/{frames}/trajectory.npz"
-        for method in methods
-        for sequence, frames in trajectory_cases
-    }
-    members.update(
-        f"{prefix}/{method}/rgbd_dataset_freiburg3_long_office_household/1000/"
-        "memory_trace.json"
-        for method in methods
-    )
-    return members
+## Comparison scope
 
+The oracle is restricted to the three bounded methods $\mathcal{M}=\{\mathrm{K4},
+\mathrm{K6},\mathrm{K8}\}$. Full cache is an unbounded reference and is not
+eligible for a bounded oracle win. All methods compared within one row use the
+same evaluation units and metric definition.
 
-def extract_figure_sources(archive_path: Path, destination: Path) -> Path:
-    """Safely extract the exact 12 frozen figure sources into a temporary tree."""
-    expected = expected_figure_source_members()
-    with tarfile.open(archive_path, "r:gz") as archive:
-        files = [member for member in archive.getmembers() if member.isfile()]
-        names = {member.name for member in files}
-        if len(files) != len(names):
-            raise ValueError("duplicate members in figure-source archive")
-        if names != expected:
-            raise ValueError(
-                "figure-source archive coverage mismatch; "
-                f"missing={sorted(expected-names)}, extra={sorted(names-expected)}"
-            )
-        for member in files:
-            pure = PurePosixPath(member.name)
-            if pure.is_absolute() or ".." in pure.parts:
-                raise ValueError(f"unsafe figure-source member: {member.name}")
-            handle = archive.extractfile(member)
-            if handle is None:
-                raise ValueError(f"cannot read figure-source member: {member.name}")
-            target = destination.joinpath(*pure.parts)
-            target.parent.mkdir(parents=True, exist_ok=True)
-            with target.open("wb") as output:
-                shutil.copyfileobj(handle, output)
-    return destination / "eval_results" / "stage4c_tum_long"
+## Unit-level normalised regret
 
+Let $x_{m,u}$ be the value obtained by method $m$ on evaluation unit $u$. For a
+metric where lower values are better, the bounded oracle and regret are
 
-def generate_csv_figures(args, figures_dir: Path) -> list[dict[str, str]]:
-    """Regenerate all available PDFs with final paper-facing K4/K6/K8 labels."""
-    figures_dir.mkdir(parents=True, exist_ok=True)
-    rows = []
-    if not args.skip_figures:
-        try:
-            import build_stage4d_paper_assets as plots
-        except (ImportError, ModuleNotFoundError) as error:
-            raise RuntimeError(
-                "figure generation requires the StreamVGGT environment with "
-                "numpy, matplotlib and evo; rerun with --skip-figures to build "
-                "CSV tables only"
-            ) from error
-        plots.METHOD_LABELS.update(
-            {
-                "full_cache": "Full cache",
-                "stage3_2_k4": "K4",
-                "old_dino_k6": "K6",
-                "temporal_binned_dino_k8": "K8",
-            }
-        )
-        plots.plot_video_depth_pareto(
-            read_csv(Path(args.video_depth_pareto)), str(figures_dir)
-        )
-        plots.plot_cross_task_regret(
-            read_csv(Path(args.method_roles)), str(figures_dir)
-        )
-        long_rows = read_csv(Path(args.long_results))
-        plots.plot_stage4c_scaling(long_rows, str(figures_dir))
-        plots.plot_stage4c_pose(long_rows, str(figures_dir))
-        with tempfile.TemporaryDirectory(prefix="streamvggt-supp-fig-") as temp:
-            results_root = extract_figure_sources(
-                Path(args.figure_source_archive), Path(temp)
-            )
-            plots.plot_trajectory_cases(
-                long_rows, str(results_root), str(figures_dir)
-            )
-            plots.plot_cache_timeline(
-                long_rows, str(results_root), str(figures_dir)
-            )
-        for png in figures_dir.glob("*.png"):
-            png.unlink()
+\begin{equation}
+o_u=\min_{m\in\mathcal{M}}x_{m,u},\qquad
+r_{m,u}=\frac{x_{m,u}-o_u}{\max(|o_u|,10^{-12})}.
+\end{equation}
 
-    for name, purpose in {**CSV_FIGURES, **SERVER_SOURCE_FIGURES}.items():
-        path = figures_dir / name
-        ready = path.is_file() and not args.skip_figures
-        source = (
-            "frozen CSV files"
-            if name in CSV_FIGURES
-            else "stage4_supp_figure_sources.tar.gz"
-        )
-        rows.append(
-            {
-                "figure": name,
-                "recommended_use": purpose,
-                "status": "ready" if ready else "not_generated",
-                "source": source,
-                "required_action": "none" if ready else "rerun without --skip-figures",
-                "size_bytes": path.stat().st_size if ready else "",
-                "sha256": sha256(path) if ready else "",
-            }
-        )
-    return rows
+For a metric where higher values are better, they are
+
+\begin{equation}
+o_u=\max_{m\in\mathcal{M}}x_{m,u},\qquad
+r_{m,u}=\frac{o_u-x_{m,u}}{\max(|o_u|,10^{-12})}.
+\end{equation}
+
+The denominator makes regret dimensionless and comparable across metrics. The
+$10^{-12}$ floor only prevents division by zero. For each reported group,
+`mean_normalized_regret`, `median_normalized_regret`, and
+`max_normalized_regret` are the corresponding statistics over its evaluation
+units.
+
+## Oracle wins
+
+A method receives one oracle win on unit $u$ when its value equals $o_u$ under
+`math.isclose` with relative tolerance $10^{-8}$ and absolute tolerance
+$10^{-10}$. Tied methods each receive a win, so the total number of wins can
+exceed the number of units. The `oracle_wins` column is the sum of these
+unit-level indicators.
+
+## Evaluation units and metrics
+
+| Task | Dataset coverage | Unit used in dataset rows | Primary metric | Secondary metric |
+|---|---|---|---|---|
+| VideoDepth | Bonn, KITTI, Sintel | sequence | AbsRel (lower) | $\delta_1$ (higher) |
+| Camera pose | ScanNet, Sintel, TUM | dataset aggregate | ATE (lower) | rotation RPE in degrees (lower) |
+| Static reconstruction | 7-Scenes, NRGBD, ETH3D | successful sequence | overall error (lower) | normal consistency (higher) |
+| Dynamic reconstruction | TUM Dynamics | sequence | overall error (lower) | normal consistency (higher) |
+
+Rows with `dataset=all` pool the comparable units across datasets within the
+same task. The `cross_task_macro` rows are different: they use only the primary
+metric from each of the ten task--dataset benchmark cells (three VideoDepth,
+three pose, three static reconstruction, and one dynamic reconstruction cell).
+The oracle is recomputed independently in each cell, after which the ten
+normalised regrets are summarised. This produces the paper's bounded primary
+oracle-win counts of 7 for K4, 1 for K6, and 2 for K8.
+
+The aggregate values supplied to this calculation are listed in
+`tables/table_s13_cross_task_summary.csv`; the complete regret output is in
+`tables/table_s14_cross_task_regret.csv`.
+"""
+    (output_root / "CALCULATION_METHODS.md").write_text(content, encoding="utf-8")
 
 
 def write_readme(output_root: Path) -> None:
-    content = """# Supplementary asset package
+    content = """# Supplementary Information
 
 This directory is generated by `scripts/build_supplementary_assets.py`.
-It contains no new inference, selector tuning, or Stage 4E-A fusion results.
+Its scope follows the statement in the paper: complete experimental results,
+plus the calculation of normalised regret and oracle wins.
 
-## Tables
+## Complete experimental results
 
 - S01--S05: complete VideoDepth aggregate, sequence, bootstrap, statistics, and Pareto data.
 - S06--S08: final pose aggregate/sequence results and the compact policy ablation.
 - S09--S12: static/dynamic reconstruction aggregate, prefix, and sequence results.
-- S13--S15: cross-task summary, normalized regret, and frozen method roles.
-- S16: all held-out long-sequence resource and pose runs.
+- S13--S14: cross-task summary and normalised regret/oracle-win results.
+- S15: all held-out long-sequence resource and pose runs.
 
-All table assets are CSV files with full stored precision.  Pose and
+All table assets are CSV files with full stored precision. Pose and
 reconstruction aggregate means are sequence-equal means.  VideoDepth S01 uses
 the official valid-pixel-weighted aggregate; S02--S04 contain sequence-level
 values and sequence-equal statistics.
@@ -943,130 +842,81 @@ records, whereas K8 records only the same 12 valid sequences. Quality comparison
 therefore uses the common 12 successful sequences; K8's zero failed count is not
 interpreted as greater robustness.
 
-## Figures
+## Normalised regret and oracle wins
 
-Four figures backed by frozen CSV files and two figures backed by the archived
-Stage 4C NPZ/JSON sources are regenerated with the final paper-facing labels
-`K4`, `K6`, and `K8`. Their sources and hashes are recorded in
-`figure_inventory.csv`. No Stage 4E-A fusion figure is included.
-
-## Audits and provenance
-
-`audit/` preserves the frozen gate/claim/case records. `source_manifest.csv`
-hashes every input, and `asset_manifest.csv` hashes every generated asset.
-`audit/reconstruction_source_consistency.csv` records the sole provenance
-difference: K8/TUM Dynamics has identical quality, pose, coverage and memory in
-the JSON and old summary CSV, but slightly different timing. The JSON timing is
-used because it is also the source frozen by the cross-task summary.
+`CALCULATION_METHODS.md` gives the exact oracle scope, equations, tie tolerance,
+evaluation units, metrics, aggregation rules, and cross-task macro procedure.
 """
     (output_root / "README.md").write_text(content, encoding="utf-8")
 
 
-def build_manifest(paths: list[Path], output_root: Path) -> None:
-    # The manifest identifies frozen inputs by their logical bundle names.
-    # Recording an absolute caller-side path would leak a machine-specific
-    # workspace and make otherwise identical builds produce different CSVs.
-    source_names = [path.name for path in paths]
-    if len(source_names) != len(set(source_names)):
-        raise ValueError(
-            "supplementary inputs must have unique logical file names: "
-            f"{source_names}"
-        )
-    source_rows = [
-        {
-            "source_file": source_name,
-            "size_bytes": path.stat().st_size,
-            "sha256": sha256(path),
-        }
-        for path, source_name in zip(paths, source_names)
-    ]
-    write_csv(output_root / "source_manifest.csv", ("source_file", "size_bytes", "sha256"), source_rows)
-
-    asset_rows = []
-    for path in sorted(output_root.rglob("*")):
-        if not path.is_file() or path.name == "asset_manifest.csv":
-            continue
-        relative = path.relative_to(output_root)
-        asset_rows.append(
-            {
-                "relative_path": relative.as_posix(),
-                "category": relative.parts[0] if len(relative.parts) > 1 else "root",
-                "size_bytes": path.stat().st_size,
-                "sha256": sha256(path),
-            }
-        )
-    write_csv(
-        output_root / "asset_manifest.csv",
-        ("relative_path", "category", "size_bytes", "sha256"),
-        asset_rows,
-    )
-
-
 def main() -> None:
     args = parse_args()
-    paths = required_paths(args)
+    required_paths(args)
     output_root = Path(args.output_root)
     tables_dir = output_root / "tables"
-    figures_dir = output_root / "figures"
-    audit_dir = output_root / "audit"
     tables_dir.mkdir(parents=True, exist_ok=True)
 
-    # Remove only known generator-owned files. User-authored files in the
-    # supplementary tree are left untouched.
+    # Remove the previous, broader supplementary package before rebuilding the
+    # deliberately narrow public package requested by the paper statement.
+    for directory in (output_root / "figures", output_root / "audit"):
+        if directory.exists():
+            shutil.rmtree(directory)
+    for name in ("asset_manifest.csv", "source_manifest.csv", "figure_inventory.csv"):
+        path = output_root / name
+        if path.is_file():
+            path.unlink()
+
     generated_tables = {f"table_s{index:02d}" for index in range(1, 17)}
     if tables_dir.exists():
         for path in tables_dir.glob("*.csv"):
             if any(path.stem.startswith(prefix) for prefix in generated_tables):
                 path.unlink()
-    if figures_dir.exists():
-        for name in (
-            *CSV_FIGURES,
-            *SERVER_SOURCE_FIGURES,
-            "fig_stage4e_fusion_failure.pdf",
-        ):
-            path = figures_dir / name
-            if path.is_file():
-                path.unlink()
-    if audit_dir.exists():
-        for name in (
-            "stage4a_gate.csv",
-            "stage4c_gate.csv",
-            "claim_audit.csv",
-            "case_audit.csv",
-            "stage4d_gate.csv",
-            "reconstruction_source_consistency.csv",
-        ):
-            path = audit_dir / name
-            if path.is_file():
-                path.unlink()
 
     build_video_depth(args, tables_dir)
     build_pose(args, tables_dir)
-    build_reconstruction(args, tables_dir, audit_dir)
+    build_reconstruction(args, tables_dir)
     build_cross_task_and_long(args, tables_dir)
-    copy_audits(args, audit_dir)
-    figure_rows = generate_csv_figures(args, figures_dir)
-    write_csv(
-        output_root / "figure_inventory.csv",
-        (
-            "figure",
-            "recommended_use",
-            "status",
-            "source",
-            "required_action",
-            "size_bytes",
-            "sha256",
-        ),
-        figure_rows,
-    )
+    write_calculation_methods(output_root)
     write_readme(output_root)
-    build_manifest(paths, output_root)
 
     if any(path.suffix == ".tex" for path in output_root.rglob("*")):
         raise RuntimeError("unexpected TeX table generated")
     if any("stage4e" in path.name.lower() or "fusion" in path.name.lower() for path in output_root.rglob("*")):
         raise RuntimeError("unexpected Stage 4E-A/fusion artifact generated")
-    print(f"Supplementary package complete: {output_root}")
+    expected_files = {
+        Path("README.md"),
+        Path("CALCULATION_METHODS.md"),
+        *(Path("tables") / f"table_s{index:02d}_{name}.csv" for index, name in (
+            (1, "video_depth_summary"),
+            (2, "video_depth_sequences"),
+            (3, "video_depth_paired_bootstrap"),
+            (4, "video_depth_sequence_statistics"),
+            (5, "video_depth_pareto"),
+            (6, "pose_summary"),
+            (7, "pose_sequences"),
+            (8, "pose_policy_ablation"),
+            (9, "static_reconstruction_summary"),
+            (10, "dynamic_reconstruction_summary"),
+            (11, "reconstruction_prefixes"),
+            (12, "reconstruction_sequences"),
+            (13, "cross_task_summary"),
+            (14, "cross_task_regret"),
+            (15, "long_sequence_results"),
+        )),
+    }
+    actual_files = {
+        path.relative_to(output_root)
+        for path in output_root.rglob("*")
+        if path.is_file()
+    }
+    if actual_files != expected_files:
+        raise RuntimeError(
+            "supplementary package scope mismatch; "
+            f"missing={sorted(expected_files-actual_files)}, "
+            f"extra={sorted(actual_files-expected_files)}"
+        )
+    print(f"Supplementary package complete: {output_root} ({len(actual_files)} files)")
 
 
 if __name__ == "__main__":
