@@ -65,6 +65,7 @@ slurm-*.out
 
 # Internal manuscript drafts and intermediate paper assets
 /PAPER_*.md
+!/PAPER_MANUSCRIPT_DRAFT.md
 /paper_assets/
 
 # Curated, release-ready supplementary material is intentionally versioned.

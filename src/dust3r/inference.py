@@ -95,6 +95,9 @@ def loss_of_one_batch(
                 cache_window_env = os.environ.get("STREAMVGGT_CACHE_WINDOW")
                 cache_window_size = int(cache_window_env) if cache_window_env else None
                 cache_policy = os.environ.get("STREAMVGGT_CACHE_POLICY", "fifo")
+                cache_random_seed = int(
+                    os.environ.get("STREAMVGGT_CACHE_RANDOM_SEED", "0")
+                )
                 return_memory_events = os.environ.get(
                     "STREAMVGGT_LOG_SELECTIONS", "0"
                 ).lower() in ("1", "true", "yes")
@@ -106,6 +109,7 @@ def loss_of_one_batch(
                     query_pts,
                     cache_window_size=cache_window_size,
                     cache_policy=cache_policy,
+                    cache_random_seed=cache_random_seed,
                     return_memory_events=return_memory_events,
                     return_memory_trace=return_memory_trace,
                 )

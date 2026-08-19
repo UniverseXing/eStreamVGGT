@@ -74,6 +74,7 @@ def get_args_parser():
     parser.add_argument("--prefix-frames", type=int, nargs="*", default=[])
     parser.add_argument("--cache-window", type=int)
     parser.add_argument("--cache-policy", default="fifo")
+    parser.add_argument("--cache-random-seed", type=int, default=0)
     parser.add_argument("--log-selections", action="store_true")
     parser.add_argument("--use_proj", action="store_true")
     parser.add_argument("--icp-threshold", type=float, default=0.1)
@@ -589,6 +590,7 @@ def main(args):
         "prefix_frames": sorted(set(args.prefix_frames)),
         "cache_window_size": args.cache_window,
         "cache_policy": "full_cache" if args.cache_window is None else args.cache_policy,
+        "cache_random_seed": args.cache_random_seed,
         "seed": args.seed,
         "datasets": {},
     }
@@ -630,6 +632,7 @@ def main(args):
                             batch,
                             cache_window_size=args.cache_window,
                             cache_policy=args.cache_policy,
+                            cache_random_seed=args.cache_random_seed,
                             return_memory_events=args.log_selections,
                             return_frame_timings=True,
                         )

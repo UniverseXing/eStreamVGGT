@@ -13,6 +13,7 @@ if [[ -n "${STREAMVGGT_CACHE_WINDOW:-}" ]]; then
     cache_suffix="${cache_policy}_k${STREAMVGGT_CACHE_WINDOW}"
     cache_args+=(--cache-window "${STREAMVGGT_CACHE_WINDOW}" --cache-policy "${cache_policy}")
 fi
+cache_args+=(--cache-random-seed "${STREAMVGGT_CACHE_RANDOM_SEED:-0}")
 if [[ -n "${STREAMVGGT_RUN_TAG:-}" ]]; then
     cache_suffix="${cache_suffix}_${STREAMVGGT_RUN_TAG}"
 fi

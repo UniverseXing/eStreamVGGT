@@ -34,6 +34,7 @@ def parse_args():
     parser.add_argument("--size", type=int, default=518)
     parser.add_argument("--cache-window", type=int)
     parser.add_argument("--cache-policy", default="fifo")
+    parser.add_argument("--cache-random-seed", type=int, default=0)
     parser.add_argument("--log-selections", action="store_true")
     parser.add_argument(
         "--resume",
@@ -92,6 +93,7 @@ def main():
             "dataset": args.dataset,
             "cache_window_size": args.cache_window,
             "cache_policy": "full_cache" if args.cache_window is None else args.cache_policy,
+            "cache_random_seed": args.cache_random_seed,
             "gpu_name": torch.cuda.get_device_name(device),
             "torch_version": str(torch.__version__),
             "cuda_version": torch.version.cuda or "",
@@ -144,6 +146,7 @@ def main():
                     frames,
                     cache_window_size=args.cache_window,
                     cache_policy=args.cache_policy,
+                    cache_random_seed=args.cache_random_seed,
                     return_memory_events=args.log_selections,
                 )
             torch.cuda.synchronize(device)
@@ -224,6 +227,7 @@ def main():
         "dataset": args.dataset,
         "cache_window_size": args.cache_window,
         "cache_policy": "full_cache" if args.cache_window is None else args.cache_policy,
+        "cache_random_seed": args.cache_random_seed,
         "gpu_name": torch.cuda.get_device_name(device),
         "torch_version": str(torch.__version__),
         "cuda_version": torch.version.cuda or "",

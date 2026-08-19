@@ -1,12 +1,12 @@
 #!/usr/bin/env bash
-#SBATCH --job-name=streamvggt-stage4d
+#SBATCH --job-name=streamvggt-stage5a
 #SBATCH --cpus-per-task=4
 #SBATCH --mem=16G
-#SBATCH --time=01:00:00
-#SBATCH --output=streamvggt-stage4d-%j.out
-#SBATCH --error=streamvggt-stage4d-%j.err
+#SBATCH --time=12:00:00
+#SBATCH --output=streamvggt-stage5a-%j.out
+#SBATCH --error=streamvggt-stage5a-%j.err
 
-# Runs Stage 4D frozen paper-asset generation and audit.
+# Runs Stage 5A same-budget controls and component ablations.
 set -euo pipefail
 
 
@@ -17,6 +17,6 @@ source activate StreamVGGT
 echo "Job ID: ${SLURM_JOB_ID:-unknown}"
 echo "Node: $(hostname)"
 echo "Started: $(date --iso-8601=seconds)"
-bash "run_stage4d.sh"
+bash "run_stage5a.sh"
 
 echo "Finished: $(date --iso-8601=seconds)"

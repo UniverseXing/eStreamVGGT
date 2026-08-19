@@ -15,6 +15,10 @@ METHODS = {
     "anchor_recent_dino_diverse_k4": 4,
     "anchor_recent_dino_diverse_k6": 6,
     "anchor_recent_dino_diverse_k8": 8,
+    "anchor_uniform_k4": 4,
+    "random_reservoir_k4": 4,
+    "dino_diverse_no_anchor_k4": 4,
+    "anchor_dino_diverse_no_recent_k6": 6,
 }
 
 
@@ -25,6 +29,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--images-dir", type=Path, required=True)
     parser.add_argument("--method", choices=tuple(METHODS), default="anchor_recent_dino_diverse_k4")
     parser.add_argument("--max-frames", type=int)
+    parser.add_argument("--random-seed", type=int, default=0)
     return parser.parse_args()
 
 
@@ -66,6 +71,7 @@ def main() -> None:
             frames,
             cache_window_size=window,
             cache_policy=args.method,
+            cache_random_seed=args.random_seed,
             return_memory_events=True,
             return_memory_trace=True,
         )
@@ -80,6 +86,7 @@ def main() -> None:
     summary = {
         "status": "ok",
         "method": args.method,
+        "random_seed": args.random_seed,
         "input_frames": len(image_paths),
         "retained_frame_ids": retained,
         "depth_shape": list(output.ress[-1]["depth"].shape),

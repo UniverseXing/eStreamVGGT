@@ -22,7 +22,8 @@ from tqdm import tqdm
 def cache_metadata():
     window = os.environ.get("STREAMVGGT_CACHE_WINDOW")
     policy = os.environ.get("STREAMVGGT_CACHE_POLICY", "fifo") if window else "full_cache"
-    return window, policy
+    seed = int(os.environ.get("STREAMVGGT_CACHE_RANDOM_SEED", "0"))
+    return window, policy, seed
 
 
 def get_args_parser():
@@ -206,6 +207,7 @@ def eval_pose_estimation_dist(args, model, img_path, save_dir=None, mask_path=No
                         "peak_reserved_mb": peak_reserved_mb,
                         "cache_window_size": cache_metadata()[0],
                         "cache_policy": cache_metadata()[1],
+                        "cache_random_seed": cache_metadata()[2],
                     }
                 )
 
@@ -236,6 +238,7 @@ def eval_pose_estimation_dist(args, model, img_path, save_dir=None, mask_path=No
                             "peak_reserved_mb": peak_reserved_mb,
                             "cache_window_size": cache_metadata()[0],
                             "cache_policy": cache_metadata()[1],
+                            "cache_random_seed": cache_metadata()[2],
                         }
                     )
                     with open(error_log_path, "a") as f:
@@ -282,6 +285,7 @@ def eval_pose_estimation_dist(args, model, img_path, save_dir=None, mask_path=No
             ),
             "cache_window_size": cache_metadata()[0],
             "cache_policy": cache_metadata()[1],
+            "cache_random_seed": cache_metadata()[2],
             "requested_max_frames": args.max_frames,
         }
         if summary["total_inference_sec"] > 0:

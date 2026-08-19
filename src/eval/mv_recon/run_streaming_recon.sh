@@ -29,6 +29,7 @@ if [[ -n "${STREAMVGGT_CACHE_WINDOW:-}" ]]; then
     args+=(--cache-window "${STREAMVGGT_CACHE_WINDOW}")
     args+=(--cache-policy "${STREAMVGGT_CACHE_POLICY:-fifo}")
 fi
+args+=(--cache-random-seed "${STREAMVGGT_CACHE_RANDOM_SEED:-0}")
 if [[ -n "${STREAMVGGT_MV_MAX_SCENES:-}" ]]; then
     args+=(--max-scenes "${STREAMVGGT_MV_MAX_SCENES}")
 fi

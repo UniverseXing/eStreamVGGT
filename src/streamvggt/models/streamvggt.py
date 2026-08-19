@@ -1,3 +1,4 @@
+import hashlib
 import os
 
 import torch
@@ -28,6 +29,17 @@ _CACHE_POLICY_ALIASES = {
     "anchor_recent_dino_diverse_k4": "anchor_recent_dino_diverse_2old_1recent",
     "anchor_recent_dino_diverse_k6": "anchor_recent_dino_diverse",
     "anchor_recent_dino_diverse_k8": "temporal_binned_dino_k8",
+}
+
+_FIXED_WINDOW_POLICIES = {
+    "anchor_recent_dino_diverse_2old_1recent": 4,
+    "anchor_stable_adaptive_recent": 4,
+    "anchor_uniform_k4": 4,
+    "random_reservoir_k4": 4,
+    "dino_diverse_no_anchor_k4": 4,
+    "anchor_recent_dino_diverse_1old_3recent": 6,
+    "anchor_dino_diverse_no_recent_k6": 6,
+    "temporal_binned_dino_k8": 8,
 }
 
 
@@ -131,6 +143,34 @@ def _different_old_frame_indices(old_start, old_end, count, device, frame_featur
     return selected.sort().values
 
 
+def _seeded_reservoir_frame_indices(frame_ids, count, seed, device):
+    """Select historical states by stable seeded priorities.
+
+    Assigning every frame ID a fixed pseudo-random priority is the standard
+    priority-reservoir formulation.  Re-pruning the retained reservoir plus the
+    new candidate therefore gives the same online result as a conventional
+    reservoir update, without keeping mutable RNG state in the model.
+    """
+    if count <= 0 or frame_ids.numel() == 0:
+        return torch.empty(0, dtype=torch.long, device=device)
+    if count >= frame_ids.numel():
+        return torch.arange(frame_ids.numel(), device=device)
+
+    priorities = []
+    for frame_id in frame_ids.detach().cpu().tolist():
+        digest = hashlib.blake2b(
+            f"streamvggt-stage5a:{int(seed)}:{int(frame_id)}".encode("utf-8"),
+            digest_size=8,
+        ).digest()
+        priorities.append(int.from_bytes(digest, byteorder="big", signed=False))
+    frame_id_values = frame_ids.detach().cpu().tolist()
+    order = sorted(
+        range(len(priorities)),
+        key=lambda index: (-priorities[index], int(frame_id_values[index])),
+    )[:count]
+    return torch.tensor(sorted(order), dtype=torch.long, device=device)
+
+
 def _temporal_binned_dino_indices(frame_features, frame_ids, device):
     """Select an anchor, three age-binned DINO landmarks, and four recent frames."""
     if frame_features is None or frame_ids is None:
@@ -230,6 +270,27 @@ def _candidate_similarity_log(frame_features, frame_ids, max_cache_frames, polic
             }
             for index in (2, 3)
         ]
+    if policy in (
+        "dino_diverse_no_anchor_k4",
+        "anchor_dino_diverse_no_recent_k6",
+    ):
+        old_start = 0 if policy == "dino_diverse_no_anchor_k4" else 1
+        old_end = frame_features.shape[0] - 1
+        if old_end <= old_start:
+            return []
+        candidates = torch.arange(old_start, old_end, device=frame_features.device)
+        current_feature = frame_features[-1:]
+        scores = (
+            frame_features[candidates] @ current_feature.transpose(0, 1)
+        ).squeeze(1)
+        candidate_ids = frame_ids.index_select(0, candidates.to(frame_ids.device))
+        return [
+            {
+                "frame_id": int(frame_id),
+                "max_similarity_to_recent": float(score),
+            }
+            for frame_id, score in zip(candidate_ids.tolist(), scores.tolist())
+        ]
     _, recent_start = _old_recent_layout(
         frame_features.shape[0], max_cache_frames, policy
     )
@@ -260,6 +321,7 @@ def _cache_keep_frame_indices(
     frame_ids=None,
     adaptive_similarity_threshold=0.99,
     adaptive_min_gap=8,
+    random_seed=0,
 ):
     requested_policy = policy
     policy = _canonical_cache_policy(policy)
@@ -267,21 +329,9 @@ def _cache_keep_frame_indices(
         raise ValueError(
             "anchor_recent_dino_diverse_k6 requires cache_window_size=6"
         )
-    if (
-        policy in (
-            "anchor_recent_dino_diverse_2old_1recent",
-            "anchor_stable_adaptive_recent",
-        )
-        and max_cache_frames != 4
-    ):
-        raise ValueError(
-            f"{policy} requires cache_window_size=4"
-        )
-    if (
-        policy == "anchor_recent_dino_diverse_1old_3recent"
-        and max_cache_frames != 6
-    ):
-        raise ValueError(f"{policy} requires cache_window_size=6")
+    required_window = _FIXED_WINDOW_POLICIES.get(policy)
+    if required_window is not None and max_cache_frames != required_window:
+        raise ValueError(f"{policy} requires cache_window_size={required_window}")
     if policy == "temporal_binned_dino_k8":
         if max_cache_frames != 8:
             raise ValueError(f"{policy} requires cache_window_size=8")
@@ -340,6 +390,53 @@ def _cache_keep_frame_indices(
             dtype=torch.long,
             device=device,
         )
+
+    if policy == "anchor_uniform_k4":
+        current = torch.tensor(
+            [num_cached_frames - 1], dtype=torch.long, device=device
+        )
+        old = _uniform_old_frame_indices(
+            1, num_cached_frames - 1, 2, device
+        )
+        return torch.cat(
+            [torch.zeros(1, dtype=torch.long, device=device), old, current]
+        )
+
+    if policy == "random_reservoir_k4":
+        if frame_ids is None:
+            raise ValueError(f"{policy} requires frame IDs")
+        history_ids = frame_ids[:-1]
+        history = _seeded_reservoir_frame_indices(
+            history_ids, 3, random_seed, device
+        )
+        current = torch.tensor(
+            [num_cached_frames - 1], dtype=torch.long, device=device
+        )
+        return torch.cat([history, current]).sort().values
+
+    if policy == "dino_diverse_no_anchor_k4":
+        if frame_features is None:
+            raise ValueError(f"{policy} requires DINO frame features")
+        history = _different_old_frame_indices(
+            0, num_cached_frames - 1, 3, device, frame_features
+        )
+        current = torch.tensor(
+            [num_cached_frames - 1], dtype=torch.long, device=device
+        )
+        return torch.cat([history, current]).sort().values
+
+    if policy == "anchor_dino_diverse_no_recent_k6":
+        if frame_features is None:
+            raise ValueError(f"{policy} requires DINO frame features")
+        history = _different_old_frame_indices(
+            1, num_cached_frames - 1, 4, device, frame_features
+        )
+        current = torch.tensor(
+            [num_cached_frames - 1], dtype=torch.long, device=device
+        )
+        return torch.cat(
+            [torch.zeros(1, dtype=torch.long, device=device), history, current]
+        ).sort().values
 
     if policy in (
         "anchor_recent_image_diff",
@@ -520,6 +617,7 @@ class StreamVGGT(nn.Module, PyTorchModelHubMixin):
         output_sink: Optional[Callable[[int, dict], None]] = None,
         retain_outputs: bool = True,
         retain_views: bool = True,
+        cache_random_seed: int = 0,
     ):
         canonical_cache_policy = _canonical_cache_policy(cache_policy)
         if (
@@ -529,28 +627,11 @@ class StreamVGGT(nn.Module, PyTorchModelHubMixin):
             raise ValueError(
                 "anchor_recent_dino_diverse_k6 requires cache_window_size=6"
             )
-        if (
-            canonical_cache_policy in (
-                "anchor_recent_dino_diverse_2old_1recent",
-                "anchor_stable_adaptive_recent",
-            )
-            and cache_window_size != 4
-        ):
+        required_window = _FIXED_WINDOW_POLICIES.get(canonical_cache_policy)
+        if required_window is not None and cache_window_size != required_window:
             raise ValueError(
-                f"{cache_policy} requires cache_window_size=4"
+                f"{cache_policy} requires cache_window_size={required_window}"
             )
-        if (
-            canonical_cache_policy == "anchor_recent_dino_diverse_1old_3recent"
-            and cache_window_size != 6
-        ):
-            raise ValueError(
-                f"{cache_policy} requires cache_window_size=6"
-            )
-        if (
-            canonical_cache_policy == "temporal_binned_dino_k8"
-            and cache_window_size != 8
-        ):
-            raise ValueError(f"{cache_policy} requires cache_window_size=8")
         if camera_cache_policy is None and camera_cache_window_size is not None:
             raise ValueError(
                 "camera_cache_window_size requires camera_cache_policy; "
@@ -618,6 +699,8 @@ class StreamVGGT(nn.Module, PyTorchModelHubMixin):
                 "anchor_recent_dino_diverse_1old_3recent",
                 "temporal_binned_dino_k8",
                 "anchor_stable_adaptive_recent",
+                "dino_diverse_no_anchor_k4",
+                "anchor_dino_diverse_no_recent_k6",
             )
             if use_rgb_features:
                 current_frame_feature = _frame_feature(images)
@@ -679,6 +762,7 @@ class StreamVGGT(nn.Module, PyTorchModelHubMixin):
                         frame_ids=cache_frame_ids,
                         adaptive_similarity_threshold=adaptive_similarity_threshold,
                         adaptive_min_gap=adaptive_min_gap,
+                        random_seed=cache_random_seed,
                     )
                     past_key_values = _trim_kv_cache_by_frame_indices(
                         past_key_values,
@@ -691,6 +775,11 @@ class StreamVGGT(nn.Module, PyTorchModelHubMixin):
                                     "step": i,
                                     "policy": cache_policy,
                                     "cache_window_size": cache_window_size,
+                                    "random_seed": (
+                                        cache_random_seed
+                                        if canonical_cache_policy == "random_reservoir_k4"
+                                        else None
+                                    ),
                                     "candidate_frame_ids": cache_frame_ids.tolist(),
                                     "selected_frame_ids": cache_frame_ids.index_select(
                                         0, keep_frame_indices.to(cache_frame_ids.device)
