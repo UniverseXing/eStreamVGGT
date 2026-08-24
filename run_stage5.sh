@@ -12,7 +12,7 @@ if [[ -z "${CONDA_PREFIX:-}" || ! -x "${python_bin}" ]]; then
     echo "CONDA_DEFAULT_ENV=${CONDA_DEFAULT_ENV:-unset}, CONDA_PREFIX=${CONDA_PREFIX:-unset}" >&2
     exit 2
 fi
-"${python_bin}" -c 'import numpy, torch, sys; print("Stage 5 Python:", sys.executable, "NumPy:", numpy.__version__, "Torch:", torch.__version__, "GPU:", torch.cuda.get_device_name(0) if torch.cuda.is_available() else "none")'
+"${python_bin}" -c 'import numpy, torch, sys; assert torch.cuda.is_available(), "Stage 5 requires a Slurm-allocated CUDA GPU"; print("Stage 5 Python:", sys.executable, "NumPy:", numpy.__version__, "Torch:", torch.__version__, "GPU:", torch.cuda.get_device_name(0))'
 
 for part in ${parts}; do
     case "${part}" in

@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
 #SBATCH --job-name=streamvggt-stage5
+#SBATCH --gpus=6000ada:1
 #SBATCH --cpus-per-task=4
 #SBATCH --mem=16G
 #SBATCH --time=04:00:00
@@ -9,6 +10,8 @@
 # Runs the two conference Stage 5 evidence-completion experiments.
 set -euo pipefail
 
+repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+cd "${repo_root}"
 
 module load Miniforge3
 conda init
@@ -17,6 +20,7 @@ source activate StreamVGGT
 echo "Job ID: ${SLURM_JOB_ID:-unknown}"
 echo "Node: $(hostname)"
 echo "Started: $(date --iso-8601=seconds)"
+nvidia-smi
 bash "run_stage5.sh"
 
 echo "Finished: $(date --iso-8601=seconds)"
