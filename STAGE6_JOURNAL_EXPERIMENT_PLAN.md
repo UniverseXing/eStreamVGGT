@@ -1,6 +1,6 @@
-# Stage 5: IVC review evidence-completion plan
+# Stage 6: journal evidence-completion plan
 
-更新日期：2026-08-19
+更新日期：2026-08-24
 
 ## 1. 目标与范围
 
@@ -10,7 +10,7 @@
 2. 复现 2--3 个直接竞争的 StreamVGGT bounded-cache 方法；
 3. qualitative/selected-frame 分析，并解释 KITTI 上 K4 优于 Full cache 的现象。
 
-Stage 5 是证据补全，不是新一轮方法搜索。K4、K6、K8 的正式配置继续冻结，
+Stage 6 是期刊证据补全，不是新一轮方法搜索。K4、K6、K8 的正式配置继续冻结，
 不得根据新增结果修改 DINO 阈值、K、temporal-bin 边界、数据抽样或指标定义。
 新增控制组只用于检验已有主张；不通过时应降低论文主张，而不是继续调控制组。
 
@@ -48,7 +48,7 @@ Stage 5 是证据补全，不是新一轮方法搜索。K4、K6、K8 的正式�
    $0.2962$ vs $0.3018$（均越低越好）。这些结果可保留为跨任务旁证。
 3. **FIFO K4 展示了明显的质量取舍。** Bonn `person_tracking2` 上 FIFO K4 将
    rotation RPE 从 K4 的 $41.67^\circ$ 降至 $4.72^\circ$，但 AbsRel 从约
-   $0.0452$ 恶化到 $0.1402$。它是有价值的失败对照，但单序列不足以替代 Stage 5A。
+   $0.0452$ 恶化到 $0.1402$。它是有价值的失败对照，但单序列不足以替代 Stage 6A。
 4. **temporal hierarchy 已有一次同 K8 诊断。** 分段 K8 相对 standard K8 将
    AbsRel 从 $0.0552$ 降到 $0.0515$，并改善局部 RPE，但两者均未修复全局 ATE。
 5. **release 路径已有正确性证据。** Bonn 110 帧上 K8 legacy-retain 与
@@ -65,11 +65,11 @@ Stage 5 是证据补全，不是新一轮方法搜索。K4、K6、K8 的正式�
 Proposed K4 在 Bonn/Sintel 重复运行三次，没有任何同预算控制组，不能作为本轮
 ablation 证据。
 
-## 3. Stage 5A: same-budget baselines and component ablations
+## 3. Stage 6A: same-budget baselines and component ablations
 
 ### 3.0 实现状态（2026-08-19）
 
-Stage 5A 核心代码已经实现，尚未产生正式集群结果：
+Stage 6A 核心代码已经实现并归档，尚未产生正式集群结果；会议投稿前暂停执行：
 
 - 新增 `anchor_uniform_k4`、`random_reservoir_k4`、
   `dino_diverse_no_anchor_k4` 和 `anchor_dino_diverse_no_recent_k6`；
@@ -77,12 +77,12 @@ Stage 5A 核心代码已经实现，尚未产生正式集群结果：
   写入运行 metadata 和 selection event；
 - VideoDepth、pose 和 reconstruction 已统一传递 random seed，双 KV 仍使用同一组
   retained frame indices；
-- `run_stage5a.sh` 支持 `video_depth`、`pose`、`reconstruction`、`finalize` 分段运行，
+- `run_stage6a.sh` 支持 `video_depth`、`pose`、`reconstruction`、`finalize` 分段运行，
   根目录 `run.sh` 是唯一 Slurm 入口；
-- `scripts/summarize_stage5a.py` 严格检查三域 $5/23/13$ 条 VideoDepth、8 条 TUM
+- `scripts/summarize_stage6a.py` 严格检查三域 $5/23/13$ 条 VideoDepth、8 条 TUM
   pose、8 条 TUM Dynamics、零失败、相同覆盖和同一 RTX 6000 Ada 软件栈，并输出
   10,000 次 paired bootstrap；
-- 全部 CPU 回归测试为 43/43 通过（其中 Stage 5A 新增测试 6 项）；当前 Codex
+- 迁移后全部 CPU 回归测试为 45/45 通过（其中 Stage 6A 新增测试 6 项）；当前 Codex
   工具会话不可见 CUDA，因此真实
   Aggregator smoke 留给可见 GPU 的本地终端执行。
 
@@ -97,25 +97,14 @@ python scripts/reproduce/smoke_inference.py \
     --max-frames 5
 ```
 
-正式集群运行：
+当前根目录 `run.sh` 固定用于会议版 Stage 5，不能通过它误启动 Stage 6。会议投稿
+完成、用户明确开始期刊扩展后，再把根入口切换到 `run_stage6a.sh`，并按
+`video_depth / pose / reconstruction / finalize` 拆分提交。现在只保留代码，不运行。
 
-```bash
-sbatch run.sh
-```
-
-若集群作业需要拆分，保持输出目录不变，依次提交：
-
-```bash
-STREAMVGGT_STAGE5A_PARTS=video_depth sbatch run.sh
-STREAMVGGT_STAGE5A_PARTS=pose sbatch run.sh
-STREAMVGGT_STAGE5A_PARTS=reconstruction sbatch run.sh
-STREAMVGGT_STAGE5A_PARTS=finalize sbatch run.sh
-```
-
-调试子集必须显式设置 `STREAMVGGT_STAGE5A_ALLOW_INCOMPLETE=1`；正式结果不得使用该
-开关。正式汇总文件为 `stage5a_same_budget_results.csv`、
-`stage5a_same_budget_sequence_results.csv`、`stage5a_component_results.csv` 和
-`stage5a_paired_statistics.csv`。
+调试子集必须显式设置 `STREAMVGGT_STAGE6A_ALLOW_INCOMPLETE=1`；正式结果不得使用该
+开关。正式汇总文件为 `stage6a_same_budget_results.csv`、
+`stage6a_same_budget_sequence_results.csv`、`stage6a_component_results.csv` 和
+`stage6a_paired_statistics.csv`。
 
 ### 3.1 先纠正 K4 的槽位语义
 
@@ -183,7 +172,7 @@ K4 已回答 `no DINO` 与 `no anchor`。其余 component 按真实存在的位�
 2. **No temporal hierarchy（K8）**：直接复用
    `standard_dino_k8` vs `temporal_binned_dino_k8` 的 Bonn 110 帧数据；若版面只
    需要 component existence proof，放 Supplementary，不为追求显著性重跑全域。
-3. **No output release（system component）**：见 Stage 5A-M，而不把执行生命周期
+3. **No output release（system component）**：见 Stage 6A-M，而不把执行生命周期
    和 selector component 混在一张质量表中。
 
 ### 3.5 统计与结论门槛
@@ -200,7 +189,7 @@ K4 已回答 `no DINO` 与 `no anchor`。其余 component 按真实存在的位�
   降为一种低成本实现选择，论文主线转为 end-to-end bounded execution。
 - 不论结果如何，都不得据此修改正式 K4。
 
-### 3.6 Stage 5A-M: matched $2\times2$ memory-source experiment
+### 3.6 Stage 6A-M: matched $2\times2$ memory-source experiment
 
 在 `rgbd_dataset_freiburg2_desk` 上，同一作业运行：
 
@@ -221,7 +210,7 @@ hash 或 `allclose`、ATE/RPE。图中分别展示 KV pruning 和 release 对斜
 
 已有 Stage 3.6B/4C 数据继续作为跨序列旁证，但不替代这一 matched factorial。
 
-## 4. Stage 5B: direct bounded-StreamVGGT baselines
+## 4. Stage 6B: direct bounded-StreamVGGT baselines
 
 ### 4.1 优先级
 
@@ -284,7 +273,7 @@ TUM pose aggregate。暂不把外部方法扩张到全部 10 个 benchmark；只
 
 ### 4.5 完成门槛与结果动作
 
-- 至少两个直接方法通过 parity 并完成核心子集，Stage 5B 才算完成。
+- 至少两个直接方法通过 parity 并完成核心子集，Stage 6B 才算完成。
 - 主表列：AbsRel、$\delta_1$、ATE、RPE、1000-frame completion、peak allocated、
   RSS、FPS、causal granularity、cache unit。
 - 只有 K4 在质量--显存--速度上不被外部方法支配，才可写“competitive Pareto
@@ -294,11 +283,11 @@ TUM pose aggregate。暂不把外部方法扩张到全部 10 个 benchmark；只
 - 若少于两个方法兼容，论文不得写 SOTA，只能写“comparison was limited by
   incompatible released protocols”，并在 Supplementary 给出完整复现审计。
 
-## 5. Stage 5C: selected-frame qualitative and KITTI mechanism analysis
+## 5. Stage 6C: selected-frame qualitative and KITTI mechanism analysis
 
 ### 5.1 避免重复推理
 
-Stage 5A 的 KITTI run 同时为 Full、Recent-4 和 Proposed K4 开启：
+Stage 6A 的 KITTI run 同时为 Full、Recent-4 和 Proposed K4 开启：
 
 - per-frame AbsRel/$\delta_1$；
 - retained frame IDs 与每次替换事件；
@@ -307,7 +296,7 @@ Stage 5A 的 KITTI run 同时为 Full、Recent-4 和 Proposed K4 开启：
 - Full/Recent-4/K4 的 depth `.npy`，仅保存预注册可视化序列的完整 depth，其他
   序列只保存逐帧 metric，避免空间再次爆炸。
 
-这样 Stage 5C 主要是 CPU 分析和画图，不单独重跑模型。
+这样 Stage 6C 主要是 CPU 分析和画图，不单独重跑模型。
 
 ### 5.2 KITTI 机制统计
 
@@ -365,14 +354,14 @@ Supplementary，不用同一信息再做一张主图。
 建议文件名：
 
 ```text
-stage5a_same_budget_results.csv
-stage5a_same_budget_sequence_results.csv
-stage5a_component_results.csv
-stage5a_memory_factorial_results.csv
-stage5b_external_results.csv
-stage5b_external_compatibility.csv
-stage5c_kitti_frame_results.csv
-stage5c_kitti_mechanism.csv
+stage6a_same_budget_results.csv
+stage6a_same_budget_sequence_results.csv
+stage6a_component_results.csv
+stage6a_memory_factorial_results.csv
+stage6b_external_results.csv
+stage6b_external_compatibility.csv
+stage6c_kitti_frame_results.csv
+stage6c_kitti_mechanism.csv
 paper_assets/figures/fig_ivc_selected_frames.pdf
 paper_assets/figures/fig_ivc_kitti_mechanism.pdf
 ```
@@ -381,9 +370,9 @@ paper_assets/figures/fig_ivc_kitti_mechanism.pdf
 
 1. 实现并单元测试 K4 控制策略，10 帧验证每步 retained IDs、K 上界和双 KV
    同步；不先跑全数据。
-2. 完成 Stage 5A VideoDepth，再跑 TUM pose/TUM Dynamics；统计脚本自动输出 CI。
-3. 用 Stage 5A 已保存的 KITTI artifacts 完成 Stage 5C，不重复推理。
-4. 完成 Stage 5A-M matched memory factorial。
+2. 完成 Stage 6A VideoDepth，再跑 TUM pose/TUM Dynamics；统计脚本自动输出 CI。
+3. 用 Stage 6A 已保存的 KITTI artifacts 完成 Stage 6C，不重复推理。
+4. 完成 Stage 6A-M matched memory factorial。
 5. 依次做 OVGGT、FrameVGGT、STAC compatibility smoke；至少两个通过后再跑 Stage
    5B 正式核心子集。STAC 构建失败时启用 XStreamVGGT fallback。
 6. 所有新增表通过覆盖、hardware、checkpoint、NaN/OOM 审计后，才修改论文主张。
@@ -396,9 +385,9 @@ paper_assets/figures/fig_ivc_kitti_mechanism.pdf
 - 不因 Proposed 输给简单 baseline 而发明新 selector；
 - 不把 external repo 自报数据与本项目实测数据混为同协议结果。
 
-## 7. Stage 5 完成定义
+## 7. Stage 6 完成定义
 
-Stage 5 只有同时满足以下条件才结束：
+Stage 6 只有同时满足以下条件才结束：
 
 1. K4 同预算六个 bounded policy（含三次 Random）完成三域 VideoDepth，并完成
    TUM pose/TUM Dynamics representative subset；

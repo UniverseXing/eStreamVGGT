@@ -159,7 +159,7 @@ def _seeded_reservoir_frame_indices(frame_ids, count, seed, device):
     priorities = []
     for frame_id in frame_ids.detach().cpu().tolist():
         digest = hashlib.blake2b(
-            f"streamvggt-stage5a:{int(seed)}:{int(frame_id)}".encode("utf-8"),
+            f"streamvggt-random-reservoir:{int(seed)}:{int(frame_id)}".encode("utf-8"),
             digest_size=8,
         ).digest()
         priorities.append(int.from_bytes(digest, byteorder="big", signed=False))

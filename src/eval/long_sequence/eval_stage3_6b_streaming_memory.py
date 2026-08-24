@@ -6,6 +6,7 @@ import hashlib
 import json
 import os
 import os.path as osp
+import platform
 import resource
 import sys
 import time
@@ -41,12 +42,22 @@ def parse_args():
     parser.add_argument("--sequence", required=True)
     parser.add_argument("--output-dir", required=True)
     parser.add_argument("--method", required=True)
-    parser.add_argument("--mode", choices=("legacy_retain", "stream_release"), required=True)
+    parser.add_argument(
+        "--mode",
+        choices=("legacy_retain", "stream_accumulate", "stream_release"),
+        required=True,
+    )
     parser.add_argument("--size", type=int, default=518)
     parser.add_argument("--max-frames", type=int, required=True)
     parser.add_argument("--cache-window", type=int, default=8)
     parser.add_argument("--cache-policy", default="temporal_binned_dino_k8")
+    parser.add_argument(
+        "--full-cache",
+        action="store_true",
+        help="disable KV pruning; preserves the historical K8 defaults when omitted",
+    )
     parser.add_argument("--collect-depth", action=argparse.BooleanOptionalAction, default=False)
+    parser.add_argument("--metrics-filename", default="stage3_6b_metrics.json")
     return parser.parse_args()
 
 
@@ -176,10 +187,13 @@ def trace_summary(memory_trace):
 
 def main():
     args = parse_args()
+    if args.full_cache:
+        args.cache_window = None
+        args.cache_policy = "fifo"
     if args.max_frames < 2:
         raise ValueError("--max-frames must be at least 2")
-    if args.cache_window != 8 or args.cache_policy != "temporal_binned_dino_k8":
-        raise ValueError("Stage 3.6B freezes geometry at temporal_binned_dino_k8/K8")
+    if args.cache_window is not None and args.cache_window < 1:
+        raise ValueError("--cache-window must be at least 1 when provided")
     if args.collect_depth and args.dataset != "bonn":
         raise ValueError("--collect-depth is reserved for the 110-frame Bonn equivalence run")
 
@@ -197,6 +211,14 @@ def main():
     model.eval().to(device)
     del checkpoint
     dtype = torch.bfloat16 if torch.cuda.get_device_capability()[0] >= 8 else torch.float16
+    provenance = {
+        "gpu_name": torch.cuda.get_device_name(device),
+        "torch_version": str(torch.__version__),
+        "cuda_version": torch.version.cuda or "",
+        "python_version": platform.python_version(),
+        "slurm_job_id": os.environ.get("SLURM_JOB_ID", ""),
+        "hostname": platform.node(),
+    }
 
     sink = PredictionSink(collect_depth=args.collect_depth)
     output = frames = None
@@ -220,6 +242,25 @@ def main():
                 )
             torch.cuda.synchronize(device)
             inference_sec = time.perf_counter() - inference_start
+            for frame_index, prediction in enumerate(output.ress):
+                sink(frame_index, prediction)
+        elif args.mode == "stream_accumulate":
+            frame_iterator = lazy_frames(
+                image_paths, load_images, args.size, device, state
+            )
+            inference_start = time.perf_counter()
+            with torch.no_grad(), torch.cuda.amp.autocast(dtype=dtype):
+                output = model.inference(
+                    frame_iterator,
+                    cache_window_size=args.cache_window,
+                    cache_policy=args.cache_policy,
+                    return_memory_trace=True,
+                    retain_outputs=True,
+                    retain_views=False,
+                )
+            torch.cuda.synchronize(device)
+            inference_sec = time.perf_counter() - inference_start
+            image_hw = state["image_hw"]
             for frame_index, prediction in enumerate(output.ress):
                 sink(frame_index, prediction)
         else:
@@ -303,8 +344,11 @@ def main():
             "dataset": args.dataset,
             "sequence": args.sequence,
             "num_frames": len(image_paths),
+            "processed_frames": sink.num_frames,
             "cache_window_size": args.cache_window,
-            "cache_policy": args.cache_policy,
+            "cache_policy": (
+                "full_cache" if args.cache_window is None else args.cache_policy
+            ),
             "collect_depth": args.collect_depth,
             "inference_sec": inference_sec,
             "wall_sec": wall_sec,
@@ -321,6 +365,7 @@ def main():
             "temporal_bank_statistics": temporal_bank_statistics(memory_trace),
             **pose_result,
             **depth_result,
+            **provenance,
         }
     except Exception as error:
         result = {
@@ -330,11 +375,19 @@ def main():
             "dataset": args.dataset,
             "sequence": args.sequence,
             "num_frames": len(image_paths),
+            "processed_frames": sink.num_frames,
+            "cache_window_size": args.cache_window,
+            "cache_policy": (
+                "full_cache" if args.cache_window is None else args.cache_policy
+            ),
             "error": f"{type(error).__name__}: {error}",
+            "peak_allocated_mb": torch.cuda.max_memory_allocated(device) / (1024**2),
+            "peak_reserved_mb": torch.cuda.max_memory_reserved(device) / (1024**2),
+            **provenance,
         }
         traceback.print_exc()
 
-    with open(osp.join(args.output_dir, "stage3_6b_metrics.json"), "w") as handle:
+    with open(osp.join(args.output_dir, args.metrics_filename), "w") as handle:
         json.dump(result, handle, indent=2)
     print(json.dumps(result, indent=2))
     if result["status"] != "ok":

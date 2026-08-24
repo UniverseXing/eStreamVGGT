@@ -1,4 +1,4 @@
-"""CPU-only checks for Stage 5A paired statistics."""
+"""CPU-only checks for Stage 6A paired statistics."""
 
 import importlib.util
 import unittest
@@ -7,7 +7,7 @@ from pathlib import Path
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
 SPEC = importlib.util.spec_from_file_location(
-    "summarize_stage5a", REPO_ROOT / "scripts" / "summarize_stage5a.py"
+    "summarize_stage6a", REPO_ROOT / "scripts" / "summarize_stage6a.py"
 )
 MODULE = importlib.util.module_from_spec(SPEC)
 SPEC.loader.exec_module(MODULE)
