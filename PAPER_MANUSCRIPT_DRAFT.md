@@ -14,16 +14,16 @@ camera-head KV，并通过逐帧输入和 streaming release 及时释放稠密�
 Bonn、Sintel 和 KITTI 上使用 AbsRel、$\delta_1$、FPS 与峰值显存评价
 VideoDepth，在 Sintel、ScanNet、TUM、7-Scenes、NRGBD、ETH3D 和 TUM
 Dynamics 上使用 ATE、RPE 与 reconstruction Overall 评价跨任务表现，并在三条
-未见 TUM RGB-D 序列上测试至 1000 帧。结果表明，K4 在十个核心 benchmark 中
-取得七个 bounded primary-metric 胜场；在 KITTI 上，相较原版 StreamVGGT 的
-Full-cache baseline，K4 将 AbsRel 降低 22.7\%（0.1726 至 0.1334）、峰值显存
-降低 35.7\%（12.43 GiB 至 8.00 GiB），并将推理速度提高 51.2\%（5.99 FPS
-至 9.06 FPS）。此外，Full cache 在三条长序列中均于约 195 个已处理帧后发生
-OOM，而 K4/K6/K8 均完成 1000 帧，并在 500 至 1000 帧之间保持零 GPU-peak
-增量。这些结果说明，语义—时间联合历史选择能够同时改善紧凑配置的质量—资源
-折中，耦合裁剪与 streaming release 则解决了在线模型仍无法在固定内存下持续
-运行的问题；不同预算在全局轨迹和局部运动上的差异进一步表明，不存在对所有
-三维任务统一最优的 cache 大小。
+未见 TUM RGB-D 序列上测试至 1000 帧。相较具有相同四状态预算的
+Anchor+Recent-4，K4 在 Bonn、Sintel 和 KITTI 上分别将 AbsRel 降低
+21.6\%、6.3\% 和 28.2\%，三个逐序列 paired-bootstrap 95\% 置信区间均排除
+零。在 110 帧显存分解中，K4 相较 Full cache 将 peak allocated/reserved
+memory 分别降低 57.9\%/80.3\%，并获得 $3.24\times$ 吞吐率；KV pruning
+贡献其中 10.80 GiB 的 peak-allocated 节省，output release 额外节省
+0.48 GiB。此外，Full cache 在三条长序列中均于约 195 个已处理帧后 OOM，
+而 K4/K6/K8 均完成 1000 帧，并在 500 至 1000 帧之间保持零 GPU-peak
+增量。这些结果说明，DINO 历史选择带来的改善并非仅来自小窗口，耦合裁剪与
+streaming release 则共同解决了在线模型无法在固定内存下持续运行的问题。
 
 ## 5.2 Introduction
 
@@ -76,12 +76,13 @@ long temporal banks。帧选择同时作用于 aggregator 和 camera head 的 KV
 稠密输出。由此，历史状态开销由序列长度相关的 $\Theta(T)$ 转化为预算相关的
 $\mathcal{O}(K)$。
 
-实验结果验证了该设计的资源可扩展性和任务边界。在三条 held-out TUM RGB-D
-长序列上，full cache 在请求 250 帧时均于约 195 个已处理帧后发生 OOM，而
-K4、K6 和 K8 均完成 1000 帧推理，并在 500 至 1000 帧之间保持不变的 GPU
-peak。统一的 RTX 6000 Ada 实验进一步表明，K4 是三个 VideoDepth 数据域中
-唯一始终位于质量--显存--速度联合 Pareto 前沿的 bounded configuration，并在
-十个跨任务 benchmark 中取得七个 primary-metric 胜场。与此同时，较大的 K
+实验结果验证了该设计的资源可扩展性和任务边界。在相同四状态预算下，K4 相较
+Anchor+Recent-4 在 Bonn、Sintel 和 KITTI 上分别将 AbsRel 降低 21.6\%、
+6.3\% 和 28.2\%，且三域 paired-bootstrap 95\% 置信区间均排除零。在三条
+held-out TUM RGB-D 长序列上，full cache 在请求 250 帧时均于约 195 个已处理
+帧后发生 OOM，而 K4、K6 和 K8 均完成 1000 帧推理，并在 500 至 1000 帧之间
+保持不变的 GPU peak。独立的四格显存实验进一步表明，KV pruning 是主要节省
+来源，streaming release 则移除随输出数量增长的附加项。与此同时，较大的 K
 并不构成普遍优势：K6 在部分静态重建任务上更稳健，K8 可改善长序列局部位姿，
 却不保证更低的全局轨迹误差。这些结果说明，执行可扩展性与长期几何一致性是
 相关但不同的目标。
@@ -294,6 +295,13 @@ retained state，并用同一索引集合裁剪，避免两个预测分支获得
 理论上的 cache 上界扩展为完整执行路径的内存上界。后续各小节依次给出问题
 定义、DINO 描述符、三种预算策略、输出释放和复杂度分析。
 
+![Method overview](paper_assets/figure1/fig_method_overview.svg)
+
+**图 1. 方法总览。当前帧同时进入冻结的 StreamVGGT 推理分支和 DINO 描述符
+分支；bounded selector 根据 anchor、recent、视觉差异与分层时间角色选择统一的
+帧索引，并据此同步保留 aggregator/camera-head KV states。当前表示查询保留的
+历史状态后产生相机与稠密三维输出，已消费输出经 prediction sink 写出并释放。**
+
 ## 5.5 Experimental Setup
 
 ### 5.5.1 Tasks and datasets
@@ -319,7 +327,11 @@ VideoDepth 测试域，后者用于 held-out 长序列验证。其余数据集�
 我们比较 full cache 与三个冻结的有界配置 K4、K6 和 K8。四种方法共享同一
 StreamVGGT checkpoint、预测 heads 和 $518\times518$ 输入分辨率，不进行
 额外训练。Full cache 保留全部历史 KV；K4、K6 和 K8 分别最多保留 4、6 和
-8 帧状态，具体选择规则见第 5.4 节。所有 bounded runs 均采用耦合的
+8 帧状态，具体选择规则见第 5.4 节。为隔离 DINO selection 的作用，
+VideoDepth 还加入两个四状态非 DINO 对照：Recent-4 保留最近三个历史状态与
+current，Anchor+Recent-4 保留 frame 0、最近两个历史状态与 current。二者与
+K4 使用相同窗口、checkpoint、输入和评估顺序；Uniform-4 与三个随机种子的
+Random-4 完整结果放入补充材料。所有 bounded runs 均采用耦合的
 aggregator/camera cache；held-out 长序列实验进一步启用逐帧输入与
 output-sink release，以避免稠密输出随序列累积。
 
@@ -327,6 +339,12 @@ output-sink release，以避免稠密输出随序列累积。
 inference FPS、CUDA peak allocated/reserved memory；长序列实验还记录 CPU
 RSS。早期 A6000 测量不与该同卡主表混合。除明确标注的 OOM 外，同一数据集
 上的所有方法使用相同输入、采样和评价代码。
+
+为分解显存来源，我们还在 Bonn `person_tracking2` 的相同 110 帧输入上构造
+$2\times2$ factorial：Full/K4 KV 与 accumulated/streaming-release outputs。
+四组均逐帧加载输入；固定输出生命周期比较 Full 与 K4 得到 KV-pruning
+贡献，固定 KV 策略比较 accumulated 与 release 得到 output-release 贡献。
+同一 KV 策略的两种生命周期必须产生相同的 pose 和 depth prediction hashes。
 
 ### 5.5.3 Metrics and analysis protocol
 
@@ -348,30 +366,39 @@ alternative 和 pose-oriented specialist 进行报告。
 
 ## 5.6 Results
 
-### 5.6.1 VideoDepth 的质量—资源折中
+### 5.6.1 同预算帧选择与 VideoDepth 折中
 
-图 X 给出了冻结后的同卡 VideoDepth 对比。在三个 bounded methods 中，K4
-是唯一在三个数据集上均处于 AbsRel--memory--runtime 联合 Pareto 前沿的
-配置；K6 和 K8 在每个数据集上均被 K4 支配。
+表 1 首先隔离了 DINO selection，而不是把 K4 只与无界 Full cache 比较。
+Recent-4、Anchor+Recent-4 和 K4 均最多保留四个状态；其中
+Anchor+Recent-4 与 K4 具有相同的 anchor、两个可替换历史槽和 current，唯一
+差异是两个历史槽由近期帧还是 DINO 低冗余帧填充。
 
-![VideoDepth quality and efficiency](paper_assets/figures/fig_video_depth_results.png)
+**表 1. 单张 RTX 6000 Ada 上的同预算 VideoDepth AbsRel（越低越好）。四个
+AbsRel aggregate 均按有效像素数加权；最后一列为逐序列等权的
+$d=\mathrm{AbsRel}_{A+R4}-\mathrm{AbsRel}_{K4}$ 均值及 95\% paired-bootstrap CI，
+正值表示 K4 更好。Full cache 是原版 StreamVGGT。**
 
-**图 X. 单张 RTX 6000 Ada 上的 VideoDepth 质量与效率。（a）AbsRel；（b）
-$\delta_1$；（c）推理吞吐率；（d）峰值 allocated GPU memory。AbsRel 与显存
-越低越好，$\delta_1$ 与 FPS 越高越好。**
+| Dataset | Full cache | Recent-4 | Anchor+Recent-4 | K4 | K4 advantage over Anchor+Recent-4 (95\% CI) |
+|---|---:|---:|---:|---:|---:|
+| Bonn | 0.0746 | 0.1210 | 0.0962 | 0.0755 | 0.0207 [0.0115, 0.0294] |
+| Sintel | 0.3232 | 0.4000 | 0.3374 | 0.3161 | 0.0191 [0.0030, 0.0358] |
+| KITTI | 0.1726 | 0.1316 | 0.1857 | 0.1334 | 0.0476 [0.0341, 0.0603] |
 
-在 Bonn 上，K4 将峰值 allocated memory 降低 51.2\%，并获得
-$2.48\times$ 加速，同时其 AbsRel 与 full cache 接近（0.0755 vs.
-0.0746）。在 held-out 户外 KITTI 域上，K4 将 AbsRel 从 0.1726 降至
-0.1334、将 $\delta_1$ 从 0.7214 提升至 0.8282，同时降低 35.7\% 显存并
-获得 $1.51\times$ 加速。在 Sintel 上，K4 将显存降低 23.3\%，获得
-$1.24\times$ 加速，AbsRel 从 0.3232 变为 0.3161。
+相较关键的 Anchor+Recent-4 对照，K4 在 Bonn、Sintel 和 KITTI 上分别将
+valid-pixel-weighted AbsRel 降低 21.6\%、6.3\% 和 28.2\%；逐序列结果为
+5/0、18/5 和 13/0 个 wins/losses，三个置信区间均排除零。因此，K4 的改善
+不能仅用“小窗口”或“保留首帧”解释，而支持 DINO 历史选择在同预算下具有
+可测收益。Uniform-4 上的三域优势同样清晰；相对三种子 Random-4，优势在 Bonn
+与 Sintel 清晰，而 KITTI 无清晰差异，故本文不宣称 K4 对所有 selector 普遍
+最优。完整 Uniform-4、Random-4、逐序列结果和 bootstrap 数据见补充材料。
 
-逐序列 paired bootstrap 表明，K4 在 KITTI 的 AbsRel 和 $\delta_1$ 上均
-清晰优于 full cache。Bonn 和 Sintel 的 AbsRel 置信区间跨越 0，因此只能
-解释为深度质量得到保持，而不能宣称显著提升；full cache 在 Bonn 的
-$\delta_1$ 上仍具有小幅但清晰的优势。总体而言，K4 提供了最一致的
-质量--显存--速度折中，但有界 cache 并不普遍提高预测精度。
+Full cache 是原版 StreamVGGT 的无界参照。在 Bonn 上，K4 的 AbsRel 与其接近
+（0.0755 vs. 0.0746），但 peak allocated memory 降低 51.2\%，吞吐率提高至
+$2.48\times$；在 Sintel 上，K4 将 AbsRel 从 0.3232 降至 0.3161，同时降低
+23.3\% 显存并获得 $1.24\times$ 加速；在 KITTI 上则将 AbsRel 从 0.1726
+降至 0.1334、$\delta_1$ 从 0.7214 提升至 0.8282，同时降低 35.7\% 显存并
+获得 $1.51\times$ 加速。Recent-4 在 KITTI 的加权 AbsRel 略低于 K4，但其
+逐序列差异置信区间跨零；这一结果也限制了“任意数据域均最优”的表述。
 
 ### 5.6.2 跨任务表现与缓存角色分化
 
@@ -382,7 +409,7 @@ bounded method 记为 oracle winner。K4 在 10 个单元中赢得 7 个，K6 �
 分别赢得 1 个和 2 个，表明不存在统一支配所有任务的 cache budget。Full
 cache 仅作为无界 reference，不参与 bounded oracle 计数。
 
-**表 Y. Pose 与 reconstruction 结果（均为越低越好）。Pose 单元格依次报告
+**表 2. Pose 与 reconstruction 结果（均为越低越好）。Pose 单元格依次报告
 ATE / rotation RPE（度），reconstruction 单元格报告 Overall；每项粗体分别表示
 该指标的最佳 bounded configuration。**
 
@@ -423,18 +450,50 @@ runs，包括所有 1000 帧测试。三者在 1000 帧时的 peak allocated mem
 peak；同期 CPU RSS 的最大增量仅为 4.35 MiB。结果表明，有界 cache 与逐帧
 输出释放共同将历史状态和输出带来的 GPU/CPU 内存增长限制在常数范围内，使
 StreamVGGT 能够处理 full cache 无法完成的长序列。位姿精度随序列长度的变化
-将在下一节分析。
+将在第 5.6.5 节分析。
 
-### 5.6.4 全局轨迹与局部位姿的差异
+![Long-sequence resource scaling](paper_assets/figures/fig_long_sequence_scaling.png)
+
+**图 2. 三条 held-out TUM RGB-D 序列上的长序列资源扩展。（a）三条序列中
+每种方法的最大 peak allocated GPU memory；（b）平均 inference FPS。
+Full cache 的红色叉号表示请求 250 帧时在实际处理约 195 帧后 OOM，而不是
+一条成功的 250 帧测量。**
+
+### 5.6.4 显存来源分解
+
+图 3 在相同 110 帧输入和逐帧加载条件下进一步拆分 KV pruning 与 output
+release。固定 streaming release 后，K4 将 Full cache 的 peak allocated
+memory 从 19084.6 MiB 降至 8026.3 MiB，节省 57.9\%；peak reserved memory
+从 44594 MiB 降至 8782 MiB，节省 80.3\%，吞吐率由 3.44 提升至 11.15 FPS
+（$3.24\times$）。固定 accumulated outputs 时得到相近的 56.5\%
+peak-allocated 降幅，说明该结果不依赖输出释放方式。
+
+![Memory decomposition](paper_assets/figures/fig_stage5b_memory_decomposition.png)
+
+**图 3. Bonn `person_tracking2` 110 帧上的显存分解。（a）Full/K4 与
+accumulated/streaming-release outputs 的逐帧 CUDA allocated memory；（b）
+streaming-release 条件下 KV pruning 的独立节省，以及 K4 条件下 output
+release 的独立节省。**
+
+KV pruning 在 streaming-release 口径下独立节省 11058.3 MiB（10.80 GiB）
+peak allocated memory，是主要贡献；K4 条件下 output release 额外节省
+492.0 MiB（0.48 GiB，5.8\%）。该差值与 accumulated 路径实际保留的
+493.0 MiB 稠密输出一致。四个单元均完成 110 帧且输入模式均为 streaming；
+同一 KV 策略的 accumulated/release pose 与 depth hashes 完全一致。因此，这一
+factorial 只归因执行生命周期带来的资源差异，不把 Full 与 K4 的预测差异误写为
+output-release 效果。图 2 展示完整系统能否扩展至 1000 帧，图 3 则解释显存
+节省主要来自何处，两者提供互补证据。
+
+### 5.6.5 全局轨迹与局部位姿的差异
 
 有界内存并不保证位姿误差随序列长度保持稳定。在 1000 帧处，K4、K6 和 K8
 的平均 ATE 分别为 0.776、0.808 和 0.820，而平均 rotation RPE 分别为
 $9.88^\circ$、$8.08^\circ$ 和 $4.57^\circ$：K4 保留了较低的全局轨迹误差，
-K8 则具有更准确的局部旋转。图 Z 给出了三个审计案例的完整 bounded 结果。
+K8 则具有更准确的局部旋转。图 4 给出了三个代表性案例的完整 bounded 结果。
 
 ![Representative long-sequence pose errors](paper_assets/figures/fig_pose_case_comparison.png)
 
-**图 Z. 三个代表性长序列前缀上的位姿误差。（a）ATE；（b）translation RPE；
+**图 4. 三个代表性长序列前缀上的位姿误差。（a）ATE；（b）translation RPE；
 （c）rotation RPE。所有指标均为越低越好，（b）和（c）采用对数纵轴，黑色空心
 轮廓标出每个案例的最佳 bounded configuration。F1-R、F2-D 和 F3-LO 分别表示
 TUM 的 Freiburg1 room、Freiburg2 desk 和 Freiburg3 long office household，
@@ -446,7 +505,7 @@ F3-LO/500 案例中，K8 的两个 RPE 均较低，但其
 ATE 是 K4 的 $2.34\times$。因此，较低的单步相对运动误差不足以避免长期
 累积漂移；K8 是局部位姿 specialist，而非 K4 的通用替代方案。
 
-### 5.6.5 K4/K8 朴素输出融合的失败
+### 5.6.6 K4/K8 朴素输出融合的失败
 
 基于 K4 的全局轨迹优势与 K8 的局部旋转优势，我们在九个长序列前缀上评估
 了两种 post-hoc 融合。第一种保留 K4 的 geometry 输出，但直接采用 K8 的
@@ -466,16 +525,15 @@ translation 与 K8 的 rotation。该方案保持了 K4 的平均 ATE（0.406）
 streaming-release 执行路径。实验结果分别为 Introduction 中的三项贡献提供了
 如下证据。
 
-第一，实验支持了语义—时间联合历史选择在紧凑预算下的有效性。K4 仅保留一个
-稳定 anchor、两个 DINO-selected historical states 和一个 recent state，仍是
-Bonn、KITTI 与 Sintel 三个 VideoDepth 数据集上唯一始终处于
-AbsRel--memory--runtime 联合 Pareto 前沿的 bounded configuration，并在十个
-跨任务 benchmark 中取得七个 bounded primary-metric 胜场。尤其在未参与策略
-选择的 KITTI 域上，K4 将 AbsRel 从 full cache 的 0.1726 降至 0.1334，将
-$\delta_1$ 从 0.7214 提升至 0.8282，同时把峰值显存从 12.43 GiB 降至
-8.00 GiB、速度从 5.99 FPS 提升至 9.06 FPS。这些结果说明，复用已有 DINO
-表征并将视觉低冗余与 anchor/recent 角色结合，能够在无需重新训练或重编码历史
-图像的条件下保留具有竞争力的三维信息，而不是简单以预测质量换取小窗口。
+第一，实验支持了语义—时间联合历史选择在紧凑预算下的有效性。相较具有相同
+anchor、两个历史槽和 current 的 Anchor+Recent-4，K4 在 Bonn、Sintel 和
+KITTI 上分别将 AbsRel 降低 21.6\%、6.3\% 和 28.2\%，三个逐序列
+paired-bootstrap 95\% 置信区间均排除零；相对 Uniform-4 也在三域取得清晰
+优势。尤其在 KITTI 上，K4 将原版 StreamVGGT Full cache 的 AbsRel 从
+0.1726 降至 0.1334，将 $\delta_1$ 从 0.7214 提升至 0.8282，同时把峰值显存
+从 12.43 GiB 降至 8.00 GiB、速度从 5.99 FPS 提升至 9.06 FPS。这些结果说明，
+复用已有 DINO 表征并将视觉低冗余与 anchor/recent 角色结合，能够在无需重新
+训练或重编码历史图像的条件下带来超出简单小窗口的可测收益。
 
 第二，长序列结果验证了耦合 KV 裁剪与输入输出释放确实形成端到端内存上界。
 Full cache 在三条未见 TUM RGB-D 序列的 100 帧运行中成功，但请求 250 帧时均
@@ -485,7 +543,11 @@ runs，包括所有 1000 帧序列；其 1000 帧 peak allocated memory 分别�
 增量均为 0 MiB，CPU RSS 最大增量仅为 4.35 MiB。该平台现象与
 $\mathcal{O}(K)$ 历史状态分析一致，说明只裁剪单个 attention cache 并不足够，
 同步维护 aggregator/camera 状态并释放已消费的稠密输出才解决了完整程序随
-序列增长的问题。
+序列增长的问题。110 帧四格分解进一步给出直接机制证据：固定 streaming
+release 后，K4 相较 Full cache 将 peak allocated/reserved memory 分别降低
+57.9\%/80.3\%，并获得 $3.24\times$ 吞吐率；其中 KV pruning 独立节省
+10.80 GiB peak allocated memory，而 output release 再节省 0.48 GiB。由此，
+KV pruning 是主要显存贡献，output release 则消除随稠密输出数量增长的附加项。
 
 第三，统一的 gate-first 评价明确了固定预算方法的适用范围，而不是只报告一个
 有利任务。K4 被支持为默认紧凑配置，K6 在部分静态 reconstruction 数据上构成
@@ -508,33 +570,3 @@ graph、回环约束或相对运动一致性联合建模，使保留状态同时
 该方法在严格资源上界下维持深度、位姿和重建能力的可行性，也给出了不同 cache
 预算的任务角色与失败边界，为进一步研究同时具有执行可扩展性和长期几何一致性
 的流式三维基础模型提供了可复现基线。
-
-
-附录：
-删掉的表
-\begin{table}[htbp]
-\centering
-\caption{VideoDepth Quality and Efficiency on a Single RTX 6000 Ada}\label{tab:dataset_evaluation}
-\small % 可改为 \footnotesize 进一步缩小字体
-\setlength{\tabcolsep}{4pt} % 默认通常是 6pt，缩小列间距
-\begin{tabular}{@{}llrrrr@{}}
-\toprule
-Dataset & Method & AbsRel $\downarrow$ & $\delta_1$ $\uparrow$ & FPS $\uparrow$ & GPU GiB $\downarrow$\\
-\midrule
-Bonn & Full cache & \textbf{0.0746} & \textbf{0.9599} & 3.08 & 21.13 \\
-     & K4         & 0.0755 & 0.9566 & \textbf{7.63} & \textbf{10.32} \\
-     & K6         & 0.0838 & 0.9556 & 7.42 & 10.68 \\
-     & K8         & 0.0843 & 0.9564 & 7.07 & 11.06 \\
-\midrule
-KITTI & Full cache & 0.1726 & 0.7214 & 5.99 & 12.43 \\
-      & K4         & \textbf{0.1334} & \textbf{0.8282} & \textbf{9.06} & \textbf{8.00} \\
-      & K6         & 0.1610 & 0.7437 & 8.90 & 8.14 \\
-      & K8         & 0.1923 & 0.6737 & 8.66 & 8.29 \\
-\midrule
-Sintel & Full cache & 0.3232 & \textbf{0.6575} & 6.87 & 10.30 \\
-       & K4         & \textbf{0.3161} & 0.6503 & \textbf{8.54} & \textbf{7.90} \\
-       & K6         & 0.3299 & 0.6380 & 8.53 & 8.09 \\
-       & K8         & 0.3350 & 0.6380 & 8.25 & 8.27 \\
-\botrule
-\end{tabular}
-\end{table}

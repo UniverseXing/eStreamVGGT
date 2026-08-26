@@ -22,7 +22,7 @@ class SupplementaryPackageTests(unittest.TestCase):
             path.relative_to(SUPPLEMENTARY)
             for path in (SUPPLEMENTARY / "tables").glob("table_s*.csv")
         )
-        self.assertEqual(15, len(expected) - 2)
+        self.assertEqual(21, len(expected) - 2)
         actual = {
             path.relative_to(SUPPLEMENTARY)
             for path in SUPPLEMENTARY.rglob("*")
@@ -109,6 +109,32 @@ class SupplementaryPackageTests(unittest.TestCase):
                     abs_tol=1e-12,
                 )
             )
+
+    def test_stage5_same_budget_and_memory_tables_are_complete(self):
+        summary = read_csv(
+            SUPPLEMENTARY / "tables" / "table_s16_same_budget_video_depth_summary.csv"
+        )
+        sequences = read_csv(
+            SUPPLEMENTARY / "tables" / "table_s17_same_budget_video_depth_sequences.csv"
+        )
+        paired = read_csv(
+            SUPPLEMENTARY / "tables" / "table_s18_same_budget_paired_bootstrap.csv"
+        )
+        memory = read_csv(
+            SUPPLEMENTARY / "tables" / "table_s19_memory_decomposition.csv"
+        )
+        trace = read_csv(
+            SUPPLEMENTARY / "tables" / "table_s20_memory_trace.csv"
+        )
+        contributions = read_csv(
+            SUPPLEMENTARY / "tables" / "table_s21_memory_contributions.csv"
+        )
+        self.assertEqual(24, len(summary))
+        self.assertEqual(328, len(sequences))
+        self.assertEqual(12, len(paired))
+        self.assertEqual(4, len(memory))
+        self.assertEqual(440, len(trace))
+        self.assertEqual(4, len(contributions))
 
 
 if __name__ == "__main__":

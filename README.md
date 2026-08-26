@@ -122,6 +122,7 @@ the intended environment before invoking them.
 | `scripts/reproduce/run_pose.sh` | Sintel, ScanNet, and TUM camera-pose evaluation |
 | `scripts/reproduce/run_reconstruction.sh` | 7-Scenes, NRGBD, ETH3D, and TUM reconstruction evaluation |
 | `scripts/reproduce/run_long_sequence.sh` | Raw-TUM 100/250/500/1000-frame streaming evaluation |
+| `scripts/reproduce/run_qualitative_figure.py` | Export Full/K4/K6/K8 RGB, depth, and point-cloud panels for one dataset scene |
 | `scripts/reproduce/build_supplementary.sh` | Rebuild supplementary CSV tables and calculation note from result sources |
 | `scripts/reproduce/run_all.sh` | Run the selected evaluation groups in sequence |
 
@@ -165,9 +166,10 @@ scripts are not the stable public interface.
 
 ## Supplementary package
 
-[`supplementary/README.md`](supplementary/README.md) indexes 15 CSV tables with
-the complete VideoDepth, pose, reconstruction, cross-task, and long-sequence
-results. [`supplementary/CALCULATION_METHODS.md`](supplementary/CALCULATION_METHODS.md)
+[`supplementary/README.md`](supplementary/README.md) indexes 21 CSV tables with
+the complete VideoDepth, same-budget controls, pose, reconstruction, cross-task,
+long-sequence, and memory-decomposition results.
+[`supplementary/CALCULATION_METHODS.md`](supplementary/CALCULATION_METHODS.md)
 defines the normalised-regret equations, bounded-oracle scope, tie rule,
 evaluation units, and aggregation procedure.
 
@@ -186,6 +188,7 @@ silently producing a partial package.
 - [Installation and checkpoint setup](docs/INSTALLATION.md)
 - [Evaluation dataset layouts](docs/DATASETS.md)
 - [End-to-end reproducibility guide](docs/REPRODUCIBILITY.md)
+- [Local qualitative runtime figure](docs/QUALITATIVE_FIGURE.md)
 - [Relationship to upstream StreamVGGT](docs/UPSTREAM.md)
 
 ## Training and demo

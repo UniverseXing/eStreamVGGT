@@ -1,0 +1,5 @@
+effect,high_memory_cell,low_memory_cell,peak_allocated_saved_mib,peak_allocated_saved_percent,peak_reserved_saved_mib,final_trace_allocated_saved_mib
+kv_pruning_with_accumulated_outputs,full_accumulated,k4_accumulated,11068.4423828125,56.50995368452206,35296.0,9542.13525390625
+kv_pruning_with_streaming_release,full_release,k4_release,11058.275390625,57.94347646613011,35812.0,9536.59814453125
+output_release_with_full_cache,full_accumulated,full_release,502.1220703125,2.563585187144067,134.0,507.30712890625
+output_release_with_k4,k4_accumulated,k4_release,491.955078125,5.775292973776839,650.0,501.77001953125

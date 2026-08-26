@@ -44,6 +44,10 @@ def main():
     axes[0].set_ylabel("CUDA allocated memory (GiB)")
     axes[0].grid(alpha=0.25)
     axes[0].legend(frameon=False, fontsize=8)
+    axes[0].text(
+        0.01, 0.98, "(a)", transform=axes[0].transAxes,
+        va="top", ha="left", fontweight="bold",
+    )
     selected = [
         next(row for row in contributions if row["effect"] == "kv_pruning_with_streaming_release"),
         next(row for row in contributions if row["effect"] == "output_release_with_k4"),
@@ -52,11 +56,15 @@ def main():
     bars = axes[1].bar(["KV pruning", "Output release"], values, color=["#2166ac", "#4daf4a"])
     axes[1].set_ylabel("Peak allocated memory saved (GiB)")
     axes[1].grid(axis="y", alpha=0.25)
+    axes[1].text(
+        0.99, 0.98, "(b)", transform=axes[1].transAxes,
+        va="top", ha="right", fontweight="bold",
+    )
     for bar, value in zip(bars, values):
         axes[1].text(bar.get_x() + bar.get_width() / 2, value, f"{value:.2f}", ha="center", va="bottom")
     output_dir = root / "paper_assets/figures"
     output_dir.mkdir(parents=True, exist_ok=True)
-    for suffix in ("pdf", "svg"):
+    for suffix in ("pdf", "svg", "png"):
         path = output_dir / f"fig_stage5b_memory_decomposition.{suffix}"
         figure.savefig(path, dpi=300)
         print(f"Wrote {path}")

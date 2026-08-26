@@ -43,6 +43,12 @@ frozen_sources=(
     stage4b_cross_task_summary.csv
     stage4b_cross_task_regret.csv
     stage4c_results.csv
+    stage5a_same_budget_results.csv
+    stage5a_same_budget_sequence_results.csv
+    stage5a_paired_statistics.csv
+    stage5b_memory_decomposition.csv
+    stage5b_memory_trace.csv
+    stage5b_memory_contributions.csv
 )
 missing_sources=()
 if [[ "${DRY_RUN}" != "1" ]]; then

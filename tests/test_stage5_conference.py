@@ -97,6 +97,9 @@ class Stage5ConferenceTest(unittest.TestCase):
             self.assertTrue(
                 (root / "paper_assets/figures/fig_stage5b_memory_decomposition.svg").is_file()
             )
+            self.assertTrue(
+                (root / "paper_assets/figures/fig_stage5b_memory_decomposition.png").is_file()
+            )
 
 
 if __name__ == "__main__":

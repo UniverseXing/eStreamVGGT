@@ -2,7 +2,7 @@
 """Build the paper's supplementary result tables and calculation note.
 
 This script performs no model inference, selector tuning, or Stage 4E-A
-processing. It validates and reorganises the frozen Stage 3/4 results used by
+processing. It validates and reorganises the frozen Stage 3--5 results used by
 the paper. The public supplementary package is deliberately limited to the
 complete result tables and the definitions of normalised regret/oracle wins.
 """
@@ -61,6 +61,28 @@ LONG_SEQUENCE_LABELS = {
     "rgbd_dataset_freiburg1_room": "F1-Room",
     "rgbd_dataset_freiburg2_desk": "F2-Desk",
     "rgbd_dataset_freiburg3_long_office_household": "F3-LongOffice",
+}
+
+STAGE5_METHODS = (
+    "full_cache",
+    "recent4",
+    "anchor_recent4",
+    "proposed_k4",
+    "anchor_uniform4",
+    "random4_seed0",
+    "random4_seed1",
+    "random4_seed2",
+)
+STAGE5_METHOD_LABELS = {
+    "full_cache": "Full cache",
+    "recent4": "Recent-4",
+    "anchor_recent4": "Anchor+Recent-4",
+    "proposed_k4": "K4",
+    "anchor_uniform4": "Uniform-4",
+    "random4_seed0": "Random-4 (seed 0)",
+    "random4_seed1": "Random-4 (seed 1)",
+    "random4_seed2": "Random-4 (seed 2)",
+    "random4_mean": "Random-4 (three-seed mean)",
 }
 
 POSE_SUMMARY_FIELDS = (
@@ -143,6 +165,22 @@ def parse_args() -> argparse.Namespace:
         "--cross-task-regret", default="stage4b_cross_task_regret.csv"
     )
     parser.add_argument("--long-results", default="stage4c_results.csv")
+    parser.add_argument(
+        "--stage5a-summary", default="stage5a_same_budget_results.csv"
+    )
+    parser.add_argument(
+        "--stage5a-sequences", default="stage5a_same_budget_sequence_results.csv"
+    )
+    parser.add_argument(
+        "--stage5a-paired", default="stage5a_paired_statistics.csv"
+    )
+    parser.add_argument(
+        "--stage5b-decomposition", default="stage5b_memory_decomposition.csv"
+    )
+    parser.add_argument("--stage5b-trace", default="stage5b_memory_trace.csv")
+    parser.add_argument(
+        "--stage5b-contributions", default="stage5b_memory_contributions.csv"
+    )
     parser.add_argument("--output-root", default="supplementary")
     return parser.parse_args()
 
@@ -218,6 +256,12 @@ def required_paths(args: argparse.Namespace) -> list[Path]:
         "cross_task_summary",
         "cross_task_regret",
         "long_results",
+        "stage5a_summary",
+        "stage5a_sequences",
+        "stage5a_paired",
+        "stage5b_decomposition",
+        "stage5b_trace",
+        "stage5b_contributions",
     )
     paths = [Path(getattr(args, name)) for name in names]
     missing = [str(path) for path in paths if not path.is_file()]
@@ -749,6 +793,170 @@ def build_cross_task_and_long(args, tables_dir: Path) -> None:
     write_csv(tables_dir / "table_s15_long_sequence_results.csv", list(long_rows[0]), long_rows)
 
 
+def stage5_method_columns(method_id: str) -> dict[str, str]:
+    if method_id not in STAGE5_METHOD_LABELS:
+        raise ValueError(f"unknown Stage 5 method: {method_id!r}")
+    return {
+        "method": STAGE5_METHOD_LABELS[method_id],
+        "method_id": "k4" if method_id == "proposed_k4" else method_id,
+    }
+
+
+def build_stage5(args, tables_dir: Path) -> None:
+    summary_rows = []
+    summary_seen = set()
+    for row in read_csv(Path(args.stage5a_summary)):
+        method_id = row["method"]
+        key = (row["dataset"], method_id)
+        if key in summary_seen:
+            raise ValueError(f"duplicate Stage 5A summary row: {key}")
+        summary_seen.add(key)
+        summary_rows.append(
+            {
+                "dataset": row["dataset"],
+                **stage5_method_columns(method_id),
+                "random_seed": row["random_seed"],
+                "cache_policy": row["cache_policy"],
+                "cache_window_size": row["cache_window_size"],
+                "num_sequences": row["num_sequences"],
+                "num_successful": row["num_successful"],
+                "num_failed": row["num_failed"],
+                "total_frames": row["total_frames"],
+                "abs_rel": row["abs_rel"],
+                "rmse": row["rmse"],
+                "delta_1": row["delta_1"],
+                "fps_inference": row["fps_inference"],
+                "peak_allocated_mib": row["peak_allocated_mb"],
+                "peak_reserved_mib": row["peak_reserved_mb"],
+                "gpu_name": row["gpu_name"],
+                "torch_version": row["torch_version"],
+                "cuda_version": row["cuda_version"],
+            }
+        )
+    expected = {
+        (dataset, method)
+        for dataset in ("bonn", "kitti", "sintel")
+        for method in STAGE5_METHODS
+    }
+    if summary_seen != expected:
+        raise ValueError(
+            "Stage 5A summary coverage mismatch; "
+            f"missing={sorted(expected-summary_seen)}, "
+            f"extra={sorted(summary_seen-expected)}"
+        )
+    stage5_order = {
+        method: index for index, method in enumerate(STAGE5_METHODS)
+    }
+    summary_rows.sort(
+        key=lambda row: (
+            ("bonn", "kitti", "sintel").index(row["dataset"]),
+            stage5_order[
+                "proposed_k4" if row["method_id"] == "k4" else row["method_id"]
+            ],
+        )
+    )
+    write_csv(
+        tables_dir / "table_s16_same_budget_video_depth_summary.csv",
+        list(summary_rows[0]),
+        summary_rows,
+    )
+
+    sequence_rows = []
+    sequence_seen = {}
+    for row in read_csv(Path(args.stage5a_sequences)):
+        method_id = row["method"]
+        sequence_seen.setdefault((row["dataset"], method_id), set()).add(
+            (row["sequence"], int(row["num_frames"]))
+        )
+        sequence_rows.append(
+            {
+                "dataset": row["dataset"],
+                "sequence": row["sequence"],
+                **stage5_method_columns(method_id),
+                "random_seed": row["random_seed"],
+                "num_frames": row["num_frames"],
+                "abs_rel": row["abs_rel"],
+                "rmse": row["rmse"],
+                "delta_1": row["delta_1"],
+                "inference_sec": row["inference_sec"],
+                "fps_inference": row["fps_inference"],
+                "peak_allocated_mib": row["peak_allocated_mb"],
+                "peak_reserved_mib": row["peak_reserved_mb"],
+            }
+        )
+    if len(sequence_rows) != 328:
+        raise ValueError(
+            f"expected 328 Stage 5A sequence rows, got {len(sequence_rows)}"
+        )
+    for dataset in ("bonn", "kitti", "sintel"):
+        variants = [sequence_seen[(dataset, method)] for method in STAGE5_METHODS]
+        if any(items != variants[0] for items in variants[1:]):
+            raise ValueError(f"unpaired Stage 5A sequences for {dataset}")
+    sequence_rows.sort(
+        key=lambda row: (
+            row["dataset"],
+            row["sequence"],
+            stage5_order[
+                "proposed_k4" if row["method_id"] == "k4" else row["method_id"]
+            ],
+        )
+    )
+    write_csv(
+        tables_dir / "table_s17_same_budget_video_depth_sequences.csv",
+        list(sequence_rows[0]),
+        sequence_rows,
+    )
+
+    paired_rows = []
+    for row in read_csv(Path(args.stage5a_paired)):
+        item = dict(row)
+        item["proposed"] = STAGE5_METHOD_LABELS[item["proposed"]]
+        item["control"] = STAGE5_METHOD_LABELS[item["control"]]
+        paired_rows.append(item)
+    if len(paired_rows) != 12:
+        raise ValueError(f"expected 12 Stage 5A paired rows, got {len(paired_rows)}")
+    write_csv(
+        tables_dir / "table_s18_same_budget_paired_bootstrap.csv",
+        list(paired_rows[0]),
+        paired_rows,
+    )
+
+    decomposition_rows = [
+        strip_fields(row, fields=("source", "slurm_job_id", "hostname"))
+        for row in read_csv(Path(args.stage5b_decomposition))
+    ]
+    if len(decomposition_rows) != 4 or any(
+        row["status"] != "ok" or row["processed_frames"] != "110"
+        for row in decomposition_rows
+    ):
+        raise ValueError("Stage 5B decomposition must contain four complete cells")
+    write_csv(
+        tables_dir / "table_s19_memory_decomposition.csv",
+        list(decomposition_rows[0]),
+        decomposition_rows,
+    )
+
+    trace_rows = read_csv(Path(args.stage5b_trace))
+    if len(trace_rows) != 440:
+        raise ValueError(f"expected 440 Stage 5B trace rows, got {len(trace_rows)}")
+    write_csv(
+        tables_dir / "table_s20_memory_trace.csv",
+        list(trace_rows[0]),
+        trace_rows,
+    )
+
+    contribution_rows = read_csv(Path(args.stage5b_contributions))
+    if len(contribution_rows) != 4:
+        raise ValueError(
+            f"expected four Stage 5B contribution rows, got {len(contribution_rows)}"
+        )
+    write_csv(
+        tables_dir / "table_s21_memory_contributions.csv",
+        list(contribution_rows[0]),
+        contribution_rows,
+    )
+
+
 def write_calculation_methods(output_root: Path) -> None:
     content = r"""# Normalised Regret and Oracle Wins
 
@@ -831,6 +1039,8 @@ plus the calculation of normalised regret and oracle wins.
 - S09--S12: static/dynamic reconstruction aggregate, prefix, and sequence results.
 - S13--S14: cross-task summary and normalised regret/oracle-win results.
 - S15: all held-out long-sequence resource and pose runs.
+- S16--S18: the complete same-budget VideoDepth controls, sequence results, and paired bootstrap tests.
+- S19--S21: the four-cell memory decomposition, per-frame trace, and isolated contributions.
 
 All table assets are CSV files with full stored precision. Pose and
 reconstruction aggregate means are sequence-equal means.  VideoDepth S01 uses
@@ -867,7 +1077,7 @@ def main() -> None:
         if path.is_file():
             path.unlink()
 
-    generated_tables = {f"table_s{index:02d}" for index in range(1, 17)}
+    generated_tables = {f"table_s{index:02d}" for index in range(1, 22)}
     if tables_dir.exists():
         for path in tables_dir.glob("*.csv"):
             if any(path.stem.startswith(prefix) for prefix in generated_tables):
@@ -877,6 +1087,7 @@ def main() -> None:
     build_pose(args, tables_dir)
     build_reconstruction(args, tables_dir)
     build_cross_task_and_long(args, tables_dir)
+    build_stage5(args, tables_dir)
     write_calculation_methods(output_root)
     write_readme(output_root)
 
@@ -903,6 +1114,12 @@ def main() -> None:
             (13, "cross_task_summary"),
             (14, "cross_task_regret"),
             (15, "long_sequence_results"),
+            (16, "same_budget_video_depth_summary"),
+            (17, "same_budget_video_depth_sequences"),
+            (18, "same_budget_paired_bootstrap"),
+            (19, "memory_decomposition"),
+            (20, "memory_trace"),
+            (21, "memory_contributions"),
         )),
     }
     actual_files = {

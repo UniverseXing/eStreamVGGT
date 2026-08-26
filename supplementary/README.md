@@ -11,6 +11,8 @@ plus the calculation of normalised regret and oracle wins.
 - S09--S12: static/dynamic reconstruction aggregate, prefix, and sequence results.
 - S13--S14: cross-task summary and normalised regret/oracle-win results.
 - S15: all held-out long-sequence resource and pose runs.
+- S16--S18: the complete same-budget VideoDepth controls, sequence results, and paired bootstrap tests.
+- S19--S21: the four-cell memory decomposition, per-frame trace, and isolated contributions.
 
 All table assets are CSV files with full stored precision. Pose and
 reconstruction aggregate means are sequence-equal means.  VideoDepth S01 uses

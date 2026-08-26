@@ -1,6 +1,6 @@
 # Stage 5: conference evidence-completion plan
 
-更新日期：2026-08-24
+更新日期：2026-08-25
 
 ## 1. 新目标
 
@@ -101,6 +101,7 @@ stage5b_memory_trace.csv
 stage5b_memory_contributions.csv
 paper_assets/figures/fig_stage5b_memory_decomposition.pdf
 paper_assets/figures/fig_stage5b_memory_decomposition.svg
+paper_assets/figures/fig_stage5b_memory_decomposition.png
 ```
 
 图左展示四条逐帧 CUDA allocated 曲线，图右分别展示在 streaming-release 口径下的
@@ -162,3 +163,22 @@ sbatch run.sh
 - 不增加新数据集、新 K 或新 selector；
 - 不删除或弱化已有 1000-frame completion 与 Full OOM 结果；
 - 两个实验完成、汇总和作图通过后，立即回到 8 页会议论文压缩与写作。
+
+## 6. 最终结果与决策（已冻结）
+
+Stage 5A 通过预设门槛：K4 相对 Anchor+Recent-4 在 Bonn、Sintel、KITTI 三域
+的 aggregate AbsRel 分别降低 21.6\%、6.3\%、28.2\%，逐序列 paired CI 分别为
+[0.0115, 0.0294]、[0.0030, 0.0358]、[0.0341, 0.0603]，全部排除零。正文允许写
+“DINO selection provides measurable same-budget benefit across all three domains”。
+Uniform-4/Random-4 只进入补充材料；由于 KITTI 上 Random-4 与 K4 无清晰差异，
+不得写 K4 对所有 selector 普遍最优。
+
+Stage 5B 的四个单元均完成 110 帧，输入均为 streaming，且同一 KV 策略的两种
+output lifecycle 预测 hashes 一致。固定 streaming release 时，K4 相对 Full
+节省 11058.3 MiB peak allocated（57.9\%）与 35812 MiB peak reserved
+（80.3\%），并获得 $3.24\times$ FPS；固定 K4 时 output release 额外节省
+492.0 MiB（5.8\%）。正文结论冻结为“KV pruning 是主要显存贡献，output release
+是独立但较小的长度相关贡献”。
+
+Stage 5 总门槛已通过，停止追加 selector、数据集或调参实验。下一步只进行主文
+表图更新与 8 页会议稿压缩；期刊扩展继续留在 Stage 6。
