@@ -34,7 +34,18 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--repo-root", type=Path, default=Path(__file__).resolve().parents[2])
     parser.add_argument("--weights", type=Path, required=True)
     parser.add_argument("--images-dir", type=Path, required=True)
-    parser.add_argument("--sequence", default="bonn_person_tracking2")
+    parser.add_argument("--sequence", default="7scenes_chess_seq01")
+    parser.add_argument(
+        "--image-glob",
+        default="*.color.png",
+        help="Glob selecting RGB inputs while excluding depth/pose files.",
+    )
+    parser.add_argument(
+        "--sampling-stride",
+        type=int,
+        default=5,
+        help="Take every Nth matching source image before applying --max-frames.",
+    )
     parser.add_argument("--max-frames", type=int, default=110)
     parser.add_argument(
         "--frame",
@@ -44,7 +55,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument(
         "--output-dir",
         type=Path,
-        default=Path("paper_assets/qualitative/bonn_person_tracking2_f110"),
+        default=Path("paper_assets/qualitative/7scenes_chess_seq01_v110"),
     )
     parser.add_argument("--point-stride", type=int, default=7)
     parser.add_argument("--confidence-percentile", type=float, default=50.0)
@@ -54,15 +65,22 @@ def parse_args() -> argparse.Namespace:
     return parser.parse_args()
 
 
-def list_images(directory: Path, max_frames: int) -> list[Path]:
+def list_images(
+    directory: Path,
+    max_frames: int,
+    image_glob: str = "*",
+    sampling_stride: int = 1,
+) -> list[Path]:
     if not directory.is_dir():
         raise FileNotFoundError(f"missing images directory: {directory}")
+    if sampling_stride < 1:
+        raise ValueError("sampling_stride must be at least 1")
     paths = sorted(
         path
-        for path in directory.iterdir()
+        for path in directory.glob(image_glob)
         if path.is_file() and path.suffix.lower() in IMAGE_SUFFIXES
     )
-    paths = paths[:max_frames]
+    paths = paths[::sampling_stride][:max_frames]
     if len(paths) != max_frames:
         raise ValueError(
             f"requested {max_frames} frames but found only {len(paths)} in {directory}"
@@ -183,6 +201,7 @@ def run_method(
         "cache_window_size": window,
         "frame_number": frame_number,
         "processed_frames": len(paths),
+        "source_frame_name": paths[target_index].name,
         "retained_frame_ids_zero_based": retained,
         "rgb": selected["rgb"],
         "depth": selected["depth"],
@@ -296,7 +315,8 @@ def export_panels(
     for result, (points, colors) in zip(results, displayed_clouds):
         label = (
             f"{result['method_label']} | {sequence} | "
-            f"frame {result['frame_number']}/{result['processed_frames']}"
+            f"view {result['frame_number']}/{result['processed_frames']} | "
+            f"source {Path(result['source_frame_name']).stem.replace('.color', '')}"
         )
         rgb_path = output_dir / f"{result['method_slug']}_rgb.png"
         depth_path = output_dir / f"{result['method_slug']}_depth.png"
@@ -323,11 +343,17 @@ def write_run_notes(
     results: list[dict],
     output_dir: Path,
     sequence: str,
+    source_paths: list[Path],
+    image_glob: str,
+    sampling_stride: int,
     confidence_percentile: float,
     point_stride: int,
 ) -> None:
     metadata = {
         "sequence": sequence,
+        "source_image_glob": image_glob,
+        "source_sampling_stride": sampling_stride,
+        "selected_source_frames": [path.name for path in source_paths],
         "methods": [
             {
                 key: result[key]
@@ -338,6 +364,7 @@ def write_run_notes(
                     "cache_window_size",
                     "frame_number",
                     "processed_frames",
+                    "source_frame_name",
                     "retained_frame_ids_zero_based",
                     "wall_seconds",
                     "mean_gpu_frame_ms",
@@ -368,9 +395,13 @@ def write_run_notes(
     )
     frame_number = results[0]["frame_number"]
     processed = results[0]["processed_frames"]
+    source_frame = results[0]["source_frame_name"]
     caption = (
-        f"Qualitative comparison on the Bonn {sequence} sequence at frame "
-        f"{frame_number}/{processed}. Columns correspond to the original StreamVGGT Full "
+        f"Qualitative comparison on the 7-Scenes {sequence} object-centred sequence at "
+        f"sampled view {frame_number}/{processed} (source {source_frame}). The input set was "
+        f"fixed in advance by taking every {sampling_stride}th RGB frame from the beginning "
+        "of the sequence, rather than selecting views by reconstruction quality. Columns "
+        "correspond to the original StreamVGGT Full "
         "cache and the proposed K4, K6, and K8 configurations; rows show the identical RGB "
         "input, direct depth prediction, and accumulated point-head reconstruction. All "
         f"methods processed frames causally one at a time on {torch.cuda.get_device_name(0)} "
@@ -393,6 +424,8 @@ def main() -> None:
         raise ValueError("--frame must be between 9 and --max-frames")
     if args.point_stride < 1:
         raise ValueError("--point-stride must be at least 1")
+    if args.sampling_stride < 1:
+        raise ValueError("--sampling-stride must be at least 1")
     if not 0 <= args.confidence_percentile < 100:
         raise ValueError("--confidence-percentile must be in [0, 100)")
     if not torch.cuda.is_available():
@@ -402,7 +435,12 @@ def main() -> None:
     images_dir = args.images_dir.resolve()
     if not weights.is_file():
         raise FileNotFoundError(f"missing weights: {weights}")
-    paths = list_images(images_dir, args.max_frames)
+    paths = list_images(
+        images_dir,
+        args.max_frames,
+        args.image_glob,
+        args.sampling_stride,
+    )
 
     sys.path.insert(0, str(repo_root / "src"))
     from streamvggt.models.streamvggt import StreamVGGT
@@ -449,6 +487,9 @@ def main() -> None:
         results,
         output_dir,
         args.sequence,
+        paths,
+        args.image_glob,
+        args.sampling_stride,
         args.confidence_percentile,
         args.point_stride,
     )

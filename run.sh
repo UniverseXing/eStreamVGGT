@@ -10,9 +10,6 @@
 # Runs the two conference Stage 5 evidence-completion experiments.
 set -euo pipefail
 
-repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-cd "${repo_root}"
-
 module load Miniforge3
 conda init
 source activate StreamVGGT
@@ -27,13 +24,15 @@ case "${STREAMVGGT_RUN_TARGET:-stage5}" in
         ;;
     qualitative)
         "${CONDA_PREFIX}/bin/python" "scripts/reproduce/run_qualitative_figure.py" \
-            --repo-root "${repo_root}" \
-            --weights "${STREAMVGGT_QUAL_WEIGHTS:-${repo_root}/ckpt/checkpoints.pth}" \
-            --images-dir "${STREAMVGGT_QUAL_IMAGES_DIR:-${repo_root}/data/eval/bonn/rgbd_bonn_dataset/rgbd_bonn_person_tracking2/rgb_110_sampled}" \
-            --sequence "${STREAMVGGT_QUAL_SEQUENCE:-person_tracking2}" \
+            --repo-root "$(pwd)" \
+            --weights "${STREAMVGGT_QUAL_WEIGHTS:-$(pwd)/ckpt/checkpoints.pth}" \
+            --images-dir "${STREAMVGGT_QUAL_IMAGES_DIR:-$(pwd)/data/eval/7scenes/chess/seq-01}" \
+            --sequence "${STREAMVGGT_QUAL_SEQUENCE:-chess_seq01}" \
+            --image-glob "${STREAMVGGT_QUAL_IMAGE_GLOB:-*.color.png}" \
+            --sampling-stride "${STREAMVGGT_QUAL_SAMPLING_STRIDE:-5}" \
             --max-frames "${STREAMVGGT_QUAL_MAX_FRAMES:-110}" \
             --frame "${STREAMVGGT_QUAL_FRAME:-110}" \
-            --output-dir "${STREAMVGGT_QUAL_OUTPUT_DIR:-${repo_root}/paper_assets/qualitative/bonn_person_tracking2_f110}"
+            --output-dir "${STREAMVGGT_QUAL_OUTPUT_DIR:-$(pwd)/paper_assets/qualitative/7scenes_chess_seq01_v110}"
         ;;
     *)
         echo "Unknown STREAMVGGT_RUN_TARGET=${STREAMVGGT_RUN_TARGET}" >&2

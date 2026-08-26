@@ -37,6 +37,18 @@ class QualitativeFigureTest(unittest.TestCase):
             with self.assertRaisesRegex(ValueError, "found only 9"):
                 MODULE.list_images(root, 10)
 
+    def test_image_listing_supports_rgb_glob_and_fixed_stride(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            for index in range(30):
+                Image.new("RGB", (16, 12)).save(root / f"frame-{index:06d}.color.png")
+                Image.new("I", (16, 12)).save(root / f"frame-{index:06d}.depth.png")
+            selected = MODULE.list_images(root, 10, "*.color.png", 3)
+            self.assertEqual(
+                [f"frame-{index:06d}.color.png" for index in range(0, 30, 3)],
+                [path.name for path in selected],
+            )
+
     def test_sampling_and_export_produce_exactly_twelve_pngs(self):
         rng = np.random.default_rng(7)
         pointmap = rng.normal(size=(28, 42, 3)).astype(np.float32)
@@ -52,6 +64,7 @@ class QualitativeFigureTest(unittest.TestCase):
                     "method_label": label,
                     "frame_number": 9,
                     "processed_frames": 9,
+                    "source_frame_name": "frame-000008.color.png",
                     "rgb": rgb,
                     "depth": np.linalg.norm(pointmap, axis=-1),
                     "points": pointmap.reshape(-1, 3),
