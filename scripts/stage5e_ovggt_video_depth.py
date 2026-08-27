@@ -126,7 +126,10 @@ def prepare_frames(load_images, paths: list[Path], size: int, device):
     loaded = load_images(
         [str(path) for path in paths], size=size, verbose=False, crop=False
     )
-    return [{"img": item["img"].to(device)} for item in loaded]
+    # Match both the project and official OVGGT VideoDepth launchers.  DUSt3R's
+    # loader returns ImageNet-normalized tensors in [-1, 1], while StreamVGGT
+    # inference expects the remapped [0, 1] representation.
+    return [{"img": ((item["img"] + 1.0) / 2.0).to(device)} for item in loaded]
 
 
 def main() -> None:

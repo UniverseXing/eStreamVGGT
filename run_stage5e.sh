@@ -55,6 +55,8 @@ for part in ${parts}; do
             parity_ours_dir="${output_root}/parity_ours/bonn_streamvggt_stage5e_parity_ours_full_n10"
             (
                 cd "${repo_root}/src"
+                unset STREAMVGGT_CACHE_WINDOW STREAMVGGT_CACHE_POLICY
+                unset STREAMVGGT_CACHE_RANDOM_SEED
                 CUDA_LAUNCH_BLOCKING=1 "${project_accelerate}" launch \
                     --num_processes 1 eval/video_depth/launch.py \
                     --weights "${weights}" \
