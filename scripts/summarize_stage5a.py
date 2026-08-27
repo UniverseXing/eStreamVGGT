@@ -32,7 +32,7 @@ PAIRED_FIELDS = (
     "dataset", "metric", "proposed", "control", "n_pairs",
     "mean_proposed", "mean_control", "mean_advantage_proposed",
     "ci95_low", "ci95_high", "wins_proposed", "ties", "losses_proposed",
-    "bootstrap_samples",
+    "bootstrap_samples", "bootstrap_seed",
 )
 
 
@@ -76,7 +76,9 @@ def load_frozen_references(root):
             num_sequences=source["num_sequences"],
             num_successful=source["num_ok"], num_failed=source["num_oom"],
             total_frames=source["total_frames"], abs_rel=source["abs_rel"],
-            rmse=source["rmse"], delta_1=source["delta_1"],
+            sq_rel=source["sq_rel"], rmse=source["rmse"],
+            log_rmse=source["log_rmse"], delta_1=source["delta_1"],
+            delta_2=source["delta_2"], delta_3=source["delta_3"],
             fps_inference=source["fps_inference"],
             peak_allocated_mb=source["max_peak_allocated_mb"],
             peak_reserved_mb=source["max_peak_reserved_mb"],
@@ -94,7 +96,9 @@ def load_frozen_references(root):
             task="video_depth", dataset=source["dataset"],
             sequence=source["sequence"], method=method, random_seed=0,
             num_frames=source["num_frames"], abs_rel=source["abs_rel"],
-            rmse=source["rmse"], delta_1=source["delta_1"],
+            sq_rel=source["sq_rel"], rmse=source["rmse"],
+            log_rmse=source["log_rmse"], delta_1=source["delta_1"],
+            delta_2=source["delta_2"], delta_3=source["delta_3"],
             inference_sec=source["inference_sec"],
             fps_inference=source["fps_inference"],
             peak_allocated_mb=source["peak_allocated_mb"],
@@ -126,10 +130,10 @@ def method_values(rows, dataset, method, metric):
     }
 
 
-def paired_statistics(rows, samples):
-    rng = np.random.default_rng(20260824)
+def paired_statistics(rows, samples, seed=20260824):
+    rng = np.random.default_rng(seed)
     outputs = []
-    controls = ["recent4", "anchor_recent4"]
+    controls = ["full_cache", "recent4", "anchor_recent4"]
     if any(row["method"] == "anchor_uniform4" for row in rows):
         controls.append("anchor_uniform4")
     if any(row["method"].startswith("random4_seed") for row in rows):
@@ -158,6 +162,7 @@ def paired_statistics(rows, samples):
                 "ties": int(np.sum(np.abs(advantage) <= 1e-12)),
                 "losses_proposed": int(np.sum(advantage < -1e-12)),
                 "bootstrap_samples": samples,
+                "bootstrap_seed": seed,
             })
     return outputs
 
@@ -166,6 +171,7 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--repo-root", type=Path, default=REPO_ROOT)
     parser.add_argument("--bootstrap-samples", type=int, default=10000)
+    parser.add_argument("--bootstrap-seed", type=int, default=20260824)
     parser.add_argument("--include-optional", action="store_true")
     parser.add_argument("--rerun-references", action="store_true")
     args = parser.parse_args()
@@ -214,7 +220,9 @@ def main():
     sequence_rows.sort(key=lambda row: (row["dataset"], row["sequence"], order[row["method"]]))
     write_csv(root / "stage5a_same_budget_results.csv", COMMON_FIELDS, aggregate_rows)
     write_csv(root / "stage5a_same_budget_sequence_results.csv", SEQUENCE_FIELDS, sequence_rows)
-    paired = paired_statistics(sequence_rows, args.bootstrap_samples)
+    paired = paired_statistics(
+        sequence_rows, args.bootstrap_samples, args.bootstrap_seed
+    )
     with (root / "stage5a_paired_statistics.csv").open("w", newline="") as handle:
         writer = csv.DictWriter(handle, fieldnames=PAIRED_FIELDS)
         writer.writeheader(); writer.writerows(paired)

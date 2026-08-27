@@ -34,6 +34,9 @@ case "${STREAMVGGT_RUN_TARGET:-stage5}" in
             --frame "${STREAMVGGT_QUAL_FRAME:-110}" \
             --output-dir "${STREAMVGGT_QUAL_OUTPUT_DIR:-$(pwd)/paper_assets/qualitative/7scenes_chess_seq01_v110}"
         ;;
+    supplementary)
+        bash "run_supplementary.sh"
+        ;;
     *)
         echo "Unknown STREAMVGGT_RUN_TARGET=${STREAMVGGT_RUN_TARGET}" >&2
         exit 2

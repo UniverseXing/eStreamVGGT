@@ -256,7 +256,42 @@ def _candidate_similarity_log(frame_features, frame_ids, max_cache_frames, polic
     if frame_features is None:
         return []
     if policy == "temporal_binned_dino_k8":
-        return []
+        current_id = frame_ids[-1]
+        ages = current_id - frame_ids
+        anchor = torch.nonzero(frame_ids == 0, as_tuple=False).flatten()[:1]
+        recent = torch.nonzero((ages >= 0) & (ages <= 3), as_tuple=False).flatten()
+        reference = torch.cat([anchor, recent]).unique(sorted=True)
+        output = []
+        for bank, minimum_age, maximum_age, basis in (
+            ("long", 48, None, "minimum_dino_similarity"),
+            ("middle", 16, 47, "oldest_age"),
+            ("near", 4, 15, "oldest_age"),
+        ):
+            mask = ages >= minimum_age
+            if maximum_age is not None:
+                mask &= ages <= maximum_age
+            candidates = torch.nonzero(mask, as_tuple=False).flatten()
+            candidates = candidates[frame_ids.index_select(0, candidates) != 0]
+            if candidates.numel() == 0:
+                continue
+            scores = (
+                frame_features.index_select(0, candidates)
+                @ frame_features.index_select(0, reference).transpose(0, 1)
+            ).max(dim=1).values
+            for index, score in zip(candidates.tolist(), scores.tolist()):
+                output.append(
+                    {
+                        "frame_id": int(frame_ids[index]),
+                        "age": int(ages[index]),
+                        "temporal_bank": bank,
+                        "selection_basis": basis,
+                        "max_similarity_to_reference": float(score),
+                    }
+                )
+            if bank == "long":
+                chosen = candidates[torch.argsort(scores, stable=True)[:1]]
+                reference = torch.cat([reference, chosen]).unique(sorted=True)
+        return output
     if policy == "anchor_stable_adaptive_recent":
         if frame_features.shape[0] < 5:
             return []
@@ -310,6 +345,39 @@ def _candidate_similarity_log(frame_features, frame_ids, max_cache_frames, polic
         }
         for frame_id, score in zip(candidate_ids.tolist(), scores.tolist())
     ]
+
+
+def _selection_dot_product_count(frame_features, frame_ids, max_cache_frames, policy):
+    """Return descriptor dot products used by the selector, excluding trace logging."""
+    policy = _canonical_cache_policy(policy)
+    if frame_features is None:
+        return 0
+    if policy == "temporal_binned_dino_k8":
+        current_id = frame_ids[-1]
+        ages = current_id - frame_ids
+        reference_count = int(
+            ((frame_ids == 0) | ((ages >= 0) & (ages <= 3))).sum()
+        )
+        long_count = int(((ages >= 48) & (frame_ids != 0)).sum())
+        return long_count * reference_count
+    if policy == "anchor_stable_adaptive_recent":
+        return 1 if frame_features.shape[0] >= 5 else 0
+    if policy in ("dino_diverse_no_anchor_k4", "anchor_dino_diverse_no_recent_k6"):
+        old_start = 0 if policy == "dino_diverse_no_anchor_k4" else 1
+        return max(0, frame_features.shape[0] - 1 - old_start)
+    if policy not in (
+        "anchor_recent_dino_diverse",
+        "dino_diverse",
+        "anchor_recent_dino_diverse_2old_1recent",
+        "anchor_recent_dino_diverse_1old_3recent",
+    ):
+        return 0
+    _, recent_start = _old_recent_layout(
+        frame_features.shape[0], max_cache_frames, policy
+    )
+    old_count = max(0, recent_start - 1)
+    recent_count = max(0, frame_features.shape[0] - recent_start)
+    return old_count * recent_count
 
 
 def _cache_keep_frame_indices(
@@ -664,6 +732,7 @@ class StreamVGGT(nn.Module, PyTorchModelHubMixin):
         all_ress = []
         processed_frames = []
         memory_events = []
+        selection_timing_events = []
         memory_trace = []
         frame_timing_events = []
         retained_output_bytes = 0
@@ -753,6 +822,11 @@ class StreamVGGT(nn.Module, PyTorchModelHubMixin):
                     None,
                 )
                 if first_kv is not None:
+                    selection_start = selection_end = None
+                    if return_memory_events and images.device.type == "cuda":
+                        selection_start = torch.cuda.Event(enable_timing=True)
+                        selection_end = torch.cuda.Event(enable_timing=True)
+                        selection_start.record()
                     keep_frame_indices = _cache_keep_frame_indices(
                         first_kv[0].shape[2],
                         cache_window_size,
@@ -764,14 +838,18 @@ class StreamVGGT(nn.Module, PyTorchModelHubMixin):
                         adaptive_min_gap=adaptive_min_gap,
                         random_seed=cache_random_seed,
                     )
+                    if selection_end is not None:
+                        selection_end.record()
                     past_key_values = _trim_kv_cache_by_frame_indices(
                         past_key_values,
                         keep_frame_indices,
                     )
                     if keep_frame_indices is not None:
                         if return_memory_events:
-                            memory_events.append(
-                                {
+                            selected_frame_ids = cache_frame_ids.index_select(
+                                0, keep_frame_indices.to(cache_frame_ids.device)
+                            ).tolist()
+                            event = {
                                     "step": i,
                                     "policy": cache_policy,
                                     "cache_window_size": cache_window_size,
@@ -781,9 +859,17 @@ class StreamVGGT(nn.Module, PyTorchModelHubMixin):
                                         else None
                                     ),
                                     "candidate_frame_ids": cache_frame_ids.tolist(),
-                                    "selected_frame_ids": cache_frame_ids.index_select(
-                                        0, keep_frame_indices.to(cache_frame_ids.device)
-                                    ).tolist(),
+                                    "selected_frame_ids": selected_frame_ids,
+                                    "evicted_frame_ids": sorted(
+                                        set(cache_frame_ids.tolist())
+                                        - set(selected_frame_ids)
+                                    ),
+                                    "selector_dot_products": _selection_dot_product_count(
+                                        cache_frame_features,
+                                        cache_frame_ids,
+                                        cache_window_size,
+                                        cache_policy,
+                                    ),
                                     "candidate_similarities": _candidate_similarity_log(
                                         cache_frame_features,
                                         cache_frame_ids,
@@ -791,7 +877,11 @@ class StreamVGGT(nn.Module, PyTorchModelHubMixin):
                                         cache_policy,
                                     ),
                                 }
-                            )
+                            memory_events.append(event)
+                            if selection_start is not None:
+                                selection_timing_events.append(
+                                    (selection_start, selection_end, event)
+                                )
                         if cache_frame_features is not None:
                             cache_frame_features = cache_frame_features.index_select(
                                 0, keep_frame_indices.to(cache_frame_features.device)
@@ -932,6 +1022,10 @@ class StreamVGGT(nn.Module, PyTorchModelHubMixin):
             ]
         elif inference_device is None:
             raise ValueError("frames must contain at least one frame")
+        if selection_timing_events:
+            torch.cuda.synchronize(inference_device)
+            for start, end, event in selection_timing_events:
+                event["selection_cuda_ms"] = float(start.elapsed_time(end))
         
         output = StreamVGGTOutput(
             ress=all_ress,

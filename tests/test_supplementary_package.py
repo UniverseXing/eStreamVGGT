@@ -16,13 +16,18 @@ def read_csv(path):
 
 
 class SupplementaryPackageTests(unittest.TestCase):
-    def test_package_contains_only_the_two_declared_categories(self):
+    def test_package_contains_declared_tables_notes_and_figures(self):
         expected = {Path("README.md"), Path("CALCULATION_METHODS.md")}
         expected.update(
             path.relative_to(SUPPLEMENTARY)
             for path in (SUPPLEMENTARY / "tables").glob("table_s*.csv")
         )
         self.assertEqual(21, len(expected) - 2)
+        expected.update(
+            path.relative_to(SUPPLEMENTARY)
+            for path in (SUPPLEMENTARY / "figures").glob("*")
+            if path.is_file()
+        )
         actual = {
             path.relative_to(SUPPLEMENTARY)
             for path in SUPPLEMENTARY.rglob("*")

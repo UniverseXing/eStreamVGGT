@@ -36,11 +36,14 @@ CONFIGS = {
     "proposed_k4": ("anchor_recent_dino_diverse_k4", 4, 0),
     "proposed_k6": ("anchor_recent_dino_diverse_k6", 6, 0),
     "no_recent_k6": ("anchor_dino_diverse_no_recent_k6", 6, 0),
+    "recent8": ("fifo", 8, 0),
+    "nonhierarchical_dino8": ("anchor_recent_dino_diverse", 8, 0),
 }
 VD_DATASETS = ("bonn", "sintel", "kitti")
 TASKS = ("video_depth", "pose", "reconstruction")
 METRIC_FIELDS = (
-    "abs_rel", "rmse", "delta_1", "ate", "rpe_trans", "rpe_rot_deg",
+    "abs_rel", "sq_rel", "rmse", "log_rmse", "delta_1", "delta_2", "delta_3",
+    "ate", "rpe_trans", "rpe_rot_deg",
     "overall", "acc", "comp", "nc",
 )
 COMMON_FIELDS = (
@@ -140,8 +143,12 @@ def load_video_depth(
         "cache_window_size": normalized_window(summary["cache_window_size"]),
         "num_sequences": summary["num_sequences"], "num_successful": summary["num_ok"],
         "num_failed": summary["num_oom"], "total_frames": summary["total_frames"],
-        "abs_rel": aggregate["Abs Rel"], "rmse": aggregate["RMSE"],
-        "delta_1": aggregate["δ < 1.25"], "fps_inference": summary["fps_inference"],
+        "abs_rel": aggregate["Abs Rel"], "sq_rel": aggregate["Sq Rel"],
+        "rmse": aggregate["RMSE"], "log_rmse": aggregate["Log RMSE"],
+        "delta_1": aggregate["δ < 1.25"],
+        "delta_2": aggregate["δ < 1.25^2"],
+        "delta_3": aggregate["δ < 1.25^3"],
+        "fps_inference": summary["fps_inference"],
         "peak_allocated_mb": summary["max_peak_allocated_mb"],
         "peak_reserved_mb": summary["max_peak_reserved_mb"],
         "gpu_name": summary.get("gpu_name", ""), "torch_version": summary.get("torch_version", ""),
@@ -159,8 +166,12 @@ def load_video_depth(
             **{field: "" for field in SEQUENCE_FIELDS}, **blank_metrics(),
             "task": "video_depth", "dataset": dataset, "sequence": sequence,
             "method": method, "random_seed": seed, "num_frames": run["num_frames"],
-            "abs_rel": values["Abs Rel"], "rmse": values["RMSE"],
-            "delta_1": values["δ < 1.25"], "inference_sec": run["inference_sec"],
+            "abs_rel": values["Abs Rel"], "sq_rel": values["Sq Rel"],
+            "rmse": values["RMSE"], "log_rmse": values["Log RMSE"],
+            "delta_1": values["δ < 1.25"],
+            "delta_2": values["δ < 1.25^2"],
+            "delta_3": values["δ < 1.25^3"],
+            "inference_sec": run["inference_sec"],
             "fps_inference": run["fps_inference"], "peak_allocated_mb": run["peak_allocated_mb"],
             "peak_reserved_mb": run["peak_reserved_mb"], "source": str(result_dir),
         })
