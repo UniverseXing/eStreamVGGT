@@ -5,6 +5,7 @@ set -euo pipefail
 
 repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 project_python="${CONDA_PREFIX:-}/bin/python"
+project_accelerate="${CONDA_PREFIX:-}/bin/accelerate"
 ovggt_root="${STREAMVGGT_STAGE5E_OVGGT_ROOT:-${repo_root}/external/OVGGT}"
 weights="${STREAMVGGT_STAGE5E_WEIGHTS:-${repo_root}/ckpt/checkpoints.pth}"
 output_root="${STREAMVGGT_STAGE5E_OUTPUT_ROOT:-${repo_root}/eval_results/stage5e_ovggt}"
@@ -12,7 +13,7 @@ datasets="${STREAMVGGT_STAGE5E_DATASETS:-bonn sintel kitti}"
 parts="${STREAMVGGT_STAGE5E_PARTS:-parity inference finalize}"
 expected_ovggt_commit="${STREAMVGGT_STAGE5E_OVGGT_COMMIT:-b582391f3dc6ec734aaa3a8fde3b4baadaf7800a}"
 
-if [[ ! -x "${project_python}" ]]; then
+if [[ ! -x "${project_python}" || ! -x "${project_accelerate}" ]]; then
     echo "Stage 5E requires the activated StreamVGGT environment" >&2
     exit 2
 fi
@@ -51,15 +52,23 @@ for part in ${parts}; do
     case "${part}" in
         parity)
             echo "===== Stage 5E parity: project Full, Bonn balloon2/10 ====="
+            parity_ours_dir="${output_root}/parity_ours/bonn_streamvggt_stage5e_parity_ours_full_n10"
             (
                 cd "${repo_root}/src"
-                export STREAMVGGT_VIDEO_DEPTH_OUTPUT_ROOT="${output_root}/parity_ours"
-                export STREAMVGGT_EVAL_DATASETS=bonn
-                export STREAMVGGT_SEQ_LIST=balloon2
-                export STREAMVGGT_MAX_FRAMES=10
-                export STREAMVGGT_RUN_TAG=stage5e_parity_ours_full
-                unset STREAMVGGT_CACHE_WINDOW STREAMVGGT_CACHE_POLICY
-                bash eval/video_depth/run.sh
+                CUDA_LAUNCH_BLOCKING=1 "${project_accelerate}" launch \
+                    --num_processes 1 eval/video_depth/launch.py \
+                    --weights "${weights}" \
+                    --output_dir "${parity_ours_dir}" \
+                    --eval_dataset bonn \
+                    --size 518 \
+                    --seq_list balloon2 \
+                    --max_frames 10
+                "${project_python}" eval/video_depth/eval_depth.py \
+                    --output_dir "${parity_ours_dir}" \
+                    --eval_dataset bonn \
+                    --align scale \
+                    --seq_list balloon2 \
+                    --max_frames 10
             )
             echo "===== Stage 5E parity: OVGGT implementation Full, Bonn balloon2/10 ====="
             "${project_python}" "${repo_root}/scripts/stage5e_ovggt_video_depth.py" \
