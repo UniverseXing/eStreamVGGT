@@ -1,10 +1,9 @@
 #!/usr/bin/env python3
-"""Run the official STAC StreamVGGT adapter with project-matched inputs.
+"""Run official OVGGT on the project's matched VideoDepth inputs.
 
-This file deliberately lives outside the external STAC checkout.  It uses the
-official model wrapper and streaming implementation without patching upstream,
-while recording the end-to-end VideoDepth coverage, model-only runtime, and
-CUDA peaks required by the Stage 5E comparison.
+The external checkout remains unmodified.  This adapter only supplies the
+same checkpoint, preprocessing, sequence coverage and metric-compatible depth
+files used by the project experiments while recording runtime and CUDA peaks.
 """
 
 from __future__ import annotations
@@ -32,15 +31,14 @@ BONN_SEQUENCES = (
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser()
     parser.add_argument("--repo-root", type=Path, required=True)
-    parser.add_argument("--stac-root", type=Path, required=True)
+    parser.add_argument("--ovggt-root", type=Path, required=True)
     parser.add_argument("--weights", type=Path, required=True)
     parser.add_argument("--dataset", choices=("bonn", "sintel", "kitti"), required=True)
     parser.add_argument("--output-dir", type=Path, required=True)
     parser.add_argument("--seq-list", nargs="+")
     parser.add_argument("--max-frames", type=int)
     parser.add_argument("--size", type=int, default=518)
-    parser.add_argument("--mode", choices=("stac", "full"), default="stac")
-    parser.add_argument("--backend", choices=("cuda", "portable"), default="cuda")
+    parser.add_argument("--mode", choices=("ovggt", "full"), default="ovggt")
     parser.add_argument("--allow-failures", action="store_true")
     parser.add_argument("--skip-existing", action="store_true")
     return parser.parse_args()
@@ -55,13 +53,13 @@ def git_commit(path: Path) -> str:
         return "unknown"
 
 
-def bonn_frame_dir(root: Path, sequence: str, kind: str) -> Path:
+def bonn_frame_dir(root: Path, sequence: str) -> Path:
     sequence_root = root / "bonn/rgbd_bonn_dataset" / f"rgbd_bonn_{sequence}"
-    for name in (f"{kind}_110_sampled", f"{kind}_110", kind):
+    for name in ("rgb_110_sampled", "rgb_110", "rgb"):
         candidate = sequence_root / name
         if candidate.is_dir():
             return candidate
-    return sequence_root / f"{kind}_110"
+    return sequence_root / "rgb_110"
 
 
 def dataset_sequences(data_root: Path, dataset: str, requested: list[str] | None):
@@ -70,18 +68,17 @@ def dataset_sequences(data_root: Path, dataset: str, requested: list[str] | None
     if dataset == "bonn":
         return BONN_SEQUENCES
     if dataset == "sintel":
-        return tuple(
-            path.name
-            for path in sorted((data_root / "sintel/training/final").iterdir())
-            if path.is_dir()
-        )
-    image_root = data_root / "kitti/depth_selection/val_selection_cropped/image_gathered"
-    return tuple(path.name for path in sorted(image_root.iterdir()) if path.is_dir())
+        root = data_root / "sintel/training/final"
+    else:
+        root = data_root / "kitti/depth_selection/val_selection_cropped/image_gathered"
+    if not root.is_dir():
+        raise FileNotFoundError(root)
+    return tuple(path.name for path in sorted(root.iterdir()) if path.is_dir())
 
 
 def frame_paths(data_root: Path, dataset: str, sequence: str) -> list[Path]:
     if dataset == "bonn":
-        directory = bonn_frame_dir(data_root, sequence, "rgb")
+        directory = bonn_frame_dir(data_root, sequence)
     elif dataset == "sintel":
         directory = data_root / "sintel/training/final" / sequence
     else:
@@ -96,96 +93,94 @@ def frame_paths(data_root: Path, dataset: str, sequence: str) -> list[Path]:
     return paths
 
 
-def normalized_depth_tensor(torch, value, expected_frames: int):
-    depth = value.detach().float().cpu() if torch.is_tensor(value) else torch.as_tensor(value)
+def normalized_depth_tensor(torch, values, expected_frames: int):
+    if isinstance(values, (list, tuple)):
+        depth = torch.cat(
+            [value.detach().float().cpu() for value in values], dim=0
+        )
+    else:
+        depth = values.detach().float().cpu()
+    if depth.ndim >= 3 and depth.shape[-1] == 1:
+        depth = depth.squeeze(-1)
     while depth.ndim > 3 and depth.shape[0] == 1:
         depth = depth.squeeze(0)
-    if depth.ndim == 4 and depth.shape[-1] == 1:
-        depth = depth.squeeze(-1)
     if depth.ndim == 4 and depth.shape[1] == 1:
         depth = depth.squeeze(1)
     if depth.ndim == 2 and expected_frames == 1:
         depth = depth.unsqueeze(0)
     if depth.ndim != 3 or depth.shape[0] != expected_frames:
         raise RuntimeError(
-            f"unexpected STAC depth shape {tuple(depth.shape)} for {expected_frames} frames"
+            f"unexpected OVGGT depth shape {tuple(depth.shape)} "
+            f"for {expected_frames} frames"
         )
     return depth
 
 
-def write_depth_maps(np, torch, depth, output_dir: Path):
+def write_depth_maps(np, depth, output_dir: Path):
     output_dir.mkdir(parents=True, exist_ok=True)
     for index in range(depth.shape[0]):
         np.save(output_dir / f"frame_{index:04d}.npy", depth[index].numpy())
 
 
+def prepare_frames(load_images, paths: list[Path], size: int, device):
+    loaded = load_images(
+        [str(path) for path in paths], size=size, verbose=False, crop=False
+    )
+    return [{"img": item["img"].to(device)} for item in loaded]
+
+
 def main() -> None:
     args = parse_args()
     repo_root = args.repo_root.resolve()
-    stac_root = args.stac_root.resolve()
+    ovggt_root = args.ovggt_root.resolve()
     weights = args.weights.resolve()
     output_dir = args.output_dir.resolve()
-    if not (stac_root / "model_wrapper.py").is_file():
-        raise FileNotFoundError(f"not an official STAC checkout: {stac_root}")
+    ovggt_src = ovggt_root / "src"
+    if not (ovggt_src / "ovggt/models/ovggt.py").is_file():
+        raise FileNotFoundError(f"not an official OVGGT checkout: {ovggt_root}")
     if not weights.is_file():
         raise FileNotFoundError(weights)
 
-    # STAC uses a top-level package named eval.  Put its checkout first and do
-    # not add this project's src directory in the external environment.
-    sys.path.insert(0, str(stac_root))
-    os.chdir(stac_root)
+    sys.path.insert(0, str(ovggt_src))
+    os.chdir(ovggt_root)
     import numpy as np
     import torch
-    from eval.video_depth import launch as stac_launch
+    from dust3r.utils.image import load_images_for_eval
+    from ovggt.models.ovggt import OVGGT
 
     if not torch.cuda.is_available():
-        raise RuntimeError("Stage 5E STAC inference requires a CUDA GPU")
+        raise RuntimeError("Stage 5E OVGGT inference requires a CUDA GPU")
     device = torch.device("cuda")
+    dtype = (
+        torch.bfloat16
+        if torch.cuda.get_device_capability(device)[0] >= 8
+        else torch.float16
+    )
     data_root = repo_root / "data/eval"
     sequences = dataset_sequences(data_root, args.dataset, args.seq_list)
     if not sequences:
         raise RuntimeError(f"no sequences selected for {args.dataset}")
 
-    model = stac_launch.load_model(
-        "causalvggt", "streamvggt", str(device), model_path=str(weights)
-    )
-    run_args = stac_launch.get_args_parser().parse_args([])
-    run_args.device = str(device)
-    run_args.model_name = "causalvggt"
-    run_args.base_model = "streamvggt"
-    run_args.mode = args.mode
-    run_args.streaming = args.mode == "stac"
-    run_args.use_cam_cache = False
-    run_args.pinned = [0]
-    run_args.chunk_size = 4 if args.mode == "stac" else 1
-    run_args.window_size = 4 if args.mode == "stac" else 0
-    run_args.hh_size = 2 if args.mode == "stac" else 0
-    run_args.retrieval_size = 2 if args.mode == "stac" else 0
-    run_args.retrieve_buf = args.mode == "stac"
-    run_args.temperature = 0.9
-    run_args.subsample = 1.0
-    run_args.voxel_size = 0.05
-    run_args.voxel_num = 4096
-    run_args.voxel_conf = 2.0
-    run_args.voxel_buf_cap = 8
-    run_args.voxel_piv_cap = 4
-    if args.backend == "cuda":
-        run_args.attn_backend = "cuda"
-        run_args.voxel_backend = "cuda"
-        run_args.allocator = "segment"
+    # The parity path must remain causal/streaming like StreamVGGT Full.  A
+    # very large budget disables OVGGT eviction for the 10-frame smoke without
+    # switching to its offline all-frame forward path.
+    if args.mode == "full":
+        model = OVGGT(total_budget=1_000_000_000, camera_budget=1_000_000_000)
     else:
-        run_args.attn_backend = "triton"
-        run_args.voxel_backend = "python"
-        run_args.allocator = "slab"
+        model = OVGGT()
+    checkpoint = torch.load(weights, map_location="cpu")
+    model.load_state_dict(checkpoint, strict=True)
+    del checkpoint
+    model.eval().to(device)
 
     output_dir.mkdir(parents=True, exist_ok=True)
     sequence_rows = []
     for sequence in sequences:
         sequence_output = output_dir / sequence
-        existing = sorted(sequence_output.glob("frame_*.npy"))
         paths = frame_paths(data_root, args.dataset, sequence)
         if args.max_frames is not None:
             paths = paths[: args.max_frames]
+        existing = sorted(sequence_output.glob("frame_*.npy"))
         if args.skip_existing and len(existing) == len(paths):
             sequence_rows.append(
                 {
@@ -202,25 +197,20 @@ def main() -> None:
 
         started = time.perf_counter()
         try:
+            frames = prepare_frames(load_images_for_eval, paths, args.size, device)
             torch.cuda.empty_cache()
             torch.cuda.reset_peak_memory_stats(device)
-            loaded = stac_launch.load_images(
-                [str(path) for path in paths], size=args.size, verbose=False, crop=False
-            )
-            loaded = stac_launch.collate_with_cat([tuple(loaded)])
-            images = torch.stack([view["img"] for view in loaded], dim=1)
-            images = stac_launch.ImgDust3r2Stream3r(images).to(device)
             torch.cuda.synchronize(device)
             inference_start = time.perf_counter()
-            predictions = stac_launch.run(
-                images, model, dtype=torch.float16, device=device, args=run_args
-            )
+            with torch.no_grad(), torch.amp.autocast("cuda", dtype=dtype):
+                predictions = model.inference(frames)
             torch.cuda.synchronize(device)
             inference_sec = time.perf_counter() - inference_start
             peak_allocated = torch.cuda.max_memory_allocated(device) / 1024**2
             peak_reserved = torch.cuda.max_memory_reserved(device) / 1024**2
-            depth = normalized_depth_tensor(torch, predictions["depth"], len(paths))
-            write_depth_maps(np, torch, depth, sequence_output)
+            depths = [item["depth"] for item in predictions.ress]
+            depth = normalized_depth_tensor(torch, depths, len(paths))
+            write_depth_maps(np, depth, sequence_output)
             sequence_rows.append(
                 {
                     "sequence": sequence,
@@ -231,14 +221,14 @@ def main() -> None:
                     "fps_inference": len(paths) / max(inference_sec, 1e-12),
                     "peak_allocated_mb": peak_allocated,
                     "peak_reserved_mb": peak_reserved,
-                    "timing": predictions.get("timing", {}),
-                    "effective_config": predictions.get("effective_config", {}),
                 }
             )
-            del depth, predictions, images, loaded
+            del depth, depths, predictions, frames
             torch.cuda.empty_cache()
         except Exception as error:
-            is_oom = isinstance(error, torch.cuda.OutOfMemoryError) or "out of memory" in str(error).lower()
+            is_oom = isinstance(error, torch.cuda.OutOfMemoryError) or (
+                "out of memory" in str(error).lower()
+            )
             sequence_rows.append(
                 {
                     "sequence": sequence,
@@ -257,11 +247,11 @@ def main() -> None:
 
     successful = [row for row in sequence_rows if row["status"] == "ok"]
     summary = {
-        "method": "streamvggt_stac",
+        "method": "ovggt" if args.mode == "ovggt" else "ovggt_full",
         "dataset": args.dataset,
         "mode": args.mode,
-        "backend": args.backend,
-        "stac_commit": git_commit(stac_root),
+        "backend": "official_pytorch",
+        "competitor_commit": git_commit(ovggt_root),
         "weights_path": str(weights),
         "input_size": args.size,
         "requested_max_frames": args.max_frames,
@@ -284,7 +274,9 @@ def main() -> None:
         "slurm_job_id": os.environ.get("SLURM_JOB_ID", ""),
     }
     if summary["total_inference_sec"]:
-        summary["fps_inference"] = summary["total_frames"] / summary["total_inference_sec"]
+        summary["fps_inference"] = (
+            summary["total_frames"] / summary["total_inference_sec"]
+        )
     payload = {"summary": summary, "sequences": sequence_rows}
     runtime_path = output_dir / "stage5e_runtime_memory.json"
     runtime_path.write_text(json.dumps(payload, indent=2))
@@ -292,8 +284,8 @@ def main() -> None:
     print(f"Wrote {runtime_path}")
     if summary["num_failed"] and not args.allow_failures:
         raise RuntimeError(
-            f"STAC failed on {summary['num_failed']}/{summary['num_sequences']} sequences; "
-            f"see {runtime_path}"
+            f"OVGGT failed on {summary['num_failed']}/{summary['num_sequences']} "
+            f"sequences; see {runtime_path}"
         )
 
 

@@ -183,109 +183,82 @@ output lifecycle 预测 hashes 一致。固定 streaming release 时，K4 相对
 Stage 5 总门槛已通过，停止追加 selector、数据集或调参实验。下一步只进行主文
 表图更新与 8 页会议稿压缩；期刊扩展继续留在 Stage 6。
 
-## 7. Stage 5E：紧急直接 SOTA 对比（2026-08-27）
+## 7. Stage 5E：紧急直接 SOTA 对比（2026-08-28 修订）
 
 ### 7.1 对手与实验边界
 
-会议稿临时增加一个公开直接竞争方法：CVPR 2026 Highlight **STAC**。只使用其
-官方仓库 `https://github.com/Rainzor/STAC` 中的 `StreamVGGT-STAC`，不使用默认的
-STream3R backbone。STAC 是 training-free cache compression，因此不存在单独训练的
-“STAC 模型权重”；正式比较让双方读取同一个 `ckpt/checkpoints.pth`。官方 Hugging
-Face `lch01/StreamVGGT` 只作为权重来源备选，不能在未确认 checkpoint 等价时与
-本项目权重混用。
+由于 STAC 的独立 CUDA/PyTorch 环境超出服务器剩余磁盘预算，直接竞争方法改为已被
+ECCV 2026 接收的 **OVGGT**（官方仓库 `https://github.com/VAISR/OVGGT`）。OVGGT
+和本文方法均为训练免费的 StreamVGGT 缓存管理方法，双方读取完全相同的
+`ckpt/checkpoints.pth`；不下载或复制第二份 checkpoint。
 
 紧急核心矩阵固定为：
 
 | 方法 | Backbone | 数据 | 指标 |
 |---|---|---|---|
 | K4 | StreamVGGT | Bonn 5 + Sintel 23 + KITTI 13 | AbsRel、SqRel、RMSE、LogRMSE、$\delta_{1,2,3}$、FPS、peak allocated/reserved |
-| StreamVGGT-STAC | 同一 StreamVGGT checkpoint | 完全相同序列与帧 | 同上 |
+| OVGGT | 同一 StreamVGGT checkpoint | 完全相同序列与帧 | 同上 |
 
-STAC 使用官方 `mode=stac` 展开的推荐配置：window 4、chunk 4、heavy hitter 2、
-retrieval 2、frame 0 pinned。正式 FPS/显存只接受官方 CUDA attention 和 CUDA voxel
-backend；`portable`（Triton attention + Python voxel）只用于排错，并必须在表中标明，
-不能用其较慢速度支持 K4 的效率优势。正式 `inference` 默认完整运行 Bonn、Sintel
-和 KITTI 三域，不为赶时间而改变主方法或 STAC 参数。
+OVGGT 不调参，直接使用官方 `OVGGT()` 与 `model.inference()` 默认设置：总 token
+budget 200000、camera budget 384、coverage history-anchor strategy。该配置不是与 K4
+相同的四帧预算，因此正文应称“direct competing bounded method”，不能称
+“same-budget comparison”；同预算 selector 结论仍由 Stage 5A 提供。
 
 ### 7.2 公平性与决策门槛
 
-正式运行前先在 Bonn `balloon2` 前 10 帧做 checkpoint/preprocessing parity：本项目
-Full 与 STAC adapter 的 Full 使用同一 depth evaluator 和 scale alignment，AbsRel
-绝对差必须不超过 `max(本项目 Full 的 2%, 0.002)`。parity 不通过时只允许排查
-resize、normalization、checkpoint 和 dtype，不能发布 K4/STAC 排名。
+正式推理前在 Bonn `balloon2` 前 10 帧做实现 parity：本项目 Full 与 OVGGT 代码在
+关闭 eviction、保留完整因果缓存时使用同一 checkpoint、输入、depth evaluator 和 scale alignment，AbsRel
+绝对差不得超过 `max(本项目 Full 的 2%, 0.002)`。不通过时只排查 preprocessing、
+checkpoint、dtype 或实现差异，不能发布 K4/OVGGT 排名。
 
-必须完整报告预注册的七个质量指标、FPS 和两种峰值显存。可以在正文突出 K4 确实
-领先的维度，但不得删除 STAC 领先的列。AbsRel 另外给出逐序列 10,000 次 paired
-bootstrap、95% CI 和 wins/ties/losses。Stage 5E 有效的门槛是 parity 通过、双方
-序列/帧覆盖完全一致、STAC 零失败且同为 RTX 6000 Ada；“至少一个维度 K4 更好”只
-决定是否存在可写优势，不代替有效性门槛，也不能据此写笼统的 SOTA。
+必须完整报告七个质量指标、FPS 和两种峰值显存；AbsRel 给出逐序列 10,000 次
+paired bootstrap、95% CI 和 wins/ties/losses。有效性门槛为 parity 通过、双方覆盖
+完全一致、OVGGT 零失败且同在 RTX 6000 Ada 上运行。“至少一个维度 K4 更好”只
+决定可以陈述哪些具体优势，不能据此宣称全面优于 SOTA。
 
-### 7.3 STAC 下载与独立环境
+### 7.3 轻量安装
 
-在服务器的项目父目录安装，保持外部源码和环境不进入本文仓库：
-
-```bash
-cd /projects/_hdd/streamVGGT
-git clone https://github.com/Rainzor/STAC.git
-cd STAC
-git checkout fd7e718597cf9963de85c8fffae32a698e8619f5
-
-conda create -n stac python=3.11 cmake=3.14.0 -y
-conda run -n stac pip install \
-  torch==2.7.0+cu128 torchvision==0.22.0+cu128 torchaudio==2.7.0+cu128 \
-  --index-url https://download.pytorch.org/whl/cu128
-conda run -n stac pip install -r requirements.txt
-
-# 集群没有 libGL.so.1；VideoDepth 只需要无界面的 OpenCV。
-conda run -n stac pip uninstall -y opencv-python
-conda run -n stac pip install opencv-python-headless
-
-# 正式 CUDA backend；CUDA_HOME 必须指向与集群编译器匹配的 toolkit。
-conda run -n stac pip install -e merger-cuda --no-build-isolation
-conda run -n stac pip install -e attn-cuda --no-build-isolation
-```
-
-STAC 不需要额外方法权重。正式运行默认直接传入本项目 checkpoint。如果确实缺少
-StreamVGGT checkpoint，官方备选下载命令是：
+OVGGT 代码仅约 24 MB。直接放在本项目 `external/` 下并复用当前 StreamVGGT 环境；
+Stage 5E adapter 直接读取本项目数据与 checkpoint，不需要数据或权重软链接。
 
 ```bash
-cd /projects/_hdd/streamVGGT/STAC
-mkdir -p ckpt/streamvggt
-conda run -n stac hf download lch01/StreamVGGT --local-dir ckpt/streamvggt
+git clone --depth 1 https://github.com/VAISR/OVGGT.git external/OVGGT
+git -C external/OVGGT checkout b582391f3dc6ec734aaa3a8fde3b4baadaf7800a
+
+conda run -n StreamVGGT python -c \
+"import torch, numpy, cv2, scipy, einops, accelerate, transformers, roma, evo; print('OVGGT dependencies: OK')"
 ```
 
-下载官方权重后应先确认它与本项目权重对应；紧急正式表仍优先使用
-`StreamVGGT/ckpt/checkpoints.pth`，从而避免 backbone 权重成为混杂因素。数据不必
-复制或建立软链接，Stage 5E adapter 直接读取本项目现有 `data/eval`。
+服务器使用且只保留 `opencv-python-headless==4.10.0.84`，不安装 OVGGT 的完整
+`requirements.txt`，也不重装 torch、open3d 或 gsplat。
 
 ### 7.4 集群运行
 
-根目录 `run.sh` 的 Conda 启动段保持不变；Stage 5E 内部通过 `conda run -n stac`
-调用外部环境。一次完成 parity、正式推理和汇总：
+一次完成 parity、三数据集正式推理与汇总：
 
 ```bash
-cd /projects/_hdd/streamVGGT/StreamVGGT
 STREAMVGGT_RUN_TARGET=stage5e \
-STREAMVGGT_STAGE5E_STAC_ROOT=/projects/_hdd/streamVGGT/STAC \
-sbatch --mem=32G --time=04:00:00 run.sh
+STREAMVGGT_STAGE5E_OVGGT_ROOT="$(pwd)/external/OVGGT" \
+sbatch --mem=32G --time=08:00:00 run.sh
 ```
 
-网络或队列紧张时可拆开：
+如需拆分，依次执行：
 
 ```bash
 STREAMVGGT_RUN_TARGET=stage5e STREAMVGGT_STAGE5E_PARTS=parity \
-STREAMVGGT_STAGE5E_STAC_ROOT=/projects/_hdd/streamVGGT/STAC sbatch --mem=32G run.sh
+STREAMVGGT_STAGE5E_OVGGT_ROOT="$(pwd)/external/OVGGT" \
+sbatch --mem=32G --time=01:00:00 run.sh
 
 STREAMVGGT_RUN_TARGET=stage5e STREAMVGGT_STAGE5E_PARTS=inference \
-STREAMVGGT_STAGE5E_STAC_ROOT=/projects/_hdd/streamVGGT/STAC sbatch --mem=32G run.sh
+STREAMVGGT_STAGE5E_OVGGT_ROOT="$(pwd)/external/OVGGT" \
+sbatch --mem=32G --time=08:00:00 run.sh
 
 STREAMVGGT_RUN_TARGET=stage5e STREAMVGGT_STAGE5E_PARTS=finalize \
-STREAMVGGT_STAGE5E_STAC_ROOT=/projects/_hdd/streamVGGT/STAC sbatch --mem=32G run.sh
+STREAMVGGT_STAGE5E_OVGGT_ROOT="$(pwd)/external/OVGGT" \
+sbatch --mem=32G --time=01:00:00 run.sh
 ```
 
-若 CUDA extension 只在 smoke 阶段构建失败，可临时设置
-`STREAMVGGT_STAGE5E_BACKEND=portable` 定位其余路径，但 portable 结果不得作为正式
-效率排名。正式下载回本地分析的文件为：
+正式下载回本地分析的文件为：
 
 ```text
 stage5e_results.csv
