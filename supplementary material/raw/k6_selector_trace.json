@@ -1,0 +1,7894 @@
+{
+  "method": "k6",
+  "method_label": "K6",
+  "cache_window_size": 6,
+  "cache_policy": "anchor_recent_dino_diverse_k6",
+  "num_frames": 110,
+  "events": [
+    {
+      "step": 6,
+      "policy": "anchor_recent_dino_diverse_k6",
+      "cache_window_size": 6,
+      "random_seed": null,
+      "candidate_frame_ids": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6
+      ],
+      "selected_frame_ids": [
+        0,
+        1,
+        2,
+        4,
+        5,
+        6
+      ],
+      "evicted_frame_ids": [
+        3
+      ],
+      "selector_dot_products": 9,
+      "candidate_similarities": [
+        {
+          "frame_id": 1,
+          "max_similarity_to_recent": 1.0
+        },
+        {
+          "frame_id": 2,
+          "max_similarity_to_recent": 1.0
+        },
+        {
+          "frame_id": 3,
+          "max_similarity_to_recent": 1.0
+        }
+      ],
+      "selection_cuda_ms": 12.475135803222656
+    },
+    {
+      "step": 7,
+      "policy": "anchor_recent_dino_diverse_k6",
+      "cache_window_size": 6,
+      "random_seed": null,
+      "candidate_frame_ids": [
+        0,
+        1,
+        2,
+        4,
+        5,
+        6,
+        7
+      ],
+      "selected_frame_ids": [
+        0,
+        1,
+        2,
+        5,
+        6,
+        7
+      ],
+      "evicted_frame_ids": [
+        4
+      ],
+      "selector_dot_products": 9,
+      "candidate_similarities": [
+        {
+          "frame_id": 1,
+          "max_similarity_to_recent": 1.0
+        },
+        {
+          "frame_id": 2,
+          "max_similarity_to_recent": 1.0
+        },
+        {
+          "frame_id": 4,
+          "max_similarity_to_recent": 1.0
+        }
+      ],
+      "selection_cuda_ms": 0.3246079981327057
+    },
+    {
+      "step": 8,
+      "policy": "anchor_recent_dino_diverse_k6",
+      "cache_window_size": 6,
+      "random_seed": null,
+      "candidate_frame_ids": [
+        0,
+        1,
+        2,
+        5,
+        6,
+        7,
+        8
+      ],
+      "selected_frame_ids": [
+        0,
+        1,
+        2,
+        6,
+        7,
+        8
+      ],
+      "evicted_frame_ids": [
+        5
+      ],
+      "selector_dot_products": 9,
+      "candidate_similarities": [
+        {
+          "frame_id": 1,
+          "max_similarity_to_recent": 1.0
+        },
+        {
+          "frame_id": 2,
+          "max_similarity_to_recent": 0.99609375
+        },
+        {
+          "frame_id": 5,
+          "max_similarity_to_recent": 1.0
+        }
+      ],
+      "selection_cuda_ms": 0.31862398982048035
+    },
+    {
+      "step": 9,
+      "policy": "anchor_recent_dino_diverse_k6",
+      "cache_window_size": 6,
+      "random_seed": null,
+      "candidate_frame_ids": [
+        0,
+        1,
+        2,
+        6,
+        7,
+        8,
+        9
+      ],
+      "selected_frame_ids": [
+        0,
+        1,
+        2,
+        7,
+        8,
+        9
+      ],
+      "evicted_frame_ids": [
+        6
+      ],
+      "selector_dot_products": 9,
+      "candidate_similarities": [
+        {
+          "frame_id": 1,
+          "max_similarity_to_recent": 1.0
+        },
+        {
+          "frame_id": 2,
+          "max_similarity_to_recent": 0.99609375
+        },
+        {
+          "frame_id": 6,
+          "max_similarity_to_recent": 1.0
+        }
+      ],
+      "selection_cuda_ms": 0.3543039858341217
+    },
+    {
+      "step": 10,
+      "policy": "anchor_recent_dino_diverse_k6",
+      "cache_window_size": 6,
+      "random_seed": null,
+      "candidate_frame_ids": [
+        0,
+        1,
+        2,
+        7,
+        8,
+        9,
+        10
+      ],
+      "selected_frame_ids": [
+        0,
+        1,
+        2,
+        8,
+        9,
+        10
+      ],
+      "evicted_frame_ids": [
+        7
+      ],
+      "selector_dot_products": 9,
+      "candidate_similarities": [
+        {
+          "frame_id": 1,
+          "max_similarity_to_recent": 1.0
+        },
+        {
+          "frame_id": 2,
+          "max_similarity_to_recent": 0.99609375
+        },
+        {
+          "frame_id": 7,
+          "max_similarity_to_recent": 1.0
+        }
+      ],
+      "selection_cuda_ms": 0.32998400926589966
+    },
+    {
+      "step": 11,
+      "policy": "anchor_recent_dino_diverse_k6",
+      "cache_window_size": 6,
+      "random_seed": null,
+      "candidate_frame_ids": [
+        0,
+        1,
+        2,
+        8,
+        9,
+        10,
+        11
+      ],
+      "selected_frame_ids": [
+        0,
+        1,
+        2,
+        9,
+        10,
+        11
+      ],
+      "evicted_frame_ids": [
+        8
+      ],
+      "selector_dot_products": 9,
+      "candidate_similarities": [
+        {
+          "frame_id": 1,
+          "max_similarity_to_recent": 1.0
+        },
+        {
+          "frame_id": 2,
+          "max_similarity_to_recent": 0.99609375
+        },
+        {
+          "frame_id": 8,
+          "max_similarity_to_recent": 1.0
+        }
+      ],
+      "selection_cuda_ms": 0.3604480028152466
+    },
+    {
+      "step": 12,
+      "policy": "anchor_recent_dino_diverse_k6",
+      "cache_window_size": 6,
+      "random_seed": null,
+      "candidate_frame_ids": [
+        0,
+        1,
+        2,
+        9,
+        10,
+        11,
+        12
+      ],
+      "selected_frame_ids": [
+        0,
+        1,
+        2,
+        10,
+        11,
+        12
+      ],
+      "evicted_frame_ids": [
+        9
+      ],
+      "selector_dot_products": 9,
+      "candidate_similarities": [
+        {
+          "frame_id": 1,
+          "max_similarity_to_recent": 1.0
+        },
+        {
+          "frame_id": 2,
+          "max_similarity_to_recent": 0.99609375
+        },
+        {
+          "frame_id": 9,
+          "max_similarity_to_recent": 1.0
+        }
+      ],
+      "selection_cuda_ms": 0.317440003156662
+    },
+    {
+      "step": 13,
+      "policy": "anchor_recent_dino_diverse_k6",
+      "cache_window_size": 6,
+      "random_seed": null,
+      "candidate_frame_ids": [
+        0,
+        1,
+        2,
+        10,
+        11,
+        12,
+        13
+      ],
+      "selected_frame_ids": [
+        0,
+        1,
+        2,
+        11,
+        12,
+        13
+      ],
+      "evicted_frame_ids": [
+        10
+      ],
+      "selector_dot_products": 9,
+      "candidate_similarities": [
+        {
+          "frame_id": 1,
+          "max_similarity_to_recent": 0.99609375
+        },
+        {
+          "frame_id": 2,
+          "max_similarity_to_recent": 0.99609375
+        },
+        {
+          "frame_id": 10,
+          "max_similarity_to_recent": 1.0
+        }
+      ],
+      "selection_cuda_ms": 0.31116798520088196
+    },
+    {
+      "step": 14,
+      "policy": "anchor_recent_dino_diverse_k6",
+      "cache_window_size": 6,
+      "random_seed": null,
+      "candidate_frame_ids": [
+        0,
+        1,
+        2,
+        11,
+        12,
+        13,
+        14
+      ],
+      "selected_frame_ids": [
+        0,
+        1,
+        2,
+        12,
+        13,
+        14
+      ],
+      "evicted_frame_ids": [
+        11
+      ],
+      "selector_dot_products": 9,
+      "candidate_similarities": [
+        {
+          "frame_id": 1,
+          "max_similarity_to_recent": 0.99609375
+        },
+        {
+          "frame_id": 2,
+          "max_similarity_to_recent": 0.99609375
+        },
+        {
+          "frame_id": 11,
+          "max_similarity_to_recent": 1.0
+        }
+      ],
+      "selection_cuda_ms": 0.3224639892578125
+    },
+    {
+      "step": 15,
+      "policy": "anchor_recent_dino_diverse_k6",
+      "cache_window_size": 6,
+      "random_seed": null,
+      "candidate_frame_ids": [
+        0,
+        1,
+        2,
+        12,
+        13,
+        14,
+        15
+      ],
+      "selected_frame_ids": [
+        0,
+        1,
+        2,
+        13,
+        14,
+        15
+      ],
+      "evicted_frame_ids": [
+        12
+      ],
+      "selector_dot_products": 9,
+      "candidate_similarities": [
+        {
+          "frame_id": 1,
+          "max_similarity_to_recent": 0.99609375
+        },
+        {
+          "frame_id": 2,
+          "max_similarity_to_recent": 0.99609375
+        },
+        {
+          "frame_id": 12,
+          "max_similarity_to_recent": 1.0
+        }
+      ],
+      "selection_cuda_ms": 0.32256001234054565
+    },
+    {
+      "step": 16,
+      "policy": "anchor_recent_dino_diverse_k6",
+      "cache_window_size": 6,
+      "random_seed": null,
+      "candidate_frame_ids": [
+        0,
+        1,
+        2,
+        13,
+        14,
+        15,
+        16
+      ],
+      "selected_frame_ids": [
+        0,
+        1,
+        2,
+        14,
+        15,
+        16
+      ],
+      "evicted_frame_ids": [
+        13
+      ],
+      "selector_dot_products": 9,
+      "candidate_similarities": [
+        {
+          "frame_id": 1,
+          "max_similarity_to_recent": 0.99609375
+        },
+        {
+          "frame_id": 2,
+          "max_similarity_to_recent": 0.99609375
+        },
+        {
+          "frame_id": 13,
+          "max_similarity_to_recent": 1.0
+        }
+      ],
+      "selection_cuda_ms": 0.3109759986400604
+    },
+    {
+      "step": 17,
+      "policy": "anchor_recent_dino_diverse_k6",
+      "cache_window_size": 6,
+      "random_seed": null,
+      "candidate_frame_ids": [
+        0,
+        1,
+        2,
+        14,
+        15,
+        16,
+        17
+      ],
+      "selected_frame_ids": [
+        0,
+        1,
+        2,
+        15,
+        16,
+        17
+      ],
+      "evicted_frame_ids": [
+        14
+      ],
+      "selector_dot_products": 9,
+      "candidate_similarities": [
+        {
+          "frame_id": 1,
+          "max_similarity_to_recent": 0.99609375
+        },
+        {
+          "frame_id": 2,
+          "max_similarity_to_recent": 0.9921875
+        },
+        {
+          "frame_id": 14,
+          "max_similarity_to_recent": 1.0
+        }
+      ],
+      "selection_cuda_ms": 0.32371199131011963
+    },
+    {
+      "step": 18,
+      "policy": "anchor_recent_dino_diverse_k6",
+      "cache_window_size": 6,
+      "random_seed": null,
+      "candidate_frame_ids": [
+        0,
+        1,
+        2,
+        15,
+        16,
+        17,
+        18
+      ],
+      "selected_frame_ids": [
+        0,
+        1,
+        2,
+        16,
+        17,
+        18
+      ],
+      "evicted_frame_ids": [
+        15
+      ],
+      "selector_dot_products": 9,
+      "candidate_similarities": [
+        {
+          "frame_id": 1,
+          "max_similarity_to_recent": 0.99609375
+        },
+        {
+          "frame_id": 2,
+          "max_similarity_to_recent": 0.9921875
+        },
+        {
+          "frame_id": 15,
+          "max_similarity_to_recent": 1.0
+        }
+      ],
+      "selection_cuda_ms": 0.323743999004364
+    },
+    {
+      "step": 19,
+      "policy": "anchor_recent_dino_diverse_k6",
+      "cache_window_size": 6,
+      "random_seed": null,
+      "candidate_frame_ids": [
+        0,
+        1,
+        2,
+        16,
+        17,
+        18,
+        19
+      ],
+      "selected_frame_ids": [
+        0,
+        1,
+        2,
+        17,
+        18,
+        19
+      ],
+      "evicted_frame_ids": [
+        16
+      ],
+      "selector_dot_products": 9,
+      "candidate_similarities": [
+        {
+          "frame_id": 1,
+          "max_similarity_to_recent": 0.99609375
+        },
+        {
+          "frame_id": 2,
+          "max_similarity_to_recent": 0.9921875
+        },
+        {
+          "frame_id": 16,
+          "max_similarity_to_recent": 1.0
+        }
+      ],
+      "selection_cuda_ms": 0.319487988948822
+    },
+    {
+      "step": 20,
+      "policy": "anchor_recent_dino_diverse_k6",
+      "cache_window_size": 6,
+      "random_seed": null,
+      "candidate_frame_ids": [
+        0,
+        1,
+        2,
+        17,
+        18,
+        19,
+        20
+      ],
+      "selected_frame_ids": [
+        0,
+        1,
+        2,
+        18,
+        19,
+        20
+      ],
+      "evicted_frame_ids": [
+        17
+      ],
+      "selector_dot_products": 9,
+      "candidate_similarities": [
+        {
+          "frame_id": 1,
+          "max_similarity_to_recent": 0.9921875
+        },
+        {
+          "frame_id": 2,
+          "max_similarity_to_recent": 0.9921875
+        },
+        {
+          "frame_id": 17,
+          "max_similarity_to_recent": 1.0
+        }
+      ],
+      "selection_cuda_ms": 0.32153600454330444
+    },
+    {
+      "step": 21,
+      "policy": "anchor_recent_dino_diverse_k6",
+      "cache_window_size": 6,
+      "random_seed": null,
+      "candidate_frame_ids": [
+        0,
+        1,
+        2,
+        18,
+        19,
+        20,
+        21
+      ],
+      "selected_frame_ids": [
+        0,
+        1,
+        2,
+        19,
+        20,
+        21
+      ],
+      "evicted_frame_ids": [
+        18
+      ],
+      "selector_dot_products": 9,
+      "candidate_similarities": [
+        {
+          "frame_id": 1,
+          "max_similarity_to_recent": 0.9921875
+        },
+        {
+          "frame_id": 2,
+          "max_similarity_to_recent": 0.9921875
+        },
+        {
+          "frame_id": 18,
+          "max_similarity_to_recent": 1.0
+        }
+      ],
+      "selection_cuda_ms": 0.320576012134552
+    },
+    {
+      "step": 22,
+      "policy": "anchor_recent_dino_diverse_k6",
+      "cache_window_size": 6,
+      "random_seed": null,
+      "candidate_frame_ids": [
+        0,
+        1,
+        2,
+        19,
+        20,
+        21,
+        22
+      ],
+      "selected_frame_ids": [
+        0,
+        1,
+        2,
+        20,
+        21,
+        22
+      ],
+      "evicted_frame_ids": [
+        19
+      ],
+      "selector_dot_products": 9,
+      "candidate_similarities": [
+        {
+          "frame_id": 1,
+          "max_similarity_to_recent": 0.9921875
+        },
+        {
+          "frame_id": 2,
+          "max_similarity_to_recent": 0.9921875
+        },
+        {
+          "frame_id": 19,
+          "max_similarity_to_recent": 1.0
+        }
+      ],
+      "selection_cuda_ms": 0.32371199131011963
+    },
+    {
+      "step": 23,
+      "policy": "anchor_recent_dino_diverse_k6",
+      "cache_window_size": 6,
+      "random_seed": null,
+      "candidate_frame_ids": [
+        0,
+        1,
+        2,
+        20,
+        21,
+        22,
+        23
+      ],
+      "selected_frame_ids": [
+        0,
+        1,
+        2,
+        21,
+        22,
+        23
+      ],
+      "evicted_frame_ids": [
+        20
+      ],
+      "selector_dot_products": 9,
+      "candidate_similarities": [
+        {
+          "frame_id": 1,
+          "max_similarity_to_recent": 0.9921875
+        },
+        {
+          "frame_id": 2,
+          "max_similarity_to_recent": 0.98828125
+        },
+        {
+          "frame_id": 20,
+          "max_similarity_to_recent": 1.0
+        }
+      ],
+      "selection_cuda_ms": 0.31750398874282837
+    },
+    {
+      "step": 24,
+      "policy": "anchor_recent_dino_diverse_k6",
+      "cache_window_size": 6,
+      "random_seed": null,
+      "candidate_frame_ids": [
+        0,
+        1,
+        2,
+        21,
+        22,
+        23,
+        24
+      ],
+      "selected_frame_ids": [
+        0,
+        1,
+        2,
+        22,
+        23,
+        24
+      ],
+      "evicted_frame_ids": [
+        21
+      ],
+      "selector_dot_products": 9,
+      "candidate_similarities": [
+        {
+          "frame_id": 1,
+          "max_similarity_to_recent": 0.98828125
+        },
+        {
+          "frame_id": 2,
+          "max_similarity_to_recent": 0.984375
+        },
+        {
+          "frame_id": 21,
+          "max_similarity_to_recent": 1.0
+        }
+      ],
+      "selection_cuda_ms": 0.3170880079269409
+    },
+    {
+      "step": 25,
+      "policy": "anchor_recent_dino_diverse_k6",
+      "cache_window_size": 6,
+      "random_seed": null,
+      "candidate_frame_ids": [
+        0,
+        1,
+        2,
+        22,
+        23,
+        24,
+        25
+      ],
+      "selected_frame_ids": [
+        0,
+        1,
+        2,
+        23,
+        24,
+        25
+      ],
+      "evicted_frame_ids": [
+        22
+      ],
+      "selector_dot_products": 9,
+      "candidate_similarities": [
+        {
+          "frame_id": 1,
+          "max_similarity_to_recent": 0.98828125
+        },
+        {
+          "frame_id": 2,
+          "max_similarity_to_recent": 0.984375
+        },
+        {
+          "frame_id": 22,
+          "max_similarity_to_recent": 1.0
+        }
+      ],
+      "selection_cuda_ms": 0.3235200047492981
+    },
+    {
+      "step": 26,
+      "policy": "anchor_recent_dino_diverse_k6",
+      "cache_window_size": 6,
+      "random_seed": null,
+      "candidate_frame_ids": [
+        0,
+        1,
+        2,
+        23,
+        24,
+        25,
+        26
+      ],
+      "selected_frame_ids": [
+        0,
+        1,
+        2,
+        24,
+        25,
+        26
+      ],
+      "evicted_frame_ids": [
+        23
+      ],
+      "selector_dot_products": 9,
+      "candidate_similarities": [
+        {
+          "frame_id": 1,
+          "max_similarity_to_recent": 0.98828125
+        },
+        {
+          "frame_id": 2,
+          "max_similarity_to_recent": 0.984375
+        },
+        {
+          "frame_id": 23,
+          "max_similarity_to_recent": 1.0
+        }
+      ],
+      "selection_cuda_ms": 0.32153600454330444
+    },
+    {
+      "step": 27,
+      "policy": "anchor_recent_dino_diverse_k6",
+      "cache_window_size": 6,
+      "random_seed": null,
+      "candidate_frame_ids": [
+        0,
+        1,
+        2,
+        24,
+        25,
+        26,
+        27
+      ],
+      "selected_frame_ids": [
+        0,
+        1,
+        2,
+        25,
+        26,
+        27
+      ],
+      "evicted_frame_ids": [
+        24
+      ],
+      "selector_dot_products": 9,
+      "candidate_similarities": [
+        {
+          "frame_id": 1,
+          "max_similarity_to_recent": 0.984375
+        },
+        {
+          "frame_id": 2,
+          "max_similarity_to_recent": 0.984375
+        },
+        {
+          "frame_id": 24,
+          "max_similarity_to_recent": 1.0
+        }
+      ],
+      "selection_cuda_ms": 0.3012799918651581
+    },
+    {
+      "step": 28,
+      "policy": "anchor_recent_dino_diverse_k6",
+      "cache_window_size": 6,
+      "random_seed": null,
+      "candidate_frame_ids": [
+        0,
+        1,
+        2,
+        25,
+        26,
+        27,
+        28
+      ],
+      "selected_frame_ids": [
+        0,
+        1,
+        2,
+        26,
+        27,
+        28
+      ],
+      "evicted_frame_ids": [
+        25
+      ],
+      "selector_dot_products": 9,
+      "candidate_similarities": [
+        {
+          "frame_id": 1,
+          "max_similarity_to_recent": 0.984375
+        },
+        {
+          "frame_id": 2,
+          "max_similarity_to_recent": 0.984375
+        },
+        {
+          "frame_id": 25,
+          "max_similarity_to_recent": 1.0
+        }
+      ],
+      "selection_cuda_ms": 0.3184640109539032
+    },
+    {
+      "step": 29,
+      "policy": "anchor_recent_dino_diverse_k6",
+      "cache_window_size": 6,
+      "random_seed": null,
+      "candidate_frame_ids": [
+        0,
+        1,
+        2,
+        26,
+        27,
+        28,
+        29
+      ],
+      "selected_frame_ids": [
+        0,
+        1,
+        2,
+        27,
+        28,
+        29
+      ],
+      "evicted_frame_ids": [
+        26
+      ],
+      "selector_dot_products": 9,
+      "candidate_similarities": [
+        {
+          "frame_id": 1,
+          "max_similarity_to_recent": 0.984375
+        },
+        {
+          "frame_id": 2,
+          "max_similarity_to_recent": 0.98046875
+        },
+        {
+          "frame_id": 26,
+          "max_similarity_to_recent": 1.0
+        }
+      ],
+      "selection_cuda_ms": 0.3152639865875244
+    },
+    {
+      "step": 30,
+      "policy": "anchor_recent_dino_diverse_k6",
+      "cache_window_size": 6,
+      "random_seed": null,
+      "candidate_frame_ids": [
+        0,
+        1,
+        2,
+        27,
+        28,
+        29,
+        30
+      ],
+      "selected_frame_ids": [
+        0,
+        1,
+        2,
+        28,
+        29,
+        30
+      ],
+      "evicted_frame_ids": [
+        27
+      ],
+      "selector_dot_products": 9,
+      "candidate_similarities": [
+        {
+          "frame_id": 1,
+          "max_similarity_to_recent": 0.98046875
+        },
+        {
+          "frame_id": 2,
+          "max_similarity_to_recent": 0.9765625
+        },
+        {
+          "frame_id": 27,
+          "max_similarity_to_recent": 1.0
+        }
+      ],
+      "selection_cuda_ms": 0.3092480003833771
+    },
+    {
+      "step": 31,
+      "policy": "anchor_recent_dino_diverse_k6",
+      "cache_window_size": 6,
+      "random_seed": null,
+      "candidate_frame_ids": [
+        0,
+        1,
+        2,
+        28,
+        29,
+        30,
+        31
+      ],
+      "selected_frame_ids": [
+        0,
+        1,
+        2,
+        29,
+        30,
+        31
+      ],
+      "evicted_frame_ids": [
+        28
+      ],
+      "selector_dot_products": 9,
+      "candidate_similarities": [
+        {
+          "frame_id": 1,
+          "max_similarity_to_recent": 0.9765625
+        },
+        {
+          "frame_id": 2,
+          "max_similarity_to_recent": 0.97265625
+        },
+        {
+          "frame_id": 28,
+          "max_similarity_to_recent": 1.0
+        }
+      ],
+      "selection_cuda_ms": 0.3123199939727783
+    },
+    {
+      "step": 32,
+      "policy": "anchor_recent_dino_diverse_k6",
+      "cache_window_size": 6,
+      "random_seed": null,
+      "candidate_frame_ids": [
+        0,
+        1,
+        2,
+        29,
+        30,
+        31,
+        32
+      ],
+      "selected_frame_ids": [
+        0,
+        1,
+        2,
+        30,
+        31,
+        32
+      ],
+      "evicted_frame_ids": [
+        29
+      ],
+      "selector_dot_products": 9,
+      "candidate_similarities": [
+        {
+          "frame_id": 1,
+          "max_similarity_to_recent": 0.9765625
+        },
+        {
+          "frame_id": 2,
+          "max_similarity_to_recent": 0.97265625
+        },
+        {
+          "frame_id": 29,
+          "max_similarity_to_recent": 1.0
+        }
+      ],
+      "selection_cuda_ms": 0.3145599961280823
+    },
+    {
+      "step": 33,
+      "policy": "anchor_recent_dino_diverse_k6",
+      "cache_window_size": 6,
+      "random_seed": null,
+      "candidate_frame_ids": [
+        0,
+        1,
+        2,
+        30,
+        31,
+        32,
+        33
+      ],
+      "selected_frame_ids": [
+        0,
+        1,
+        2,
+        31,
+        32,
+        33
+      ],
+      "evicted_frame_ids": [
+        30
+      ],
+      "selector_dot_products": 9,
+      "candidate_similarities": [
+        {
+          "frame_id": 1,
+          "max_similarity_to_recent": 0.9765625
+        },
+        {
+          "frame_id": 2,
+          "max_similarity_to_recent": 0.97265625
+        },
+        {
+          "frame_id": 30,
+          "max_similarity_to_recent": 1.0
+        }
+      ],
+      "selection_cuda_ms": 0.3409920036792755
+    },
+    {
+      "step": 34,
+      "policy": "anchor_recent_dino_diverse_k6",
+      "cache_window_size": 6,
+      "random_seed": null,
+      "candidate_frame_ids": [
+        0,
+        1,
+        2,
+        31,
+        32,
+        33,
+        34
+      ],
+      "selected_frame_ids": [
+        0,
+        1,
+        2,
+        32,
+        33,
+        34
+      ],
+      "evicted_frame_ids": [
+        31
+      ],
+      "selector_dot_products": 9,
+      "candidate_similarities": [
+        {
+          "frame_id": 1,
+          "max_similarity_to_recent": 0.9765625
+        },
+        {
+          "frame_id": 2,
+          "max_similarity_to_recent": 0.97265625
+        },
+        {
+          "frame_id": 31,
+          "max_similarity_to_recent": 1.0
+        }
+      ],
+      "selection_cuda_ms": 0.32047998905181885
+    },
+    {
+      "step": 35,
+      "policy": "anchor_recent_dino_diverse_k6",
+      "cache_window_size": 6,
+      "random_seed": null,
+      "candidate_frame_ids": [
+        0,
+        1,
+        2,
+        32,
+        33,
+        34,
+        35
+      ],
+      "selected_frame_ids": [
+        0,
+        1,
+        2,
+        33,
+        34,
+        35
+      ],
+      "evicted_frame_ids": [
+        32
+      ],
+      "selector_dot_products": 9,
+      "candidate_similarities": [
+        {
+          "frame_id": 1,
+          "max_similarity_to_recent": 0.97265625
+        },
+        {
+          "frame_id": 2,
+          "max_similarity_to_recent": 0.96875
+        },
+        {
+          "frame_id": 32,
+          "max_similarity_to_recent": 1.0
+        }
+      ],
+      "selection_cuda_ms": 0.3177280128002167
+    },
+    {
+      "step": 36,
+      "policy": "anchor_recent_dino_diverse_k6",
+      "cache_window_size": 6,
+      "random_seed": null,
+      "candidate_frame_ids": [
+        0,
+        1,
+        2,
+        33,
+        34,
+        35,
+        36
+      ],
+      "selected_frame_ids": [
+        0,
+        1,
+        2,
+        34,
+        35,
+        36
+      ],
+      "evicted_frame_ids": [
+        33
+      ],
+      "selector_dot_products": 9,
+      "candidate_similarities": [
+        {
+          "frame_id": 1,
+          "max_similarity_to_recent": 0.96875
+        },
+        {
+          "frame_id": 2,
+          "max_similarity_to_recent": 0.96875
+        },
+        {
+          "frame_id": 33,
+          "max_similarity_to_recent": 1.0
+        }
+      ],
+      "selection_cuda_ms": 0.3253760039806366
+    },
+    {
+      "step": 37,
+      "policy": "anchor_recent_dino_diverse_k6",
+      "cache_window_size": 6,
+      "random_seed": null,
+      "candidate_frame_ids": [
+        0,
+        1,
+        2,
+        34,
+        35,
+        36,
+        37
+      ],
+      "selected_frame_ids": [
+        0,
+        1,
+        2,
+        35,
+        36,
+        37
+      ],
+      "evicted_frame_ids": [
+        34
+      ],
+      "selector_dot_products": 9,
+      "candidate_similarities": [
+        {
+          "frame_id": 1,
+          "max_similarity_to_recent": 0.96875
+        },
+        {
+          "frame_id": 2,
+          "max_similarity_to_recent": 0.96484375
+        },
+        {
+          "frame_id": 34,
+          "max_similarity_to_recent": 1.0
+        }
+      ],
+      "selection_cuda_ms": 0.32870399951934814
+    },
+    {
+      "step": 38,
+      "policy": "anchor_recent_dino_diverse_k6",
+      "cache_window_size": 6,
+      "random_seed": null,
+      "candidate_frame_ids": [
+        0,
+        1,
+        2,
+        35,
+        36,
+        37,
+        38
+      ],
+      "selected_frame_ids": [
+        0,
+        1,
+        2,
+        36,
+        37,
+        38
+      ],
+      "evicted_frame_ids": [
+        35
+      ],
+      "selector_dot_products": 9,
+      "candidate_similarities": [
+        {
+          "frame_id": 1,
+          "max_similarity_to_recent": 0.96875
+        },
+        {
+          "frame_id": 2,
+          "max_similarity_to_recent": 0.96484375
+        },
+        {
+          "frame_id": 35,
+          "max_similarity_to_recent": 1.0
+        }
+      ],
+      "selection_cuda_ms": 0.3020800054073334
+    },
+    {
+      "step": 39,
+      "policy": "anchor_recent_dino_diverse_k6",
+      "cache_window_size": 6,
+      "random_seed": null,
+      "candidate_frame_ids": [
+        0,
+        1,
+        2,
+        36,
+        37,
+        38,
+        39
+      ],
+      "selected_frame_ids": [
+        0,
+        1,
+        2,
+        37,
+        38,
+        39
+      ],
+      "evicted_frame_ids": [
+        36
+      ],
+      "selector_dot_products": 9,
+      "candidate_similarities": [
+        {
+          "frame_id": 1,
+          "max_similarity_to_recent": 0.96875
+        },
+        {
+          "frame_id": 2,
+          "max_similarity_to_recent": 0.96484375
+        },
+        {
+          "frame_id": 36,
+          "max_similarity_to_recent": 1.0
+        }
+      ],
+      "selection_cuda_ms": 0.3235839903354645
+    },
+    {
+      "step": 40,
+      "policy": "anchor_recent_dino_diverse_k6",
+      "cache_window_size": 6,
+      "random_seed": null,
+      "candidate_frame_ids": [
+        0,
+        1,
+        2,
+        37,
+        38,
+        39,
+        40
+      ],
+      "selected_frame_ids": [
+        0,
+        1,
+        2,
+        38,
+        39,
+        40
+      ],
+      "evicted_frame_ids": [
+        37
+      ],
+      "selector_dot_products": 9,
+      "candidate_similarities": [
+        {
+          "frame_id": 1,
+          "max_similarity_to_recent": 0.96484375
+        },
+        {
+          "frame_id": 2,
+          "max_similarity_to_recent": 0.9609375
+        },
+        {
+          "frame_id": 37,
+          "max_similarity_to_recent": 1.0
+        }
+      ],
+      "selection_cuda_ms": 0.3192960023880005
+    },
+    {
+      "step": 41,
+      "policy": "anchor_recent_dino_diverse_k6",
+      "cache_window_size": 6,
+      "random_seed": null,
+      "candidate_frame_ids": [
+        0,
+        1,
+        2,
+        38,
+        39,
+        40,
+        41
+      ],
+      "selected_frame_ids": [
+        0,
+        1,
+        2,
+        39,
+        40,
+        41
+      ],
+      "evicted_frame_ids": [
+        38
+      ],
+      "selector_dot_products": 9,
+      "candidate_similarities": [
+        {
+          "frame_id": 1,
+          "max_similarity_to_recent": 0.96484375
+        },
+        {
+          "frame_id": 2,
+          "max_similarity_to_recent": 0.9609375
+        },
+        {
+          "frame_id": 38,
+          "max_similarity_to_recent": 0.99609375
+        }
+      ],
+      "selection_cuda_ms": 0.3052479922771454
+    },
+    {
+      "step": 42,
+      "policy": "anchor_recent_dino_diverse_k6",
+      "cache_window_size": 6,
+      "random_seed": null,
+      "candidate_frame_ids": [
+        0,
+        1,
+        2,
+        39,
+        40,
+        41,
+        42
+      ],
+      "selected_frame_ids": [
+        0,
+        1,
+        2,
+        40,
+        41,
+        42
+      ],
+      "evicted_frame_ids": [
+        39
+      ],
+      "selector_dot_products": 9,
+      "candidate_similarities": [
+        {
+          "frame_id": 1,
+          "max_similarity_to_recent": 0.96484375
+        },
+        {
+          "frame_id": 2,
+          "max_similarity_to_recent": 0.9609375
+        },
+        {
+          "frame_id": 39,
+          "max_similarity_to_recent": 0.99609375
+        }
+      ],
+      "selection_cuda_ms": 0.32972800731658936
+    },
+    {
+      "step": 43,
+      "policy": "anchor_recent_dino_diverse_k6",
+      "cache_window_size": 6,
+      "random_seed": null,
+      "candidate_frame_ids": [
+        0,
+        1,
+        2,
+        40,
+        41,
+        42,
+        43
+      ],
+      "selected_frame_ids": [
+        0,
+        1,
+        2,
+        41,
+        42,
+        43
+      ],
+      "evicted_frame_ids": [
+        40
+      ],
+      "selector_dot_products": 9,
+      "candidate_similarities": [
+        {
+          "frame_id": 1,
+          "max_similarity_to_recent": 0.96484375
+        },
+        {
+          "frame_id": 2,
+          "max_similarity_to_recent": 0.96484375
+        },
+        {
+          "frame_id": 40,
+          "max_similarity_to_recent": 1.0
+        }
+      ],
+      "selection_cuda_ms": 0.31539198756217957
+    },
+    {
+      "step": 44,
+      "policy": "anchor_recent_dino_diverse_k6",
+      "cache_window_size": 6,
+      "random_seed": null,
+      "candidate_frame_ids": [
+        0,
+        1,
+        2,
+        41,
+        42,
+        43,
+        44
+      ],
+      "selected_frame_ids": [
+        0,
+        1,
+        2,
+        42,
+        43,
+        44
+      ],
+      "evicted_frame_ids": [
+        41
+      ],
+      "selector_dot_products": 9,
+      "candidate_similarities": [
+        {
+          "frame_id": 1,
+          "max_similarity_to_recent": 0.96875
+        },
+        {
+          "frame_id": 2,
+          "max_similarity_to_recent": 0.96484375
+        },
+        {
+          "frame_id": 41,
+          "max_similarity_to_recent": 1.0
+        }
+      ],
+      "selection_cuda_ms": 0.3184640109539032
+    },
+    {
+      "step": 45,
+      "policy": "anchor_recent_dino_diverse_k6",
+      "cache_window_size": 6,
+      "random_seed": null,
+      "candidate_frame_ids": [
+        0,
+        1,
+        2,
+        42,
+        43,
+        44,
+        45
+      ],
+      "selected_frame_ids": [
+        0,
+        1,
+        2,
+        43,
+        44,
+        45
+      ],
+      "evicted_frame_ids": [
+        42
+      ],
+      "selector_dot_products": 9,
+      "candidate_similarities": [
+        {
+          "frame_id": 1,
+          "max_similarity_to_recent": 0.97265625
+        },
+        {
+          "frame_id": 2,
+          "max_similarity_to_recent": 0.96875
+        },
+        {
+          "frame_id": 42,
+          "max_similarity_to_recent": 1.0
+        }
+      ],
+      "selection_cuda_ms": 0.32019200921058655
+    },
+    {
+      "step": 46,
+      "policy": "anchor_recent_dino_diverse_k6",
+      "cache_window_size": 6,
+      "random_seed": null,
+      "candidate_frame_ids": [
+        0,
+        1,
+        2,
+        43,
+        44,
+        45,
+        46
+      ],
+      "selected_frame_ids": [
+        0,
+        1,
+        2,
+        44,
+        45,
+        46
+      ],
+      "evicted_frame_ids": [
+        43
+      ],
+      "selector_dot_products": 9,
+      "candidate_similarities": [
+        {
+          "frame_id": 1,
+          "max_similarity_to_recent": 0.97265625
+        },
+        {
+          "frame_id": 2,
+          "max_similarity_to_recent": 0.96875
+        },
+        {
+          "frame_id": 43,
+          "max_similarity_to_recent": 1.0
+        }
+      ],
+      "selection_cuda_ms": 0.31094399094581604
+    },
+    {
+      "step": 47,
+      "policy": "anchor_recent_dino_diverse_k6",
+      "cache_window_size": 6,
+      "random_seed": null,
+      "candidate_frame_ids": [
+        0,
+        1,
+        2,
+        44,
+        45,
+        46,
+        47
+      ],
+      "selected_frame_ids": [
+        0,
+        1,
+        2,
+        45,
+        46,
+        47
+      ],
+      "evicted_frame_ids": [
+        44
+      ],
+      "selector_dot_products": 9,
+      "candidate_similarities": [
+        {
+          "frame_id": 1,
+          "max_similarity_to_recent": 0.97265625
+        },
+        {
+          "frame_id": 2,
+          "max_similarity_to_recent": 0.96875
+        },
+        {
+          "frame_id": 44,
+          "max_similarity_to_recent": 1.0
+        }
+      ],
+      "selection_cuda_ms": 0.3214080035686493
+    },
+    {
+      "step": 48,
+      "policy": "anchor_recent_dino_diverse_k6",
+      "cache_window_size": 6,
+      "random_seed": null,
+      "candidate_frame_ids": [
+        0,
+        1,
+        2,
+        45,
+        46,
+        47,
+        48
+      ],
+      "selected_frame_ids": [
+        0,
+        1,
+        2,
+        46,
+        47,
+        48
+      ],
+      "evicted_frame_ids": [
+        45
+      ],
+      "selector_dot_products": 9,
+      "candidate_similarities": [
+        {
+          "frame_id": 1,
+          "max_similarity_to_recent": 0.97265625
+        },
+        {
+          "frame_id": 2,
+          "max_similarity_to_recent": 0.96875
+        },
+        {
+          "frame_id": 45,
+          "max_similarity_to_recent": 1.0
+        }
+      ],
+      "selection_cuda_ms": 0.319487988948822
+    },
+    {
+      "step": 49,
+      "policy": "anchor_recent_dino_diverse_k6",
+      "cache_window_size": 6,
+      "random_seed": null,
+      "candidate_frame_ids": [
+        0,
+        1,
+        2,
+        46,
+        47,
+        48,
+        49
+      ],
+      "selected_frame_ids": [
+        0,
+        1,
+        2,
+        47,
+        48,
+        49
+      ],
+      "evicted_frame_ids": [
+        46
+      ],
+      "selector_dot_products": 9,
+      "candidate_similarities": [
+        {
+          "frame_id": 1,
+          "max_similarity_to_recent": 0.97265625
+        },
+        {
+          "frame_id": 2,
+          "max_similarity_to_recent": 0.96875
+        },
+        {
+          "frame_id": 46,
+          "max_similarity_to_recent": 1.0
+        }
+      ],
+      "selection_cuda_ms": 0.3184640109539032
+    },
+    {
+      "step": 50,
+      "policy": "anchor_recent_dino_diverse_k6",
+      "cache_window_size": 6,
+      "random_seed": null,
+      "candidate_frame_ids": [
+        0,
+        1,
+        2,
+        47,
+        48,
+        49,
+        50
+      ],
+      "selected_frame_ids": [
+        0,
+        1,
+        2,
+        48,
+        49,
+        50
+      ],
+      "evicted_frame_ids": [
+        47
+      ],
+      "selector_dot_products": 9,
+      "candidate_similarities": [
+        {
+          "frame_id": 1,
+          "max_similarity_to_recent": 0.97265625
+        },
+        {
+          "frame_id": 2,
+          "max_similarity_to_recent": 0.96875
+        },
+        {
+          "frame_id": 47,
+          "max_similarity_to_recent": 1.0
+        }
+      ],
+      "selection_cuda_ms": 0.3184640109539032
+    },
+    {
+      "step": 51,
+      "policy": "anchor_recent_dino_diverse_k6",
+      "cache_window_size": 6,
+      "random_seed": null,
+      "candidate_frame_ids": [
+        0,
+        1,
+        2,
+        48,
+        49,
+        50,
+        51
+      ],
+      "selected_frame_ids": [
+        0,
+        1,
+        2,
+        49,
+        50,
+        51
+      ],
+      "evicted_frame_ids": [
+        48
+      ],
+      "selector_dot_products": 9,
+      "candidate_similarities": [
+        {
+          "frame_id": 1,
+          "max_similarity_to_recent": 0.97265625
+        },
+        {
+          "frame_id": 2,
+          "max_similarity_to_recent": 0.96875
+        },
+        {
+          "frame_id": 48,
+          "max_similarity_to_recent": 1.0
+        }
+      ],
+      "selection_cuda_ms": 0.3255999982357025
+    },
+    {
+      "step": 52,
+      "policy": "anchor_recent_dino_diverse_k6",
+      "cache_window_size": 6,
+      "random_seed": null,
+      "candidate_frame_ids": [
+        0,
+        1,
+        2,
+        49,
+        50,
+        51,
+        52
+      ],
+      "selected_frame_ids": [
+        0,
+        1,
+        2,
+        50,
+        51,
+        52
+      ],
+      "evicted_frame_ids": [
+        49
+      ],
+      "selector_dot_products": 9,
+      "candidate_similarities": [
+        {
+          "frame_id": 1,
+          "max_similarity_to_recent": 0.97265625
+        },
+        {
+          "frame_id": 2,
+          "max_similarity_to_recent": 0.96875
+        },
+        {
+          "frame_id": 49,
+          "max_similarity_to_recent": 1.0
+        }
+      ],
+      "selection_cuda_ms": 0.33689600229263306
+    },
+    {
+      "step": 53,
+      "policy": "anchor_recent_dino_diverse_k6",
+      "cache_window_size": 6,
+      "random_seed": null,
+      "candidate_frame_ids": [
+        0,
+        1,
+        2,
+        50,
+        51,
+        52,
+        53
+      ],
+      "selected_frame_ids": [
+        0,
+        1,
+        2,
+        51,
+        52,
+        53
+      ],
+      "evicted_frame_ids": [
+        50
+      ],
+      "selector_dot_products": 9,
+      "candidate_similarities": [
+        {
+          "frame_id": 1,
+          "max_similarity_to_recent": 0.97265625
+        },
+        {
+          "frame_id": 2,
+          "max_similarity_to_recent": 0.96875
+        },
+        {
+          "frame_id": 50,
+          "max_similarity_to_recent": 1.0
+        }
+      ],
+      "selection_cuda_ms": 0.3246079981327057
+    },
+    {
+      "step": 54,
+      "policy": "anchor_recent_dino_diverse_k6",
+      "cache_window_size": 6,
+      "random_seed": null,
+      "candidate_frame_ids": [
+        0,
+        1,
+        2,
+        51,
+        52,
+        53,
+        54
+      ],
+      "selected_frame_ids": [
+        0,
+        1,
+        2,
+        52,
+        53,
+        54
+      ],
+      "evicted_frame_ids": [
+        51
+      ],
+      "selector_dot_products": 9,
+      "candidate_similarities": [
+        {
+          "frame_id": 1,
+          "max_similarity_to_recent": 0.97265625
+        },
+        {
+          "frame_id": 2,
+          "max_similarity_to_recent": 0.96875
+        },
+        {
+          "frame_id": 51,
+          "max_similarity_to_recent": 0.99609375
+        }
+      ],
+      "selection_cuda_ms": 0.3073920011520386
+    },
+    {
+      "step": 55,
+      "policy": "anchor_recent_dino_diverse_k6",
+      "cache_window_size": 6,
+      "random_seed": null,
+      "candidate_frame_ids": [
+        0,
+        1,
+        2,
+        52,
+        53,
+        54,
+        55
+      ],
+      "selected_frame_ids": [
+        0,
+        1,
+        2,
+        53,
+        54,
+        55
+      ],
+      "evicted_frame_ids": [
+        52
+      ],
+      "selector_dot_products": 9,
+      "candidate_similarities": [
+        {
+          "frame_id": 1,
+          "max_similarity_to_recent": 0.9765625
+        },
+        {
+          "frame_id": 2,
+          "max_similarity_to_recent": 0.97265625
+        },
+        {
+          "frame_id": 52,
+          "max_similarity_to_recent": 1.0
+        }
+      ],
+      "selection_cuda_ms": 0.3961600065231323
+    },
+    {
+      "step": 56,
+      "policy": "anchor_recent_dino_diverse_k6",
+      "cache_window_size": 6,
+      "random_seed": null,
+      "candidate_frame_ids": [
+        0,
+        1,
+        2,
+        53,
+        54,
+        55,
+        56
+      ],
+      "selected_frame_ids": [
+        0,
+        1,
+        2,
+        54,
+        55,
+        56
+      ],
+      "evicted_frame_ids": [
+        53
+      ],
+      "selector_dot_products": 9,
+      "candidate_similarities": [
+        {
+          "frame_id": 1,
+          "max_similarity_to_recent": 0.9765625
+        },
+        {
+          "frame_id": 2,
+          "max_similarity_to_recent": 0.97265625
+        },
+        {
+          "frame_id": 53,
+          "max_similarity_to_recent": 0.99609375
+        }
+      ],
+      "selection_cuda_ms": 0.3235839903354645
+    },
+    {
+      "step": 57,
+      "policy": "anchor_recent_dino_diverse_k6",
+      "cache_window_size": 6,
+      "random_seed": null,
+      "candidate_frame_ids": [
+        0,
+        1,
+        2,
+        54,
+        55,
+        56,
+        57
+      ],
+      "selected_frame_ids": [
+        0,
+        1,
+        2,
+        55,
+        56,
+        57
+      ],
+      "evicted_frame_ids": [
+        54
+      ],
+      "selector_dot_products": 9,
+      "candidate_similarities": [
+        {
+          "frame_id": 1,
+          "max_similarity_to_recent": 0.9765625
+        },
+        {
+          "frame_id": 2,
+          "max_similarity_to_recent": 0.97265625
+        },
+        {
+          "frame_id": 54,
+          "max_similarity_to_recent": 1.0
+        }
+      ],
+      "selection_cuda_ms": 0.3235839903354645
+    },
+    {
+      "step": 58,
+      "policy": "anchor_recent_dino_diverse_k6",
+      "cache_window_size": 6,
+      "random_seed": null,
+      "candidate_frame_ids": [
+        0,
+        1,
+        2,
+        55,
+        56,
+        57,
+        58
+      ],
+      "selected_frame_ids": [
+        0,
+        1,
+        2,
+        56,
+        57,
+        58
+      ],
+      "evicted_frame_ids": [
+        55
+      ],
+      "selector_dot_products": 9,
+      "candidate_similarities": [
+        {
+          "frame_id": 1,
+          "max_similarity_to_recent": 0.9765625
+        },
+        {
+          "frame_id": 2,
+          "max_similarity_to_recent": 0.97265625
+        },
+        {
+          "frame_id": 55,
+          "max_similarity_to_recent": 1.0
+        }
+      ],
+      "selection_cuda_ms": 0.32256001234054565
+    },
+    {
+      "step": 59,
+      "policy": "anchor_recent_dino_diverse_k6",
+      "cache_window_size": 6,
+      "random_seed": null,
+      "candidate_frame_ids": [
+        0,
+        1,
+        2,
+        56,
+        57,
+        58,
+        59
+      ],
+      "selected_frame_ids": [
+        0,
+        1,
+        2,
+        57,
+        58,
+        59
+      ],
+      "evicted_frame_ids": [
+        56
+      ],
+      "selector_dot_products": 9,
+      "candidate_similarities": [
+        {
+          "frame_id": 1,
+          "max_similarity_to_recent": 0.97265625
+        },
+        {
+          "frame_id": 2,
+          "max_similarity_to_recent": 0.97265625
+        },
+        {
+          "frame_id": 56,
+          "max_similarity_to_recent": 1.0
+        }
+      ],
+      "selection_cuda_ms": 0.3283520042896271
+    },
+    {
+      "step": 60,
+      "policy": "anchor_recent_dino_diverse_k6",
+      "cache_window_size": 6,
+      "random_seed": null,
+      "candidate_frame_ids": [
+        0,
+        1,
+        2,
+        57,
+        58,
+        59,
+        60
+      ],
+      "selected_frame_ids": [
+        0,
+        1,
+        2,
+        58,
+        59,
+        60
+      ],
+      "evicted_frame_ids": [
+        57
+      ],
+      "selector_dot_products": 9,
+      "candidate_similarities": [
+        {
+          "frame_id": 1,
+          "max_similarity_to_recent": 0.9765625
+        },
+        {
+          "frame_id": 2,
+          "max_similarity_to_recent": 0.97265625
+        },
+        {
+          "frame_id": 57,
+          "max_similarity_to_recent": 1.0
+        }
+      ],
+      "selection_cuda_ms": 0.3246079981327057
+    },
+    {
+      "step": 61,
+      "policy": "anchor_recent_dino_diverse_k6",
+      "cache_window_size": 6,
+      "random_seed": null,
+      "candidate_frame_ids": [
+        0,
+        1,
+        2,
+        58,
+        59,
+        60,
+        61
+      ],
+      "selected_frame_ids": [
+        0,
+        1,
+        2,
+        59,
+        60,
+        61
+      ],
+      "evicted_frame_ids": [
+        58
+      ],
+      "selector_dot_products": 9,
+      "candidate_similarities": [
+        {
+          "frame_id": 1,
+          "max_similarity_to_recent": 0.9765625
+        },
+        {
+          "frame_id": 2,
+          "max_similarity_to_recent": 0.97265625
+        },
+        {
+          "frame_id": 58,
+          "max_similarity_to_recent": 1.0
+        }
+      ],
+      "selection_cuda_ms": 0.326911985874176
+    },
+    {
+      "step": 62,
+      "policy": "anchor_recent_dino_diverse_k6",
+      "cache_window_size": 6,
+      "random_seed": null,
+      "candidate_frame_ids": [
+        0,
+        1,
+        2,
+        59,
+        60,
+        61,
+        62
+      ],
+      "selected_frame_ids": [
+        0,
+        1,
+        2,
+        60,
+        61,
+        62
+      ],
+      "evicted_frame_ids": [
+        59
+      ],
+      "selector_dot_products": 9,
+      "candidate_similarities": [
+        {
+          "frame_id": 1,
+          "max_similarity_to_recent": 0.98046875
+        },
+        {
+          "frame_id": 2,
+          "max_similarity_to_recent": 0.9765625
+        },
+        {
+          "frame_id": 59,
+          "max_similarity_to_recent": 1.0
+        }
+      ],
+      "selection_cuda_ms": 0.32256001234054565
+    },
+    {
+      "step": 63,
+      "policy": "anchor_recent_dino_diverse_k6",
+      "cache_window_size": 6,
+      "random_seed": null,
+      "candidate_frame_ids": [
+        0,
+        1,
+        2,
+        60,
+        61,
+        62,
+        63
+      ],
+      "selected_frame_ids": [
+        0,
+        1,
+        2,
+        61,
+        62,
+        63
+      ],
+      "evicted_frame_ids": [
+        60
+      ],
+      "selector_dot_products": 9,
+      "candidate_similarities": [
+        {
+          "frame_id": 1,
+          "max_similarity_to_recent": 0.98046875
+        },
+        {
+          "frame_id": 2,
+          "max_similarity_to_recent": 0.9765625
+        },
+        {
+          "frame_id": 60,
+          "max_similarity_to_recent": 1.0
+        }
+      ],
+      "selection_cuda_ms": 0.32767999172210693
+    },
+    {
+      "step": 64,
+      "policy": "anchor_recent_dino_diverse_k6",
+      "cache_window_size": 6,
+      "random_seed": null,
+      "candidate_frame_ids": [
+        0,
+        1,
+        2,
+        61,
+        62,
+        63,
+        64
+      ],
+      "selected_frame_ids": [
+        0,
+        1,
+        2,
+        62,
+        63,
+        64
+      ],
+      "evicted_frame_ids": [
+        61
+      ],
+      "selector_dot_products": 9,
+      "candidate_similarities": [
+        {
+          "frame_id": 1,
+          "max_similarity_to_recent": 0.984375
+        },
+        {
+          "frame_id": 2,
+          "max_similarity_to_recent": 0.98046875
+        },
+        {
+          "frame_id": 61,
+          "max_similarity_to_recent": 1.0
+        }
+      ],
+      "selection_cuda_ms": 0.3256320059299469
+    },
+    {
+      "step": 65,
+      "policy": "anchor_recent_dino_diverse_k6",
+      "cache_window_size": 6,
+      "random_seed": null,
+      "candidate_frame_ids": [
+        0,
+        1,
+        2,
+        62,
+        63,
+        64,
+        65
+      ],
+      "selected_frame_ids": [
+        0,
+        1,
+        2,
+        63,
+        64,
+        65
+      ],
+      "evicted_frame_ids": [
+        62
+      ],
+      "selector_dot_products": 9,
+      "candidate_similarities": [
+        {
+          "frame_id": 1,
+          "max_similarity_to_recent": 0.984375
+        },
+        {
+          "frame_id": 2,
+          "max_similarity_to_recent": 0.98046875
+        },
+        {
+          "frame_id": 62,
+          "max_similarity_to_recent": 1.0
+        }
+      ],
+      "selection_cuda_ms": 0.33766400814056396
+    },
+    {
+      "step": 66,
+      "policy": "anchor_recent_dino_diverse_k6",
+      "cache_window_size": 6,
+      "random_seed": null,
+      "candidate_frame_ids": [
+        0,
+        1,
+        2,
+        63,
+        64,
+        65,
+        66
+      ],
+      "selected_frame_ids": [
+        0,
+        1,
+        2,
+        64,
+        65,
+        66
+      ],
+      "evicted_frame_ids": [
+        63
+      ],
+      "selector_dot_products": 9,
+      "candidate_similarities": [
+        {
+          "frame_id": 1,
+          "max_similarity_to_recent": 0.98828125
+        },
+        {
+          "frame_id": 2,
+          "max_similarity_to_recent": 0.984375
+        },
+        {
+          "frame_id": 63,
+          "max_similarity_to_recent": 1.0
+        }
+      ],
+      "selection_cuda_ms": 0.30822399258613586
+    },
+    {
+      "step": 67,
+      "policy": "anchor_recent_dino_diverse_k6",
+      "cache_window_size": 6,
+      "random_seed": null,
+      "candidate_frame_ids": [
+        0,
+        1,
+        2,
+        64,
+        65,
+        66,
+        67
+      ],
+      "selected_frame_ids": [
+        0,
+        1,
+        2,
+        65,
+        66,
+        67
+      ],
+      "evicted_frame_ids": [
+        64
+      ],
+      "selector_dot_products": 9,
+      "candidate_similarities": [
+        {
+          "frame_id": 1,
+          "max_similarity_to_recent": 0.98828125
+        },
+        {
+          "frame_id": 2,
+          "max_similarity_to_recent": 0.984375
+        },
+        {
+          "frame_id": 64,
+          "max_similarity_to_recent": 1.0
+        }
+      ],
+      "selection_cuda_ms": 0.31753599643707275
+    },
+    {
+      "step": 68,
+      "policy": "anchor_recent_dino_diverse_k6",
+      "cache_window_size": 6,
+      "random_seed": null,
+      "candidate_frame_ids": [
+        0,
+        1,
+        2,
+        65,
+        66,
+        67,
+        68
+      ],
+      "selected_frame_ids": [
+        0,
+        1,
+        2,
+        66,
+        67,
+        68
+      ],
+      "evicted_frame_ids": [
+        65
+      ],
+      "selector_dot_products": 9,
+      "candidate_similarities": [
+        {
+          "frame_id": 1,
+          "max_similarity_to_recent": 0.98828125
+        },
+        {
+          "frame_id": 2,
+          "max_similarity_to_recent": 0.98828125
+        },
+        {
+          "frame_id": 65,
+          "max_similarity_to_recent": 1.0
+        }
+      ],
+      "selection_cuda_ms": 0.32044801115989685
+    },
+    {
+      "step": 69,
+      "policy": "anchor_recent_dino_diverse_k6",
+      "cache_window_size": 6,
+      "random_seed": null,
+      "candidate_frame_ids": [
+        0,
+        1,
+        2,
+        66,
+        67,
+        68,
+        69
+      ],
+      "selected_frame_ids": [
+        0,
+        1,
+        2,
+        67,
+        68,
+        69
+      ],
+      "evicted_frame_ids": [
+        66
+      ],
+      "selector_dot_products": 9,
+      "candidate_similarities": [
+        {
+          "frame_id": 1,
+          "max_similarity_to_recent": 0.9921875
+        },
+        {
+          "frame_id": 2,
+          "max_similarity_to_recent": 0.98828125
+        },
+        {
+          "frame_id": 66,
+          "max_similarity_to_recent": 1.0
+        }
+      ],
+      "selection_cuda_ms": 0.3503040075302124
+    },
+    {
+      "step": 70,
+      "policy": "anchor_recent_dino_diverse_k6",
+      "cache_window_size": 6,
+      "random_seed": null,
+      "candidate_frame_ids": [
+        0,
+        1,
+        2,
+        67,
+        68,
+        69,
+        70
+      ],
+      "selected_frame_ids": [
+        0,
+        1,
+        2,
+        68,
+        69,
+        70
+      ],
+      "evicted_frame_ids": [
+        67
+      ],
+      "selector_dot_products": 9,
+      "candidate_similarities": [
+        {
+          "frame_id": 1,
+          "max_similarity_to_recent": 0.9921875
+        },
+        {
+          "frame_id": 2,
+          "max_similarity_to_recent": 0.98828125
+        },
+        {
+          "frame_id": 67,
+          "max_similarity_to_recent": 0.99609375
+        }
+      ],
+      "selection_cuda_ms": 0.30825600028038025
+    },
+    {
+      "step": 71,
+      "policy": "anchor_recent_dino_diverse_k6",
+      "cache_window_size": 6,
+      "random_seed": null,
+      "candidate_frame_ids": [
+        0,
+        1,
+        2,
+        68,
+        69,
+        70,
+        71
+      ],
+      "selected_frame_ids": [
+        0,
+        1,
+        2,
+        69,
+        70,
+        71
+      ],
+      "evicted_frame_ids": [
+        68
+      ],
+      "selector_dot_products": 9,
+      "candidate_similarities": [
+        {
+          "frame_id": 1,
+          "max_similarity_to_recent": 0.9921875
+        },
+        {
+          "frame_id": 2,
+          "max_similarity_to_recent": 0.98828125
+        },
+        {
+          "frame_id": 68,
+          "max_similarity_to_recent": 0.99609375
+        }
+      ],
+      "selection_cuda_ms": 0.3263680040836334
+    },
+    {
+      "step": 72,
+      "policy": "anchor_recent_dino_diverse_k6",
+      "cache_window_size": 6,
+      "random_seed": null,
+      "candidate_frame_ids": [
+        0,
+        1,
+        2,
+        69,
+        70,
+        71,
+        72
+      ],
+      "selected_frame_ids": [
+        0,
+        1,
+        2,
+        70,
+        71,
+        72
+      ],
+      "evicted_frame_ids": [
+        69
+      ],
+      "selector_dot_products": 9,
+      "candidate_similarities": [
+        {
+          "frame_id": 1,
+          "max_similarity_to_recent": 0.9921875
+        },
+        {
+          "frame_id": 2,
+          "max_similarity_to_recent": 0.98828125
+        },
+        {
+          "frame_id": 69,
+          "max_similarity_to_recent": 1.0
+        }
+      ],
+      "selection_cuda_ms": 0.31244799494743347
+    },
+    {
+      "step": 73,
+      "policy": "anchor_recent_dino_diverse_k6",
+      "cache_window_size": 6,
+      "random_seed": null,
+      "candidate_frame_ids": [
+        0,
+        1,
+        2,
+        70,
+        71,
+        72,
+        73
+      ],
+      "selected_frame_ids": [
+        0,
+        1,
+        2,
+        71,
+        72,
+        73
+      ],
+      "evicted_frame_ids": [
+        70
+      ],
+      "selector_dot_products": 9,
+      "candidate_similarities": [
+        {
+          "frame_id": 1,
+          "max_similarity_to_recent": 0.9921875
+        },
+        {
+          "frame_id": 2,
+          "max_similarity_to_recent": 0.98828125
+        },
+        {
+          "frame_id": 70,
+          "max_similarity_to_recent": 1.0
+        }
+      ],
+      "selection_cuda_ms": 0.3072960078716278
+    },
+    {
+      "step": 74,
+      "policy": "anchor_recent_dino_diverse_k6",
+      "cache_window_size": 6,
+      "random_seed": null,
+      "candidate_frame_ids": [
+        0,
+        1,
+        2,
+        71,
+        72,
+        73,
+        74
+      ],
+      "selected_frame_ids": [
+        0,
+        1,
+        2,
+        72,
+        73,
+        74
+      ],
+      "evicted_frame_ids": [
+        71
+      ],
+      "selector_dot_products": 9,
+      "candidate_similarities": [
+        {
+          "frame_id": 1,
+          "max_similarity_to_recent": 0.99609375
+        },
+        {
+          "frame_id": 2,
+          "max_similarity_to_recent": 0.9921875
+        },
+        {
+          "frame_id": 71,
+          "max_similarity_to_recent": 1.0
+        }
+      ],
+      "selection_cuda_ms": 0.3123840093612671
+    },
+    {
+      "step": 75,
+      "policy": "anchor_recent_dino_diverse_k6",
+      "cache_window_size": 6,
+      "random_seed": null,
+      "candidate_frame_ids": [
+        0,
+        1,
+        2,
+        72,
+        73,
+        74,
+        75
+      ],
+      "selected_frame_ids": [
+        0,
+        1,
+        2,
+        73,
+        74,
+        75
+      ],
+      "evicted_frame_ids": [
+        72
+      ],
+      "selector_dot_products": 9,
+      "candidate_similarities": [
+        {
+          "frame_id": 1,
+          "max_similarity_to_recent": 0.99609375
+        },
+        {
+          "frame_id": 2,
+          "max_similarity_to_recent": 0.9921875
+        },
+        {
+          "frame_id": 72,
+          "max_similarity_to_recent": 1.0
+        }
+      ],
+      "selection_cuda_ms": 0.30003198981285095
+    },
+    {
+      "step": 76,
+      "policy": "anchor_recent_dino_diverse_k6",
+      "cache_window_size": 6,
+      "random_seed": null,
+      "candidate_frame_ids": [
+        0,
+        1,
+        2,
+        73,
+        74,
+        75,
+        76
+      ],
+      "selected_frame_ids": [
+        0,
+        1,
+        2,
+        74,
+        75,
+        76
+      ],
+      "evicted_frame_ids": [
+        73
+      ],
+      "selector_dot_products": 9,
+      "candidate_similarities": [
+        {
+          "frame_id": 1,
+          "max_similarity_to_recent": 0.99609375
+        },
+        {
+          "frame_id": 2,
+          "max_similarity_to_recent": 0.9921875
+        },
+        {
+          "frame_id": 73,
+          "max_similarity_to_recent": 0.99609375
+        }
+      ],
+      "selection_cuda_ms": 0.3213759958744049
+    },
+    {
+      "step": 77,
+      "policy": "anchor_recent_dino_diverse_k6",
+      "cache_window_size": 6,
+      "random_seed": null,
+      "candidate_frame_ids": [
+        0,
+        1,
+        2,
+        74,
+        75,
+        76,
+        77
+      ],
+      "selected_frame_ids": [
+        0,
+        1,
+        2,
+        75,
+        76,
+        77
+      ],
+      "evicted_frame_ids": [
+        74
+      ],
+      "selector_dot_products": 9,
+      "candidate_similarities": [
+        {
+          "frame_id": 1,
+          "max_similarity_to_recent": 0.99609375
+        },
+        {
+          "frame_id": 2,
+          "max_similarity_to_recent": 0.9921875
+        },
+        {
+          "frame_id": 74,
+          "max_similarity_to_recent": 1.0
+        }
+      ],
+      "selection_cuda_ms": 0.32051199674606323
+    },
+    {
+      "step": 78,
+      "policy": "anchor_recent_dino_diverse_k6",
+      "cache_window_size": 6,
+      "random_seed": null,
+      "candidate_frame_ids": [
+        0,
+        1,
+        2,
+        75,
+        76,
+        77,
+        78
+      ],
+      "selected_frame_ids": [
+        0,
+        1,
+        2,
+        76,
+        77,
+        78
+      ],
+      "evicted_frame_ids": [
+        75
+      ],
+      "selector_dot_products": 9,
+      "candidate_similarities": [
+        {
+          "frame_id": 1,
+          "max_similarity_to_recent": 0.99609375
+        },
+        {
+          "frame_id": 2,
+          "max_similarity_to_recent": 0.9921875
+        },
+        {
+          "frame_id": 75,
+          "max_similarity_to_recent": 1.0
+        }
+      ],
+      "selection_cuda_ms": 0.33587199449539185
+    },
+    {
+      "step": 79,
+      "policy": "anchor_recent_dino_diverse_k6",
+      "cache_window_size": 6,
+      "random_seed": null,
+      "candidate_frame_ids": [
+        0,
+        1,
+        2,
+        76,
+        77,
+        78,
+        79
+      ],
+      "selected_frame_ids": [
+        0,
+        1,
+        2,
+        77,
+        78,
+        79
+      ],
+      "evicted_frame_ids": [
+        76
+      ],
+      "selector_dot_products": 9,
+      "candidate_similarities": [
+        {
+          "frame_id": 1,
+          "max_similarity_to_recent": 0.99609375
+        },
+        {
+          "frame_id": 2,
+          "max_similarity_to_recent": 0.9921875
+        },
+        {
+          "frame_id": 76,
+          "max_similarity_to_recent": 1.0
+        }
+      ],
+      "selection_cuda_ms": 0.30720001459121704
+    },
+    {
+      "step": 80,
+      "policy": "anchor_recent_dino_diverse_k6",
+      "cache_window_size": 6,
+      "random_seed": null,
+      "candidate_frame_ids": [
+        0,
+        1,
+        2,
+        77,
+        78,
+        79,
+        80
+      ],
+      "selected_frame_ids": [
+        0,
+        1,
+        2,
+        78,
+        79,
+        80
+      ],
+      "evicted_frame_ids": [
+        77
+      ],
+      "selector_dot_products": 9,
+      "candidate_similarities": [
+        {
+          "frame_id": 1,
+          "max_similarity_to_recent": 0.99609375
+        },
+        {
+          "frame_id": 2,
+          "max_similarity_to_recent": 0.9921875
+        },
+        {
+          "frame_id": 77,
+          "max_similarity_to_recent": 1.0
+        }
+      ],
+      "selection_cuda_ms": 0.30748799443244934
+    },
+    {
+      "step": 81,
+      "policy": "anchor_recent_dino_diverse_k6",
+      "cache_window_size": 6,
+      "random_seed": null,
+      "candidate_frame_ids": [
+        0,
+        1,
+        2,
+        78,
+        79,
+        80,
+        81
+      ],
+      "selected_frame_ids": [
+        0,
+        1,
+        2,
+        79,
+        80,
+        81
+      ],
+      "evicted_frame_ids": [
+        78
+      ],
+      "selector_dot_products": 9,
+      "candidate_similarities": [
+        {
+          "frame_id": 1,
+          "max_similarity_to_recent": 0.99609375
+        },
+        {
+          "frame_id": 2,
+          "max_similarity_to_recent": 0.9921875
+        },
+        {
+          "frame_id": 78,
+          "max_similarity_to_recent": 1.0
+        }
+      ],
+      "selection_cuda_ms": 0.31747201085090637
+    },
+    {
+      "step": 82,
+      "policy": "anchor_recent_dino_diverse_k6",
+      "cache_window_size": 6,
+      "random_seed": null,
+      "candidate_frame_ids": [
+        0,
+        1,
+        2,
+        79,
+        80,
+        81,
+        82
+      ],
+      "selected_frame_ids": [
+        0,
+        1,
+        2,
+        80,
+        81,
+        82
+      ],
+      "evicted_frame_ids": [
+        79
+      ],
+      "selector_dot_products": 9,
+      "candidate_similarities": [
+        {
+          "frame_id": 1,
+          "max_similarity_to_recent": 0.99609375
+        },
+        {
+          "frame_id": 2,
+          "max_similarity_to_recent": 0.9921875
+        },
+        {
+          "frame_id": 79,
+          "max_similarity_to_recent": 1.0
+        }
+      ],
+      "selection_cuda_ms": 0.3418880105018616
+    },
+    {
+      "step": 83,
+      "policy": "anchor_recent_dino_diverse_k6",
+      "cache_window_size": 6,
+      "random_seed": null,
+      "candidate_frame_ids": [
+        0,
+        1,
+        2,
+        80,
+        81,
+        82,
+        83
+      ],
+      "selected_frame_ids": [
+        0,
+        1,
+        2,
+        81,
+        82,
+        83
+      ],
+      "evicted_frame_ids": [
+        80
+      ],
+      "selector_dot_products": 9,
+      "candidate_similarities": [
+        {
+          "frame_id": 1,
+          "max_similarity_to_recent": 0.99609375
+        },
+        {
+          "frame_id": 2,
+          "max_similarity_to_recent": 0.9921875
+        },
+        {
+          "frame_id": 80,
+          "max_similarity_to_recent": 1.0
+        }
+      ],
+      "selection_cuda_ms": 0.30847999453544617
+    },
+    {
+      "step": 84,
+      "policy": "anchor_recent_dino_diverse_k6",
+      "cache_window_size": 6,
+      "random_seed": null,
+      "candidate_frame_ids": [
+        0,
+        1,
+        2,
+        81,
+        82,
+        83,
+        84
+      ],
+      "selected_frame_ids": [
+        0,
+        1,
+        2,
+        82,
+        83,
+        84
+      ],
+      "evicted_frame_ids": [
+        81
+      ],
+      "selector_dot_products": 9,
+      "candidate_similarities": [
+        {
+          "frame_id": 1,
+          "max_similarity_to_recent": 0.99609375
+        },
+        {
+          "frame_id": 2,
+          "max_similarity_to_recent": 0.9921875
+        },
+        {
+          "frame_id": 81,
+          "max_similarity_to_recent": 1.0
+        }
+      ],
+      "selection_cuda_ms": 0.3317759931087494
+    },
+    {
+      "step": 85,
+      "policy": "anchor_recent_dino_diverse_k6",
+      "cache_window_size": 6,
+      "random_seed": null,
+      "candidate_frame_ids": [
+        0,
+        1,
+        2,
+        82,
+        83,
+        84,
+        85
+      ],
+      "selected_frame_ids": [
+        0,
+        1,
+        2,
+        83,
+        84,
+        85
+      ],
+      "evicted_frame_ids": [
+        82
+      ],
+      "selector_dot_products": 9,
+      "candidate_similarities": [
+        {
+          "frame_id": 1,
+          "max_similarity_to_recent": 0.99609375
+        },
+        {
+          "frame_id": 2,
+          "max_similarity_to_recent": 0.9921875
+        },
+        {
+          "frame_id": 82,
+          "max_similarity_to_recent": 1.0
+        }
+      ],
+      "selection_cuda_ms": 0.3060159981250763
+    },
+    {
+      "step": 86,
+      "policy": "anchor_recent_dino_diverse_k6",
+      "cache_window_size": 6,
+      "random_seed": null,
+      "candidate_frame_ids": [
+        0,
+        1,
+        2,
+        83,
+        84,
+        85,
+        86
+      ],
+      "selected_frame_ids": [
+        0,
+        1,
+        2,
+        84,
+        85,
+        86
+      ],
+      "evicted_frame_ids": [
+        83
+      ],
+      "selector_dot_products": 9,
+      "candidate_similarities": [
+        {
+          "frame_id": 1,
+          "max_similarity_to_recent": 0.99609375
+        },
+        {
+          "frame_id": 2,
+          "max_similarity_to_recent": 0.9921875
+        },
+        {
+          "frame_id": 83,
+          "max_similarity_to_recent": 1.0
+        }
+      ],
+      "selection_cuda_ms": 0.3041279911994934
+    },
+    {
+      "step": 87,
+      "policy": "anchor_recent_dino_diverse_k6",
+      "cache_window_size": 6,
+      "random_seed": null,
+      "candidate_frame_ids": [
+        0,
+        1,
+        2,
+        84,
+        85,
+        86,
+        87
+      ],
+      "selected_frame_ids": [
+        0,
+        1,
+        2,
+        85,
+        86,
+        87
+      ],
+      "evicted_frame_ids": [
+        84
+      ],
+      "selector_dot_products": 9,
+      "candidate_similarities": [
+        {
+          "frame_id": 1,
+          "max_similarity_to_recent": 0.99609375
+        },
+        {
+          "frame_id": 2,
+          "max_similarity_to_recent": 0.99609375
+        },
+        {
+          "frame_id": 84,
+          "max_similarity_to_recent": 1.0
+        }
+      ],
+      "selection_cuda_ms": 0.33900800347328186
+    },
+    {
+      "step": 88,
+      "policy": "anchor_recent_dino_diverse_k6",
+      "cache_window_size": 6,
+      "random_seed": null,
+      "candidate_frame_ids": [
+        0,
+        1,
+        2,
+        85,
+        86,
+        87,
+        88
+      ],
+      "selected_frame_ids": [
+        0,
+        1,
+        2,
+        86,
+        87,
+        88
+      ],
+      "evicted_frame_ids": [
+        85
+      ],
+      "selector_dot_products": 9,
+      "candidate_similarities": [
+        {
+          "frame_id": 1,
+          "max_similarity_to_recent": 0.99609375
+        },
+        {
+          "frame_id": 2,
+          "max_similarity_to_recent": 0.99609375
+        },
+        {
+          "frame_id": 85,
+          "max_similarity_to_recent": 1.0
+        }
+      ],
+      "selection_cuda_ms": 0.3234879970550537
+    },
+    {
+      "step": 89,
+      "policy": "anchor_recent_dino_diverse_k6",
+      "cache_window_size": 6,
+      "random_seed": null,
+      "candidate_frame_ids": [
+        0,
+        1,
+        2,
+        86,
+        87,
+        88,
+        89
+      ],
+      "selected_frame_ids": [
+        0,
+        1,
+        2,
+        87,
+        88,
+        89
+      ],
+      "evicted_frame_ids": [
+        86
+      ],
+      "selector_dot_products": 9,
+      "candidate_similarities": [
+        {
+          "frame_id": 1,
+          "max_similarity_to_recent": 0.99609375
+        },
+        {
+          "frame_id": 2,
+          "max_similarity_to_recent": 0.99609375
+        },
+        {
+          "frame_id": 86,
+          "max_similarity_to_recent": 1.0
+        }
+      ],
+      "selection_cuda_ms": 0.3041279911994934
+    },
+    {
+      "step": 90,
+      "policy": "anchor_recent_dino_diverse_k6",
+      "cache_window_size": 6,
+      "random_seed": null,
+      "candidate_frame_ids": [
+        0,
+        1,
+        2,
+        87,
+        88,
+        89,
+        90
+      ],
+      "selected_frame_ids": [
+        0,
+        1,
+        2,
+        88,
+        89,
+        90
+      ],
+      "evicted_frame_ids": [
+        87
+      ],
+      "selector_dot_products": 9,
+      "candidate_similarities": [
+        {
+          "frame_id": 1,
+          "max_similarity_to_recent": 0.99609375
+        },
+        {
+          "frame_id": 2,
+          "max_similarity_to_recent": 0.9921875
+        },
+        {
+          "frame_id": 87,
+          "max_similarity_to_recent": 1.0
+        }
+      ],
+      "selection_cuda_ms": 0.30720001459121704
+    },
+    {
+      "step": 91,
+      "policy": "anchor_recent_dino_diverse_k6",
+      "cache_window_size": 6,
+      "random_seed": null,
+      "candidate_frame_ids": [
+        0,
+        1,
+        2,
+        88,
+        89,
+        90,
+        91
+      ],
+      "selected_frame_ids": [
+        0,
+        1,
+        2,
+        89,
+        90,
+        91
+      ],
+      "evicted_frame_ids": [
+        88
+      ],
+      "selector_dot_products": 9,
+      "candidate_similarities": [
+        {
+          "frame_id": 1,
+          "max_similarity_to_recent": 0.99609375
+        },
+        {
+          "frame_id": 2,
+          "max_similarity_to_recent": 0.9921875
+        },
+        {
+          "frame_id": 88,
+          "max_similarity_to_recent": 1.0
+        }
+      ],
+      "selection_cuda_ms": 0.2987839877605438
+    },
+    {
+      "step": 92,
+      "policy": "anchor_recent_dino_diverse_k6",
+      "cache_window_size": 6,
+      "random_seed": null,
+      "candidate_frame_ids": [
+        0,
+        1,
+        2,
+        89,
+        90,
+        91,
+        92
+      ],
+      "selected_frame_ids": [
+        0,
+        1,
+        2,
+        90,
+        91,
+        92
+      ],
+      "evicted_frame_ids": [
+        89
+      ],
+      "selector_dot_products": 9,
+      "candidate_similarities": [
+        {
+          "frame_id": 1,
+          "max_similarity_to_recent": 0.99609375
+        },
+        {
+          "frame_id": 2,
+          "max_similarity_to_recent": 0.9921875
+        },
+        {
+          "frame_id": 89,
+          "max_similarity_to_recent": 0.99609375
+        }
+      ],
+      "selection_cuda_ms": 0.30534398555755615
+    },
+    {
+      "step": 93,
+      "policy": "anchor_recent_dino_diverse_k6",
+      "cache_window_size": 6,
+      "random_seed": null,
+      "candidate_frame_ids": [
+        0,
+        1,
+        2,
+        90,
+        91,
+        92,
+        93
+      ],
+      "selected_frame_ids": [
+        0,
+        1,
+        2,
+        91,
+        92,
+        93
+      ],
+      "evicted_frame_ids": [
+        90
+      ],
+      "selector_dot_products": 9,
+      "candidate_similarities": [
+        {
+          "frame_id": 1,
+          "max_similarity_to_recent": 0.99609375
+        },
+        {
+          "frame_id": 2,
+          "max_similarity_to_recent": 0.9921875
+        },
+        {
+          "frame_id": 90,
+          "max_similarity_to_recent": 1.0
+        }
+      ],
+      "selection_cuda_ms": 0.3246079981327057
+    },
+    {
+      "step": 94,
+      "policy": "anchor_recent_dino_diverse_k6",
+      "cache_window_size": 6,
+      "random_seed": null,
+      "candidate_frame_ids": [
+        0,
+        1,
+        2,
+        91,
+        92,
+        93,
+        94
+      ],
+      "selected_frame_ids": [
+        0,
+        1,
+        2,
+        92,
+        93,
+        94
+      ],
+      "evicted_frame_ids": [
+        91
+      ],
+      "selector_dot_products": 9,
+      "candidate_similarities": [
+        {
+          "frame_id": 1,
+          "max_similarity_to_recent": 0.99609375
+        },
+        {
+          "frame_id": 2,
+          "max_similarity_to_recent": 0.9921875
+        },
+        {
+          "frame_id": 91,
+          "max_similarity_to_recent": 1.0
+        }
+      ],
+      "selection_cuda_ms": 0.3550719916820526
+    },
+    {
+      "step": 95,
+      "policy": "anchor_recent_dino_diverse_k6",
+      "cache_window_size": 6,
+      "random_seed": null,
+      "candidate_frame_ids": [
+        0,
+        1,
+        2,
+        92,
+        93,
+        94,
+        95
+      ],
+      "selected_frame_ids": [
+        0,
+        1,
+        2,
+        93,
+        94,
+        95
+      ],
+      "evicted_frame_ids": [
+        92
+      ],
+      "selector_dot_products": 9,
+      "candidate_similarities": [
+        {
+          "frame_id": 1,
+          "max_similarity_to_recent": 0.99609375
+        },
+        {
+          "frame_id": 2,
+          "max_similarity_to_recent": 0.9921875
+        },
+        {
+          "frame_id": 92,
+          "max_similarity_to_recent": 1.0
+        }
+      ],
+      "selection_cuda_ms": 0.3503679931163788
+    },
+    {
+      "step": 96,
+      "policy": "anchor_recent_dino_diverse_k6",
+      "cache_window_size": 6,
+      "random_seed": null,
+      "candidate_frame_ids": [
+        0,
+        1,
+        2,
+        93,
+        94,
+        95,
+        96
+      ],
+      "selected_frame_ids": [
+        0,
+        1,
+        2,
+        94,
+        95,
+        96
+      ],
+      "evicted_frame_ids": [
+        93
+      ],
+      "selector_dot_products": 9,
+      "candidate_similarities": [
+        {
+          "frame_id": 1,
+          "max_similarity_to_recent": 0.99609375
+        },
+        {
+          "frame_id": 2,
+          "max_similarity_to_recent": 0.9921875
+        },
+        {
+          "frame_id": 93,
+          "max_similarity_to_recent": 1.0
+        }
+      ],
+      "selection_cuda_ms": 0.3160640001296997
+    },
+    {
+      "step": 97,
+      "policy": "anchor_recent_dino_diverse_k6",
+      "cache_window_size": 6,
+      "random_seed": null,
+      "candidate_frame_ids": [
+        0,
+        1,
+        2,
+        94,
+        95,
+        96,
+        97
+      ],
+      "selected_frame_ids": [
+        0,
+        1,
+        2,
+        95,
+        96,
+        97
+      ],
+      "evicted_frame_ids": [
+        94
+      ],
+      "selector_dot_products": 9,
+      "candidate_similarities": [
+        {
+          "frame_id": 1,
+          "max_similarity_to_recent": 0.99609375
+        },
+        {
+          "frame_id": 2,
+          "max_similarity_to_recent": 0.9921875
+        },
+        {
+          "frame_id": 94,
+          "max_similarity_to_recent": 1.0
+        }
+      ],
+      "selection_cuda_ms": 0.336544007062912
+    },
+    {
+      "step": 98,
+      "policy": "anchor_recent_dino_diverse_k6",
+      "cache_window_size": 6,
+      "random_seed": null,
+      "candidate_frame_ids": [
+        0,
+        1,
+        2,
+        95,
+        96,
+        97,
+        98
+      ],
+      "selected_frame_ids": [
+        0,
+        1,
+        2,
+        96,
+        97,
+        98
+      ],
+      "evicted_frame_ids": [
+        95
+      ],
+      "selector_dot_products": 9,
+      "candidate_similarities": [
+        {
+          "frame_id": 1,
+          "max_similarity_to_recent": 0.99609375
+        },
+        {
+          "frame_id": 2,
+          "max_similarity_to_recent": 0.9921875
+        },
+        {
+          "frame_id": 95,
+          "max_similarity_to_recent": 1.0
+        }
+      ],
+      "selection_cuda_ms": 0.32175999879837036
+    },
+    {
+      "step": 99,
+      "policy": "anchor_recent_dino_diverse_k6",
+      "cache_window_size": 6,
+      "random_seed": null,
+      "candidate_frame_ids": [
+        0,
+        1,
+        2,
+        96,
+        97,
+        98,
+        99
+      ],
+      "selected_frame_ids": [
+        0,
+        1,
+        2,
+        97,
+        98,
+        99
+      ],
+      "evicted_frame_ids": [
+        96
+      ],
+      "selector_dot_products": 9,
+      "candidate_similarities": [
+        {
+          "frame_id": 1,
+          "max_similarity_to_recent": 0.99609375
+        },
+        {
+          "frame_id": 2,
+          "max_similarity_to_recent": 0.9921875
+        },
+        {
+          "frame_id": 96,
+          "max_similarity_to_recent": 1.0
+        }
+      ],
+      "selection_cuda_ms": 0.4107840061187744
+    },
+    {
+      "step": 100,
+      "policy": "anchor_recent_dino_diverse_k6",
+      "cache_window_size": 6,
+      "random_seed": null,
+      "candidate_frame_ids": [
+        0,
+        1,
+        2,
+        97,
+        98,
+        99,
+        100
+      ],
+      "selected_frame_ids": [
+        0,
+        1,
+        2,
+        98,
+        99,
+        100
+      ],
+      "evicted_frame_ids": [
+        97
+      ],
+      "selector_dot_products": 9,
+      "candidate_similarities": [
+        {
+          "frame_id": 1,
+          "max_similarity_to_recent": 0.9921875
+        },
+        {
+          "frame_id": 2,
+          "max_similarity_to_recent": 0.98828125
+        },
+        {
+          "frame_id": 97,
+          "max_similarity_to_recent": 1.0
+        }
+      ],
+      "selection_cuda_ms": 0.32767999172210693
+    },
+    {
+      "step": 101,
+      "policy": "anchor_recent_dino_diverse_k6",
+      "cache_window_size": 6,
+      "random_seed": null,
+      "candidate_frame_ids": [
+        0,
+        1,
+        2,
+        98,
+        99,
+        100,
+        101
+      ],
+      "selected_frame_ids": [
+        0,
+        1,
+        2,
+        99,
+        100,
+        101
+      ],
+      "evicted_frame_ids": [
+        98
+      ],
+      "selector_dot_products": 9,
+      "candidate_similarities": [
+        {
+          "frame_id": 1,
+          "max_similarity_to_recent": 0.9921875
+        },
+        {
+          "frame_id": 2,
+          "max_similarity_to_recent": 0.98828125
+        },
+        {
+          "frame_id": 98,
+          "max_similarity_to_recent": 1.0
+        }
+      ],
+      "selection_cuda_ms": 0.3266560137271881
+    },
+    {
+      "step": 102,
+      "policy": "anchor_recent_dino_diverse_k6",
+      "cache_window_size": 6,
+      "random_seed": null,
+      "candidate_frame_ids": [
+        0,
+        1,
+        2,
+        99,
+        100,
+        101,
+        102
+      ],
+      "selected_frame_ids": [
+        0,
+        1,
+        2,
+        100,
+        101,
+        102
+      ],
+      "evicted_frame_ids": [
+        99
+      ],
+      "selector_dot_products": 9,
+      "candidate_similarities": [
+        {
+          "frame_id": 1,
+          "max_similarity_to_recent": 0.9921875
+        },
+        {
+          "frame_id": 2,
+          "max_similarity_to_recent": 0.98828125
+        },
+        {
+          "frame_id": 99,
+          "max_similarity_to_recent": 0.99609375
+        }
+      ],
+      "selection_cuda_ms": 0.3166080117225647
+    },
+    {
+      "step": 103,
+      "policy": "anchor_recent_dino_diverse_k6",
+      "cache_window_size": 6,
+      "random_seed": null,
+      "candidate_frame_ids": [
+        0,
+        1,
+        2,
+        100,
+        101,
+        102,
+        103
+      ],
+      "selected_frame_ids": [
+        0,
+        1,
+        2,
+        101,
+        102,
+        103
+      ],
+      "evicted_frame_ids": [
+        100
+      ],
+      "selector_dot_products": 9,
+      "candidate_similarities": [
+        {
+          "frame_id": 1,
+          "max_similarity_to_recent": 0.9921875
+        },
+        {
+          "frame_id": 2,
+          "max_similarity_to_recent": 0.98828125
+        },
+        {
+          "frame_id": 100,
+          "max_similarity_to_recent": 1.0
+        }
+      ],
+      "selection_cuda_ms": 0.3051519989967346
+    },
+    {
+      "step": 104,
+      "policy": "anchor_recent_dino_diverse_k6",
+      "cache_window_size": 6,
+      "random_seed": null,
+      "candidate_frame_ids": [
+        0,
+        1,
+        2,
+        101,
+        102,
+        103,
+        104
+      ],
+      "selected_frame_ids": [
+        0,
+        1,
+        2,
+        102,
+        103,
+        104
+      ],
+      "evicted_frame_ids": [
+        101
+      ],
+      "selector_dot_products": 9,
+      "candidate_similarities": [
+        {
+          "frame_id": 1,
+          "max_similarity_to_recent": 0.9921875
+        },
+        {
+          "frame_id": 2,
+          "max_similarity_to_recent": 0.9921875
+        },
+        {
+          "frame_id": 101,
+          "max_similarity_to_recent": 1.0
+        }
+      ],
+      "selection_cuda_ms": 0.3328000009059906
+    },
+    {
+      "step": 105,
+      "policy": "anchor_recent_dino_diverse_k6",
+      "cache_window_size": 6,
+      "random_seed": null,
+      "candidate_frame_ids": [
+        0,
+        1,
+        2,
+        102,
+        103,
+        104,
+        105
+      ],
+      "selected_frame_ids": [
+        0,
+        1,
+        2,
+        103,
+        104,
+        105
+      ],
+      "evicted_frame_ids": [
+        102
+      ],
+      "selector_dot_products": 9,
+      "candidate_similarities": [
+        {
+          "frame_id": 1,
+          "max_similarity_to_recent": 0.9921875
+        },
+        {
+          "frame_id": 2,
+          "max_similarity_to_recent": 0.9921875
+        },
+        {
+          "frame_id": 102,
+          "max_similarity_to_recent": 0.99609375
+        }
+      ],
+      "selection_cuda_ms": 0.32572799921035767
+    },
+    {
+      "step": 106,
+      "policy": "anchor_recent_dino_diverse_k6",
+      "cache_window_size": 6,
+      "random_seed": null,
+      "candidate_frame_ids": [
+        0,
+        1,
+        2,
+        103,
+        104,
+        105,
+        106
+      ],
+      "selected_frame_ids": [
+        0,
+        1,
+        2,
+        104,
+        105,
+        106
+      ],
+      "evicted_frame_ids": [
+        103
+      ],
+      "selector_dot_products": 9,
+      "candidate_similarities": [
+        {
+          "frame_id": 1,
+          "max_similarity_to_recent": 0.9921875
+        },
+        {
+          "frame_id": 2,
+          "max_similarity_to_recent": 0.9921875
+        },
+        {
+          "frame_id": 103,
+          "max_similarity_to_recent": 1.0
+        }
+      ],
+      "selection_cuda_ms": 0.3299199938774109
+    },
+    {
+      "step": 107,
+      "policy": "anchor_recent_dino_diverse_k6",
+      "cache_window_size": 6,
+      "random_seed": null,
+      "candidate_frame_ids": [
+        0,
+        1,
+        2,
+        104,
+        105,
+        106,
+        107
+      ],
+      "selected_frame_ids": [
+        0,
+        1,
+        2,
+        105,
+        106,
+        107
+      ],
+      "evicted_frame_ids": [
+        104
+      ],
+      "selector_dot_products": 9,
+      "candidate_similarities": [
+        {
+          "frame_id": 1,
+          "max_similarity_to_recent": 0.9921875
+        },
+        {
+          "frame_id": 2,
+          "max_similarity_to_recent": 0.9921875
+        },
+        {
+          "frame_id": 104,
+          "max_similarity_to_recent": 1.0
+        }
+      ],
+      "selection_cuda_ms": 0.30115199089050293
+    },
+    {
+      "step": 108,
+      "policy": "anchor_recent_dino_diverse_k6",
+      "cache_window_size": 6,
+      "random_seed": null,
+      "candidate_frame_ids": [
+        0,
+        1,
+        2,
+        105,
+        106,
+        107,
+        108
+      ],
+      "selected_frame_ids": [
+        0,
+        1,
+        2,
+        106,
+        107,
+        108
+      ],
+      "evicted_frame_ids": [
+        105
+      ],
+      "selector_dot_products": 9,
+      "candidate_similarities": [
+        {
+          "frame_id": 1,
+          "max_similarity_to_recent": 0.9921875
+        },
+        {
+          "frame_id": 2,
+          "max_similarity_to_recent": 0.9921875
+        },
+        {
+          "frame_id": 105,
+          "max_similarity_to_recent": 1.0
+        }
+      ],
+      "selection_cuda_ms": 0.31564798951148987
+    },
+    {
+      "step": 109,
+      "policy": "anchor_recent_dino_diverse_k6",
+      "cache_window_size": 6,
+      "random_seed": null,
+      "candidate_frame_ids": [
+        0,
+        1,
+        2,
+        106,
+        107,
+        108,
+        109
+      ],
+      "selected_frame_ids": [
+        0,
+        1,
+        2,
+        107,
+        108,
+        109
+      ],
+      "evicted_frame_ids": [
+        106
+      ],
+      "selector_dot_products": 9,
+      "candidate_similarities": [
+        {
+          "frame_id": 1,
+          "max_similarity_to_recent": 0.9921875
+        },
+        {
+          "frame_id": 2,
+          "max_similarity_to_recent": 0.9921875
+        },
+        {
+          "frame_id": 106,
+          "max_similarity_to_recent": 1.0
+        }
+      ],
+      "selection_cuda_ms": 0.32339200377464294
+    }
+  ],
+  "memory_trace": [
+    {
+      "frame_index": 0,
+      "retained_frame_ids": [
+        0
+      ],
+      "camera_retained_frame_ids": [
+        0
+      ],
+      "temporal_bank_frame_ids": {},
+      "aggregator_kv_mib": 146.390625,
+      "camera_kv_mib": 0.25,
+      "descriptor_mib": 0.00390625,
+      "input_tensors_mib": 2.32379150390625,
+      "retained_outputs_mib": 0.0,
+      "retained_views_mib": 0.0,
+      "input_mode": "streaming",
+      "output_mode": "sink",
+      "cuda_allocated_mib": 6893.25439453125,
+      "cuda_reserved_mib": 7818.0
+    },
+    {
+      "frame_index": 1,
+      "retained_frame_ids": [
+        0,
+        1
+      ],
+      "camera_retained_frame_ids": [
+        0,
+        1
+      ],
+      "temporal_bank_frame_ids": {},
+      "aggregator_kv_mib": 195.1875,
+      "camera_kv_mib": 0.5,
+      "descriptor_mib": 0.0078125,
+      "input_tensors_mib": 2.32379150390625,
+      "retained_outputs_mib": 0.0,
+      "retained_views_mib": 0.0,
+      "input_mode": "streaming",
+      "output_mode": "sink",
+      "cuda_allocated_mib": 6943.24755859375,
+      "cuda_reserved_mib": 8048.0
+    },
+    {
+      "frame_index": 2,
+      "retained_frame_ids": [
+        0,
+        1,
+        2
+      ],
+      "camera_retained_frame_ids": [
+        0,
+        1,
+        2
+      ],
+      "temporal_bank_frame_ids": {},
+      "aggregator_kv_mib": 292.78125,
+      "camera_kv_mib": 0.75,
+      "descriptor_mib": 0.01171875,
+      "input_tensors_mib": 2.32379150390625,
+      "retained_outputs_mib": 0.0,
+      "retained_views_mib": 0.0,
+      "input_mode": "streaming",
+      "output_mode": "sink",
+      "cuda_allocated_mib": 7040.15771484375,
+      "cuda_reserved_mib": 8048.0
+    },
+    {
+      "frame_index": 3,
+      "retained_frame_ids": [
+        0,
+        1,
+        2,
+        3
+      ],
+      "camera_retained_frame_ids": [
+        0,
+        1,
+        2,
+        3
+      ],
+      "temporal_bank_frame_ids": {},
+      "aggregator_kv_mib": 390.375,
+      "camera_kv_mib": 1.0,
+      "descriptor_mib": 0.015625,
+      "input_tensors_mib": 2.32379150390625,
+      "retained_outputs_mib": 0.0,
+      "retained_views_mib": 0.0,
+      "input_mode": "streaming",
+      "output_mode": "sink",
+      "cuda_allocated_mib": 7139.02490234375,
+      "cuda_reserved_mib": 8376.0
+    },
+    {
+      "frame_index": 4,
+      "retained_frame_ids": [
+        0,
+        1,
+        2,
+        3,
+        4
+      ],
+      "camera_retained_frame_ids": [
+        0,
+        1,
+        2,
+        3,
+        4
+      ],
+      "temporal_bank_frame_ids": {},
+      "aggregator_kv_mib": 487.96875,
+      "camera_kv_mib": 1.25,
+      "descriptor_mib": 0.01953125,
+      "input_tensors_mib": 2.32379150390625,
+      "retained_outputs_mib": 0.0,
+      "retained_views_mib": 0.0,
+      "input_mode": "streaming",
+      "output_mode": "sink",
+      "cuda_allocated_mib": 7236.22607421875,
+      "cuda_reserved_mib": 8476.0
+    },
+    {
+      "frame_index": 5,
+      "retained_frame_ids": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5
+      ],
+      "camera_retained_frame_ids": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5
+      ],
+      "temporal_bank_frame_ids": {},
+      "aggregator_kv_mib": 585.5625,
+      "camera_kv_mib": 1.5,
+      "descriptor_mib": 0.0234375,
+      "input_tensors_mib": 2.32379150390625,
+      "retained_outputs_mib": 0.0,
+      "retained_views_mib": 0.0,
+      "input_mode": "streaming",
+      "output_mode": "sink",
+      "cuda_allocated_mib": 7334.34716796875,
+      "cuda_reserved_mib": 8656.0
+    },
+    {
+      "frame_index": 6,
+      "retained_frame_ids": [
+        0,
+        1,
+        2,
+        4,
+        5,
+        6
+      ],
+      "camera_retained_frame_ids": [
+        0,
+        1,
+        2,
+        4,
+        5,
+        6
+      ],
+      "temporal_bank_frame_ids": {},
+      "aggregator_kv_mib": 585.5625,
+      "camera_kv_mib": 1.5,
+      "descriptor_mib": 0.0234375,
+      "input_tensors_mib": 2.32379150390625,
+      "retained_outputs_mib": 0.0,
+      "retained_views_mib": 0.0,
+      "input_mode": "streaming",
+      "output_mode": "sink",
+      "cuda_allocated_mib": 8017.23046875,
+      "cuda_reserved_mib": 9344.0
+    },
+    {
+      "frame_index": 7,
+      "retained_frame_ids": [
+        0,
+        1,
+        2,
+        5,
+        6,
+        7
+      ],
+      "camera_retained_frame_ids": [
+        0,
+        1,
+        2,
+        5,
+        6,
+        7
+      ],
+      "temporal_bank_frame_ids": {},
+      "aggregator_kv_mib": 585.5625,
+      "camera_kv_mib": 1.5,
+      "descriptor_mib": 0.0234375,
+      "input_tensors_mib": 2.32379150390625,
+      "retained_outputs_mib": 0.0,
+      "retained_views_mib": 0.0,
+      "input_mode": "streaming",
+      "output_mode": "sink",
+      "cuda_allocated_mib": 8018.25,
+      "cuda_reserved_mib": 9344.0
+    },
+    {
+      "frame_index": 8,
+      "retained_frame_ids": [
+        0,
+        1,
+        2,
+        6,
+        7,
+        8
+      ],
+      "camera_retained_frame_ids": [
+        0,
+        1,
+        2,
+        6,
+        7,
+        8
+      ],
+      "temporal_bank_frame_ids": {},
+      "aggregator_kv_mib": 585.5625,
+      "camera_kv_mib": 1.5,
+      "descriptor_mib": 0.0234375,
+      "input_tensors_mib": 2.32379150390625,
+      "retained_outputs_mib": 0.0,
+      "retained_views_mib": 0.0,
+      "input_mode": "streaming",
+      "output_mode": "sink",
+      "cuda_allocated_mib": 8017.23046875,
+      "cuda_reserved_mib": 9344.0
+    },
+    {
+      "frame_index": 9,
+      "retained_frame_ids": [
+        0,
+        1,
+        2,
+        7,
+        8,
+        9
+      ],
+      "camera_retained_frame_ids": [
+        0,
+        1,
+        2,
+        7,
+        8,
+        9
+      ],
+      "temporal_bank_frame_ids": {},
+      "aggregator_kv_mib": 585.5625,
+      "camera_kv_mib": 1.5,
+      "descriptor_mib": 0.0234375,
+      "input_tensors_mib": 2.32379150390625,
+      "retained_outputs_mib": 0.0,
+      "retained_views_mib": 0.0,
+      "input_mode": "streaming",
+      "output_mode": "sink",
+      "cuda_allocated_mib": 8019.162109375,
+      "cuda_reserved_mib": 9344.0
+    },
+    {
+      "frame_index": 10,
+      "retained_frame_ids": [
+        0,
+        1,
+        2,
+        8,
+        9,
+        10
+      ],
+      "camera_retained_frame_ids": [
+        0,
+        1,
+        2,
+        8,
+        9,
+        10
+      ],
+      "temporal_bank_frame_ids": {},
+      "aggregator_kv_mib": 585.5625,
+      "camera_kv_mib": 1.5,
+      "descriptor_mib": 0.0234375,
+      "input_tensors_mib": 2.32379150390625,
+      "retained_outputs_mib": 0.0,
+      "retained_views_mib": 0.0,
+      "input_mode": "streaming",
+      "output_mode": "sink",
+      "cuda_allocated_mib": 8018.16796875,
+      "cuda_reserved_mib": 9394.0
+    },
+    {
+      "frame_index": 11,
+      "retained_frame_ids": [
+        0,
+        1,
+        2,
+        9,
+        10,
+        11
+      ],
+      "camera_retained_frame_ids": [
+        0,
+        1,
+        2,
+        9,
+        10,
+        11
+      ],
+      "temporal_bank_frame_ids": {},
+      "aggregator_kv_mib": 585.5625,
+      "camera_kv_mib": 1.5,
+      "descriptor_mib": 0.0234375,
+      "input_tensors_mib": 2.32379150390625,
+      "retained_outputs_mib": 0.0,
+      "retained_views_mib": 0.0,
+      "input_mode": "streaming",
+      "output_mode": "sink",
+      "cuda_allocated_mib": 8018.25,
+      "cuda_reserved_mib": 9394.0
+    },
+    {
+      "frame_index": 12,
+      "retained_frame_ids": [
+        0,
+        1,
+        2,
+        10,
+        11,
+        12
+      ],
+      "camera_retained_frame_ids": [
+        0,
+        1,
+        2,
+        10,
+        11,
+        12
+      ],
+      "temporal_bank_frame_ids": {},
+      "aggregator_kv_mib": 585.5625,
+      "camera_kv_mib": 1.5,
+      "descriptor_mib": 0.0234375,
+      "input_tensors_mib": 2.32379150390625,
+      "retained_outputs_mib": 0.0,
+      "retained_views_mib": 0.0,
+      "input_mode": "streaming",
+      "output_mode": "sink",
+      "cuda_allocated_mib": 8018.16796875,
+      "cuda_reserved_mib": 9394.0
+    },
+    {
+      "frame_index": 13,
+      "retained_frame_ids": [
+        0,
+        1,
+        2,
+        11,
+        12,
+        13
+      ],
+      "camera_retained_frame_ids": [
+        0,
+        1,
+        2,
+        11,
+        12,
+        13
+      ],
+      "temporal_bank_frame_ids": {},
+      "aggregator_kv_mib": 585.5625,
+      "camera_kv_mib": 1.5,
+      "descriptor_mib": 0.0234375,
+      "input_tensors_mib": 2.32379150390625,
+      "retained_outputs_mib": 0.0,
+      "retained_views_mib": 0.0,
+      "input_mode": "streaming",
+      "output_mode": "sink",
+      "cuda_allocated_mib": 8019.080078125,
+      "cuda_reserved_mib": 9394.0
+    },
+    {
+      "frame_index": 14,
+      "retained_frame_ids": [
+        0,
+        1,
+        2,
+        12,
+        13,
+        14
+      ],
+      "camera_retained_frame_ids": [
+        0,
+        1,
+        2,
+        12,
+        13,
+        14
+      ],
+      "temporal_bank_frame_ids": {},
+      "aggregator_kv_mib": 585.5625,
+      "camera_kv_mib": 1.5,
+      "descriptor_mib": 0.0234375,
+      "input_tensors_mib": 2.32379150390625,
+      "retained_outputs_mib": 0.0,
+      "retained_views_mib": 0.0,
+      "input_mode": "streaming",
+      "output_mode": "sink",
+      "cuda_allocated_mib": 8018.16796875,
+      "cuda_reserved_mib": 9394.0
+    },
+    {
+      "frame_index": 15,
+      "retained_frame_ids": [
+        0,
+        1,
+        2,
+        13,
+        14,
+        15
+      ],
+      "camera_retained_frame_ids": [
+        0,
+        1,
+        2,
+        13,
+        14,
+        15
+      ],
+      "temporal_bank_frame_ids": {},
+      "aggregator_kv_mib": 585.5625,
+      "camera_kv_mib": 1.5,
+      "descriptor_mib": 0.0234375,
+      "input_tensors_mib": 2.32379150390625,
+      "retained_outputs_mib": 0.0,
+      "retained_views_mib": 0.0,
+      "input_mode": "streaming",
+      "output_mode": "sink",
+      "cuda_allocated_mib": 8019.080078125,
+      "cuda_reserved_mib": 9444.0
+    },
+    {
+      "frame_index": 16,
+      "retained_frame_ids": [
+        0,
+        1,
+        2,
+        14,
+        15,
+        16
+      ],
+      "camera_retained_frame_ids": [
+        0,
+        1,
+        2,
+        14,
+        15,
+        16
+      ],
+      "temporal_bank_frame_ids": {},
+      "aggregator_kv_mib": 585.5625,
+      "camera_kv_mib": 1.5,
+      "descriptor_mib": 0.0234375,
+      "input_tensors_mib": 2.32379150390625,
+      "retained_outputs_mib": 0.0,
+      "retained_views_mib": 0.0,
+      "input_mode": "streaming",
+      "output_mode": "sink",
+      "cuda_allocated_mib": 8018.16796875,
+      "cuda_reserved_mib": 9444.0
+    },
+    {
+      "frame_index": 17,
+      "retained_frame_ids": [
+        0,
+        1,
+        2,
+        15,
+        16,
+        17
+      ],
+      "camera_retained_frame_ids": [
+        0,
+        1,
+        2,
+        15,
+        16,
+        17
+      ],
+      "temporal_bank_frame_ids": {},
+      "aggregator_kv_mib": 585.5625,
+      "camera_kv_mib": 1.5,
+      "descriptor_mib": 0.0234375,
+      "input_tensors_mib": 2.32379150390625,
+      "retained_outputs_mib": 0.0,
+      "retained_views_mib": 0.0,
+      "input_mode": "streaming",
+      "output_mode": "sink",
+      "cuda_allocated_mib": 8018.7890625,
+      "cuda_reserved_mib": 9444.0
+    },
+    {
+      "frame_index": 18,
+      "retained_frame_ids": [
+        0,
+        1,
+        2,
+        16,
+        17,
+        18
+      ],
+      "camera_retained_frame_ids": [
+        0,
+        1,
+        2,
+        16,
+        17,
+        18
+      ],
+      "temporal_bank_frame_ids": {},
+      "aggregator_kv_mib": 585.5625,
+      "camera_kv_mib": 1.5,
+      "descriptor_mib": 0.0234375,
+      "input_tensors_mib": 2.32379150390625,
+      "retained_outputs_mib": 0.0,
+      "retained_views_mib": 0.0,
+      "input_mode": "streaming",
+      "output_mode": "sink",
+      "cuda_allocated_mib": 8018.16796875,
+      "cuda_reserved_mib": 9544.0
+    },
+    {
+      "frame_index": 19,
+      "retained_frame_ids": [
+        0,
+        1,
+        2,
+        17,
+        18,
+        19
+      ],
+      "camera_retained_frame_ids": [
+        0,
+        1,
+        2,
+        17,
+        18,
+        19
+      ],
+      "temporal_bank_frame_ids": {},
+      "aggregator_kv_mib": 585.5625,
+      "camera_kv_mib": 1.5,
+      "descriptor_mib": 0.0234375,
+      "input_tensors_mib": 2.32379150390625,
+      "retained_outputs_mib": 0.0,
+      "retained_views_mib": 0.0,
+      "input_mode": "streaming",
+      "output_mode": "sink",
+      "cuda_allocated_mib": 8019.619140625,
+      "cuda_reserved_mib": 9544.0
+    },
+    {
+      "frame_index": 20,
+      "retained_frame_ids": [
+        0,
+        1,
+        2,
+        18,
+        19,
+        20
+      ],
+      "camera_retained_frame_ids": [
+        0,
+        1,
+        2,
+        18,
+        19,
+        20
+      ],
+      "temporal_bank_frame_ids": {},
+      "aggregator_kv_mib": 585.5625,
+      "camera_kv_mib": 1.5,
+      "descriptor_mib": 0.0234375,
+      "input_tensors_mib": 2.32379150390625,
+      "retained_outputs_mib": 0.0,
+      "retained_views_mib": 0.0,
+      "input_mode": "streaming",
+      "output_mode": "sink",
+      "cuda_allocated_mib": 8018.541015625,
+      "cuda_reserved_mib": 9544.0
+    },
+    {
+      "frame_index": 21,
+      "retained_frame_ids": [
+        0,
+        1,
+        2,
+        19,
+        20,
+        21
+      ],
+      "camera_retained_frame_ids": [
+        0,
+        1,
+        2,
+        19,
+        20,
+        21
+      ],
+      "temporal_bank_frame_ids": {},
+      "aggregator_kv_mib": 585.5625,
+      "camera_kv_mib": 1.5,
+      "descriptor_mib": 0.0234375,
+      "input_tensors_mib": 2.32379150390625,
+      "retained_outputs_mib": 0.0,
+      "retained_views_mib": 0.0,
+      "input_mode": "streaming",
+      "output_mode": "sink",
+      "cuda_allocated_mib": 8019.619140625,
+      "cuda_reserved_mib": 9544.0
+    },
+    {
+      "frame_index": 22,
+      "retained_frame_ids": [
+        0,
+        1,
+        2,
+        20,
+        21,
+        22
+      ],
+      "camera_retained_frame_ids": [
+        0,
+        1,
+        2,
+        20,
+        21,
+        22
+      ],
+      "temporal_bank_frame_ids": {},
+      "aggregator_kv_mib": 585.5625,
+      "camera_kv_mib": 1.5,
+      "descriptor_mib": 0.0234375,
+      "input_tensors_mib": 2.32379150390625,
+      "retained_outputs_mib": 0.0,
+      "retained_views_mib": 0.0,
+      "input_mode": "streaming",
+      "output_mode": "sink",
+      "cuda_allocated_mib": 8019.080078125,
+      "cuda_reserved_mib": 9544.0
+    },
+    {
+      "frame_index": 23,
+      "retained_frame_ids": [
+        0,
+        1,
+        2,
+        21,
+        22,
+        23
+      ],
+      "camera_retained_frame_ids": [
+        0,
+        1,
+        2,
+        21,
+        22,
+        23
+      ],
+      "temporal_bank_frame_ids": {},
+      "aggregator_kv_mib": 585.5625,
+      "camera_kv_mib": 1.5,
+      "descriptor_mib": 0.0234375,
+      "input_tensors_mib": 2.32379150390625,
+      "retained_outputs_mib": 0.0,
+      "retained_views_mib": 0.0,
+      "input_mode": "streaming",
+      "output_mode": "sink",
+      "cuda_allocated_mib": 8018.7890625,
+      "cuda_reserved_mib": 9544.0
+    },
+    {
+      "frame_index": 24,
+      "retained_frame_ids": [
+        0,
+        1,
+        2,
+        22,
+        23,
+        24
+      ],
+      "camera_retained_frame_ids": [
+        0,
+        1,
+        2,
+        22,
+        23,
+        24
+      ],
+      "temporal_bank_frame_ids": {},
+      "aggregator_kv_mib": 585.5625,
+      "camera_kv_mib": 1.5,
+      "descriptor_mib": 0.0234375,
+      "input_tensors_mib": 2.32379150390625,
+      "retained_outputs_mib": 0.0,
+      "retained_views_mib": 0.0,
+      "input_mode": "streaming",
+      "output_mode": "sink",
+      "cuda_allocated_mib": 8018.541015625,
+      "cuda_reserved_mib": 9644.0
+    },
+    {
+      "frame_index": 25,
+      "retained_frame_ids": [
+        0,
+        1,
+        2,
+        23,
+        24,
+        25
+      ],
+      "camera_retained_frame_ids": [
+        0,
+        1,
+        2,
+        23,
+        24,
+        25
+      ],
+      "temporal_bank_frame_ids": {},
+      "aggregator_kv_mib": 585.5625,
+      "camera_kv_mib": 1.5,
+      "descriptor_mib": 0.0234375,
+      "input_tensors_mib": 2.32379150390625,
+      "retained_outputs_mib": 0.0,
+      "retained_views_mib": 0.0,
+      "input_mode": "streaming",
+      "output_mode": "sink",
+      "cuda_allocated_mib": 8019.619140625,
+      "cuda_reserved_mib": 9644.0
+    },
+    {
+      "frame_index": 26,
+      "retained_frame_ids": [
+        0,
+        1,
+        2,
+        24,
+        25,
+        26
+      ],
+      "camera_retained_frame_ids": [
+        0,
+        1,
+        2,
+        24,
+        25,
+        26
+      ],
+      "temporal_bank_frame_ids": {},
+      "aggregator_kv_mib": 585.5625,
+      "camera_kv_mib": 1.5,
+      "descriptor_mib": 0.0234375,
+      "input_tensors_mib": 2.32379150390625,
+      "retained_outputs_mib": 0.0,
+      "retained_views_mib": 0.0,
+      "input_mode": "streaming",
+      "output_mode": "sink",
+      "cuda_allocated_mib": 8018.541015625,
+      "cuda_reserved_mib": 9644.0
+    },
+    {
+      "frame_index": 27,
+      "retained_frame_ids": [
+        0,
+        1,
+        2,
+        25,
+        26,
+        27
+      ],
+      "camera_retained_frame_ids": [
+        0,
+        1,
+        2,
+        25,
+        26,
+        27
+      ],
+      "temporal_bank_frame_ids": {},
+      "aggregator_kv_mib": 585.5625,
+      "camera_kv_mib": 1.5,
+      "descriptor_mib": 0.0234375,
+      "input_tensors_mib": 2.32379150390625,
+      "retained_outputs_mib": 0.0,
+      "retained_views_mib": 0.0,
+      "input_mode": "streaming",
+      "output_mode": "sink",
+      "cuda_allocated_mib": 8019.619140625,
+      "cuda_reserved_mib": 9644.0
+    },
+    {
+      "frame_index": 28,
+      "retained_frame_ids": [
+        0,
+        1,
+        2,
+        26,
+        27,
+        28
+      ],
+      "camera_retained_frame_ids": [
+        0,
+        1,
+        2,
+        26,
+        27,
+        28
+      ],
+      "temporal_bank_frame_ids": {},
+      "aggregator_kv_mib": 585.5625,
+      "camera_kv_mib": 1.5,
+      "descriptor_mib": 0.0234375,
+      "input_tensors_mib": 2.32379150390625,
+      "retained_outputs_mib": 0.0,
+      "retained_views_mib": 0.0,
+      "input_mode": "streaming",
+      "output_mode": "sink",
+      "cuda_allocated_mib": 8018.541015625,
+      "cuda_reserved_mib": 9644.0
+    },
+    {
+      "frame_index": 29,
+      "retained_frame_ids": [
+        0,
+        1,
+        2,
+        27,
+        28,
+        29
+      ],
+      "camera_retained_frame_ids": [
+        0,
+        1,
+        2,
+        27,
+        28,
+        29
+      ],
+      "temporal_bank_frame_ids": {},
+      "aggregator_kv_mib": 585.5625,
+      "camera_kv_mib": 1.5,
+      "descriptor_mib": 0.0234375,
+      "input_tensors_mib": 2.32379150390625,
+      "retained_outputs_mib": 0.0,
+      "retained_views_mib": 0.0,
+      "input_mode": "streaming",
+      "output_mode": "sink",
+      "cuda_allocated_mib": 8019.9921875,
+      "cuda_reserved_mib": 9644.0
+    },
+    {
+      "frame_index": 30,
+      "retained_frame_ids": [
+        0,
+        1,
+        2,
+        28,
+        29,
+        30
+      ],
+      "camera_retained_frame_ids": [
+        0,
+        1,
+        2,
+        28,
+        29,
+        30
+      ],
+      "temporal_bank_frame_ids": {},
+      "aggregator_kv_mib": 585.5625,
+      "camera_kv_mib": 1.5,
+      "descriptor_mib": 0.0234375,
+      "input_tensors_mib": 2.32379150390625,
+      "retained_outputs_mib": 0.0,
+      "retained_views_mib": 0.0,
+      "input_mode": "streaming",
+      "output_mode": "sink",
+      "cuda_allocated_mib": 8018.541015625,
+      "cuda_reserved_mib": 9644.0
+    },
+    {
+      "frame_index": 31,
+      "retained_frame_ids": [
+        0,
+        1,
+        2,
+        29,
+        30,
+        31
+      ],
+      "camera_retained_frame_ids": [
+        0,
+        1,
+        2,
+        29,
+        30,
+        31
+      ],
+      "temporal_bank_frame_ids": {},
+      "aggregator_kv_mib": 585.5625,
+      "camera_kv_mib": 1.5,
+      "descriptor_mib": 0.0234375,
+      "input_tensors_mib": 2.32379150390625,
+      "retained_outputs_mib": 0.0,
+      "retained_views_mib": 0.0,
+      "input_mode": "streaming",
+      "output_mode": "sink",
+      "cuda_allocated_mib": 8019.9921875,
+      "cuda_reserved_mib": 9644.0
+    },
+    {
+      "frame_index": 32,
+      "retained_frame_ids": [
+        0,
+        1,
+        2,
+        30,
+        31,
+        32
+      ],
+      "camera_retained_frame_ids": [
+        0,
+        1,
+        2,
+        30,
+        31,
+        32
+      ],
+      "temporal_bank_frame_ids": {},
+      "aggregator_kv_mib": 585.5625,
+      "camera_kv_mib": 1.5,
+      "descriptor_mib": 0.0234375,
+      "input_tensors_mib": 2.32379150390625,
+      "retained_outputs_mib": 0.0,
+      "retained_views_mib": 0.0,
+      "input_mode": "streaming",
+      "output_mode": "sink",
+      "cuda_allocated_mib": 8018.541015625,
+      "cuda_reserved_mib": 9644.0
+    },
+    {
+      "frame_index": 33,
+      "retained_frame_ids": [
+        0,
+        1,
+        2,
+        31,
+        32,
+        33
+      ],
+      "camera_retained_frame_ids": [
+        0,
+        1,
+        2,
+        31,
+        32,
+        33
+      ],
+      "temporal_bank_frame_ids": {},
+      "aggregator_kv_mib": 585.5625,
+      "camera_kv_mib": 1.5,
+      "descriptor_mib": 0.0234375,
+      "input_tensors_mib": 2.32379150390625,
+      "retained_outputs_mib": 0.0,
+      "retained_views_mib": 0.0,
+      "input_mode": "streaming",
+      "output_mode": "sink",
+      "cuda_allocated_mib": 8019.9921875,
+      "cuda_reserved_mib": 9644.0
+    },
+    {
+      "frame_index": 34,
+      "retained_frame_ids": [
+        0,
+        1,
+        2,
+        32,
+        33,
+        34
+      ],
+      "camera_retained_frame_ids": [
+        0,
+        1,
+        2,
+        32,
+        33,
+        34
+      ],
+      "temporal_bank_frame_ids": {},
+      "aggregator_kv_mib": 585.5625,
+      "camera_kv_mib": 1.5,
+      "descriptor_mib": 0.0234375,
+      "input_tensors_mib": 2.32379150390625,
+      "retained_outputs_mib": 0.0,
+      "retained_views_mib": 0.0,
+      "input_mode": "streaming",
+      "output_mode": "sink",
+      "cuda_allocated_mib": 8018.888671875,
+      "cuda_reserved_mib": 9644.0
+    },
+    {
+      "frame_index": 35,
+      "retained_frame_ids": [
+        0,
+        1,
+        2,
+        33,
+        34,
+        35
+      ],
+      "camera_retained_frame_ids": [
+        0,
+        1,
+        2,
+        33,
+        34,
+        35
+      ],
+      "temporal_bank_frame_ids": {},
+      "aggregator_kv_mib": 585.5625,
+      "camera_kv_mib": 1.5,
+      "descriptor_mib": 0.0234375,
+      "input_tensors_mib": 2.32379150390625,
+      "retained_outputs_mib": 0.0,
+      "retained_views_mib": 0.0,
+      "input_mode": "streaming",
+      "output_mode": "sink",
+      "cuda_allocated_mib": 8018.5234375,
+      "cuda_reserved_mib": 9644.0
+    },
+    {
+      "frame_index": 36,
+      "retained_frame_ids": [
+        0,
+        1,
+        2,
+        34,
+        35,
+        36
+      ],
+      "camera_retained_frame_ids": [
+        0,
+        1,
+        2,
+        34,
+        35,
+        36
+      ],
+      "temporal_bank_frame_ids": {},
+      "aggregator_kv_mib": 585.5625,
+      "camera_kv_mib": 1.5,
+      "descriptor_mib": 0.0234375,
+      "input_tensors_mib": 2.32379150390625,
+      "retained_outputs_mib": 0.0,
+      "retained_views_mib": 0.0,
+      "input_mode": "streaming",
+      "output_mode": "sink",
+      "cuda_allocated_mib": 8018.9140625,
+      "cuda_reserved_mib": 9644.0
+    },
+    {
+      "frame_index": 37,
+      "retained_frame_ids": [
+        0,
+        1,
+        2,
+        35,
+        36,
+        37
+      ],
+      "camera_retained_frame_ids": [
+        0,
+        1,
+        2,
+        35,
+        36,
+        37
+      ],
+      "temporal_bank_frame_ids": {},
+      "aggregator_kv_mib": 585.5625,
+      "camera_kv_mib": 1.5,
+      "descriptor_mib": 0.0234375,
+      "input_tensors_mib": 2.32379150390625,
+      "retained_outputs_mib": 0.0,
+      "retained_views_mib": 0.0,
+      "input_mode": "streaming",
+      "output_mode": "sink",
+      "cuda_allocated_mib": 8019.9921875,
+      "cuda_reserved_mib": 9644.0
+    },
+    {
+      "frame_index": 38,
+      "retained_frame_ids": [
+        0,
+        1,
+        2,
+        36,
+        37,
+        38
+      ],
+      "camera_retained_frame_ids": [
+        0,
+        1,
+        2,
+        36,
+        37,
+        38
+      ],
+      "temporal_bank_frame_ids": {},
+      "aggregator_kv_mib": 585.5625,
+      "camera_kv_mib": 1.5,
+      "descriptor_mib": 0.0234375,
+      "input_tensors_mib": 2.32379150390625,
+      "retained_outputs_mib": 0.0,
+      "retained_views_mib": 0.0,
+      "input_mode": "streaming",
+      "output_mode": "sink",
+      "cuda_allocated_mib": 8018.888671875,
+      "cuda_reserved_mib": 9644.0
+    },
+    {
+      "frame_index": 39,
+      "retained_frame_ids": [
+        0,
+        1,
+        2,
+        37,
+        38,
+        39
+      ],
+      "camera_retained_frame_ids": [
+        0,
+        1,
+        2,
+        37,
+        38,
+        39
+      ],
+      "temporal_bank_frame_ids": {},
+      "aggregator_kv_mib": 585.5625,
+      "camera_kv_mib": 1.5,
+      "descriptor_mib": 0.0234375,
+      "input_tensors_mib": 2.32379150390625,
+      "retained_outputs_mib": 0.0,
+      "retained_views_mib": 0.0,
+      "input_mode": "streaming",
+      "output_mode": "sink",
+      "cuda_allocated_mib": 8019.353515625,
+      "cuda_reserved_mib": 9644.0
+    },
+    {
+      "frame_index": 40,
+      "retained_frame_ids": [
+        0,
+        1,
+        2,
+        38,
+        39,
+        40
+      ],
+      "camera_retained_frame_ids": [
+        0,
+        1,
+        2,
+        38,
+        39,
+        40
+      ],
+      "temporal_bank_frame_ids": {},
+      "aggregator_kv_mib": 585.5625,
+      "camera_kv_mib": 1.5,
+      "descriptor_mib": 0.0234375,
+      "input_tensors_mib": 2.32379150390625,
+      "retained_outputs_mib": 0.0,
+      "retained_views_mib": 0.0,
+      "input_mode": "streaming",
+      "output_mode": "sink",
+      "cuda_allocated_mib": 8018.541015625,
+      "cuda_reserved_mib": 9644.0
+    },
+    {
+      "frame_index": 41,
+      "retained_frame_ids": [
+        0,
+        1,
+        2,
+        39,
+        40,
+        41
+      ],
+      "camera_retained_frame_ids": [
+        0,
+        1,
+        2,
+        39,
+        40,
+        41
+      ],
+      "temporal_bank_frame_ids": {},
+      "aggregator_kv_mib": 585.5625,
+      "camera_kv_mib": 1.5,
+      "descriptor_mib": 0.0234375,
+      "input_tensors_mib": 2.32379150390625,
+      "retained_outputs_mib": 0.0,
+      "retained_views_mib": 0.0,
+      "input_mode": "streaming",
+      "output_mode": "sink",
+      "cuda_allocated_mib": 8019.619140625,
+      "cuda_reserved_mib": 9644.0
+    },
+    {
+      "frame_index": 42,
+      "retained_frame_ids": [
+        0,
+        1,
+        2,
+        40,
+        41,
+        42
+      ],
+      "camera_retained_frame_ids": [
+        0,
+        1,
+        2,
+        40,
+        41,
+        42
+      ],
+      "temporal_bank_frame_ids": {},
+      "aggregator_kv_mib": 585.5625,
+      "camera_kv_mib": 1.5,
+      "descriptor_mib": 0.0234375,
+      "input_tensors_mib": 2.32379150390625,
+      "retained_outputs_mib": 0.0,
+      "retained_views_mib": 0.0,
+      "input_mode": "streaming",
+      "output_mode": "sink",
+      "cuda_allocated_mib": 8018.541015625,
+      "cuda_reserved_mib": 9644.0
+    },
+    {
+      "frame_index": 43,
+      "retained_frame_ids": [
+        0,
+        1,
+        2,
+        41,
+        42,
+        43
+      ],
+      "camera_retained_frame_ids": [
+        0,
+        1,
+        2,
+        41,
+        42,
+        43
+      ],
+      "temporal_bank_frame_ids": {},
+      "aggregator_kv_mib": 585.5625,
+      "camera_kv_mib": 1.5,
+      "descriptor_mib": 0.0234375,
+      "input_tensors_mib": 2.32379150390625,
+      "retained_outputs_mib": 0.0,
+      "retained_views_mib": 0.0,
+      "input_mode": "streaming",
+      "output_mode": "sink",
+      "cuda_allocated_mib": 8019.619140625,
+      "cuda_reserved_mib": 9644.0
+    },
+    {
+      "frame_index": 44,
+      "retained_frame_ids": [
+        0,
+        1,
+        2,
+        42,
+        43,
+        44
+      ],
+      "camera_retained_frame_ids": [
+        0,
+        1,
+        2,
+        42,
+        43,
+        44
+      ],
+      "temporal_bank_frame_ids": {},
+      "aggregator_kv_mib": 585.5625,
+      "camera_kv_mib": 1.5,
+      "descriptor_mib": 0.0234375,
+      "input_tensors_mib": 2.32379150390625,
+      "retained_outputs_mib": 0.0,
+      "retained_views_mib": 0.0,
+      "input_mode": "streaming",
+      "output_mode": "sink",
+      "cuda_allocated_mib": 8017.603515625,
+      "cuda_reserved_mib": 9644.0
+    },
+    {
+      "frame_index": 45,
+      "retained_frame_ids": [
+        0,
+        1,
+        2,
+        43,
+        44,
+        45
+      ],
+      "camera_retained_frame_ids": [
+        0,
+        1,
+        2,
+        43,
+        44,
+        45
+      ],
+      "temporal_bank_frame_ids": {},
+      "aggregator_kv_mib": 585.5625,
+      "camera_kv_mib": 1.5,
+      "descriptor_mib": 0.0234375,
+      "input_tensors_mib": 2.32379150390625,
+      "retained_outputs_mib": 0.0,
+      "retained_views_mib": 0.0,
+      "input_mode": "streaming",
+      "output_mode": "sink",
+      "cuda_allocated_mib": 8020.556640625,
+      "cuda_reserved_mib": 9644.0
+    },
+    {
+      "frame_index": 46,
+      "retained_frame_ids": [
+        0,
+        1,
+        2,
+        44,
+        45,
+        46
+      ],
+      "camera_retained_frame_ids": [
+        0,
+        1,
+        2,
+        44,
+        45,
+        46
+      ],
+      "temporal_bank_frame_ids": {},
+      "aggregator_kv_mib": 585.5625,
+      "camera_kv_mib": 1.5,
+      "descriptor_mib": 0.0234375,
+      "input_tensors_mib": 2.32379150390625,
+      "retained_outputs_mib": 0.0,
+      "retained_views_mib": 0.0,
+      "input_mode": "streaming",
+      "output_mode": "sink",
+      "cuda_allocated_mib": 8017.603515625,
+      "cuda_reserved_mib": 9644.0
+    },
+    {
+      "frame_index": 47,
+      "retained_frame_ids": [
+        0,
+        1,
+        2,
+        45,
+        46,
+        47
+      ],
+      "camera_retained_frame_ids": [
+        0,
+        1,
+        2,
+        45,
+        46,
+        47
+      ],
+      "temporal_bank_frame_ids": {},
+      "aggregator_kv_mib": 585.5625,
+      "camera_kv_mib": 1.5,
+      "descriptor_mib": 0.0234375,
+      "input_tensors_mib": 2.32379150390625,
+      "retained_outputs_mib": 0.0,
+      "retained_views_mib": 0.0,
+      "input_mode": "streaming",
+      "output_mode": "sink",
+      "cuda_allocated_mib": 8020.556640625,
+      "cuda_reserved_mib": 9644.0
+    },
+    {
+      "frame_index": 48,
+      "retained_frame_ids": [
+        0,
+        1,
+        2,
+        46,
+        47,
+        48
+      ],
+      "camera_retained_frame_ids": [
+        0,
+        1,
+        2,
+        46,
+        47,
+        48
+      ],
+      "temporal_bank_frame_ids": {},
+      "aggregator_kv_mib": 585.5625,
+      "camera_kv_mib": 1.5,
+      "descriptor_mib": 0.0234375,
+      "input_tensors_mib": 2.32379150390625,
+      "retained_outputs_mib": 0.0,
+      "retained_views_mib": 0.0,
+      "input_mode": "streaming",
+      "output_mode": "sink",
+      "cuda_allocated_mib": 8018.515625,
+      "cuda_reserved_mib": 9644.0
+    },
+    {
+      "frame_index": 49,
+      "retained_frame_ids": [
+        0,
+        1,
+        2,
+        47,
+        48,
+        49
+      ],
+      "camera_retained_frame_ids": [
+        0,
+        1,
+        2,
+        47,
+        48,
+        49
+      ],
+      "temporal_bank_frame_ids": {},
+      "aggregator_kv_mib": 585.5625,
+      "camera_kv_mib": 1.5,
+      "descriptor_mib": 0.0234375,
+      "input_tensors_mib": 2.32379150390625,
+      "retained_outputs_mib": 0.0,
+      "retained_views_mib": 0.0,
+      "input_mode": "streaming",
+      "output_mode": "sink",
+      "cuda_allocated_mib": 8019.619140625,
+      "cuda_reserved_mib": 9644.0
+    },
+    {
+      "frame_index": 50,
+      "retained_frame_ids": [
+        0,
+        1,
+        2,
+        48,
+        49,
+        50
+      ],
+      "camera_retained_frame_ids": [
+        0,
+        1,
+        2,
+        48,
+        49,
+        50
+      ],
+      "temporal_bank_frame_ids": {},
+      "aggregator_kv_mib": 585.5625,
+      "camera_kv_mib": 1.5,
+      "descriptor_mib": 0.0234375,
+      "input_tensors_mib": 2.32379150390625,
+      "retained_outputs_mib": 0.0,
+      "retained_views_mib": 0.0,
+      "input_mode": "streaming",
+      "output_mode": "sink",
+      "cuda_allocated_mib": 8018.541015625,
+      "cuda_reserved_mib": 9644.0
+    },
+    {
+      "frame_index": 51,
+      "retained_frame_ids": [
+        0,
+        1,
+        2,
+        49,
+        50,
+        51
+      ],
+      "camera_retained_frame_ids": [
+        0,
+        1,
+        2,
+        49,
+        50,
+        51
+      ],
+      "temporal_bank_frame_ids": {},
+      "aggregator_kv_mib": 585.5625,
+      "camera_kv_mib": 1.5,
+      "descriptor_mib": 0.0234375,
+      "input_tensors_mib": 2.32379150390625,
+      "retained_outputs_mib": 0.0,
+      "retained_views_mib": 0.0,
+      "input_mode": "streaming",
+      "output_mode": "sink",
+      "cuda_allocated_mib": 8019.9921875,
+      "cuda_reserved_mib": 9644.0
+    },
+    {
+      "frame_index": 52,
+      "retained_frame_ids": [
+        0,
+        1,
+        2,
+        50,
+        51,
+        52
+      ],
+      "camera_retained_frame_ids": [
+        0,
+        1,
+        2,
+        50,
+        51,
+        52
+      ],
+      "temporal_bank_frame_ids": {},
+      "aggregator_kv_mib": 585.5625,
+      "camera_kv_mib": 1.5,
+      "descriptor_mib": 0.0234375,
+      "input_tensors_mib": 2.32379150390625,
+      "retained_outputs_mib": 0.0,
+      "retained_views_mib": 0.0,
+      "input_mode": "streaming",
+      "output_mode": "sink",
+      "cuda_allocated_mib": 8018.541015625,
+      "cuda_reserved_mib": 9644.0
+    },
+    {
+      "frame_index": 53,
+      "retained_frame_ids": [
+        0,
+        1,
+        2,
+        51,
+        52,
+        53
+      ],
+      "camera_retained_frame_ids": [
+        0,
+        1,
+        2,
+        51,
+        52,
+        53
+      ],
+      "temporal_bank_frame_ids": {},
+      "aggregator_kv_mib": 585.5625,
+      "camera_kv_mib": 1.5,
+      "descriptor_mib": 0.0234375,
+      "input_tensors_mib": 2.32379150390625,
+      "retained_outputs_mib": 0.0,
+      "retained_views_mib": 0.0,
+      "input_mode": "streaming",
+      "output_mode": "sink",
+      "cuda_allocated_mib": 8019.9921875,
+      "cuda_reserved_mib": 9644.0
+    },
+    {
+      "frame_index": 54,
+      "retained_frame_ids": [
+        0,
+        1,
+        2,
+        52,
+        53,
+        54
+      ],
+      "camera_retained_frame_ids": [
+        0,
+        1,
+        2,
+        52,
+        53,
+        54
+      ],
+      "temporal_bank_frame_ids": {},
+      "aggregator_kv_mib": 585.5625,
+      "camera_kv_mib": 1.5,
+      "descriptor_mib": 0.0234375,
+      "input_tensors_mib": 2.32379150390625,
+      "retained_outputs_mib": 0.0,
+      "retained_views_mib": 0.0,
+      "input_mode": "streaming",
+      "output_mode": "sink",
+      "cuda_allocated_mib": 8018.9140625,
+      "cuda_reserved_mib": 9644.0
+    },
+    {
+      "frame_index": 55,
+      "retained_frame_ids": [
+        0,
+        1,
+        2,
+        53,
+        54,
+        55
+      ],
+      "camera_retained_frame_ids": [
+        0,
+        1,
+        2,
+        53,
+        54,
+        55
+      ],
+      "temporal_bank_frame_ids": {},
+      "aggregator_kv_mib": 585.5625,
+      "camera_kv_mib": 1.5,
+      "descriptor_mib": 0.0234375,
+      "input_tensors_mib": 2.32379150390625,
+      "retained_outputs_mib": 0.0,
+      "retained_views_mib": 0.0,
+      "input_mode": "streaming",
+      "output_mode": "sink",
+      "cuda_allocated_mib": 8019.619140625,
+      "cuda_reserved_mib": 9644.0
+    },
+    {
+      "frame_index": 56,
+      "retained_frame_ids": [
+        0,
+        1,
+        2,
+        54,
+        55,
+        56
+      ],
+      "camera_retained_frame_ids": [
+        0,
+        1,
+        2,
+        54,
+        55,
+        56
+      ],
+      "temporal_bank_frame_ids": {},
+      "aggregator_kv_mib": 585.5625,
+      "camera_kv_mib": 1.5,
+      "descriptor_mib": 0.0234375,
+      "input_tensors_mib": 2.32379150390625,
+      "retained_outputs_mib": 0.0,
+      "retained_views_mib": 0.0,
+      "input_mode": "streaming",
+      "output_mode": "sink",
+      "cuda_allocated_mib": 8019.826171875,
+      "cuda_reserved_mib": 9644.0
+    },
+    {
+      "frame_index": 57,
+      "retained_frame_ids": [
+        0,
+        1,
+        2,
+        55,
+        56,
+        57
+      ],
+      "camera_retained_frame_ids": [
+        0,
+        1,
+        2,
+        55,
+        56,
+        57
+      ],
+      "temporal_bank_frame_ids": {},
+      "aggregator_kv_mib": 585.5625,
+      "camera_kv_mib": 1.5,
+      "descriptor_mib": 0.0234375,
+      "input_tensors_mib": 2.32379150390625,
+      "retained_outputs_mib": 0.0,
+      "retained_views_mib": 0.0,
+      "input_mode": "streaming",
+      "output_mode": "sink",
+      "cuda_allocated_mib": 8018.7890625,
+      "cuda_reserved_mib": 9644.0
+    },
+    {
+      "frame_index": 58,
+      "retained_frame_ids": [
+        0,
+        1,
+        2,
+        56,
+        57,
+        58
+      ],
+      "camera_retained_frame_ids": [
+        0,
+        1,
+        2,
+        56,
+        57,
+        58
+      ],
+      "temporal_bank_frame_ids": {},
+      "aggregator_kv_mib": 585.5625,
+      "camera_kv_mib": 1.5,
+      "descriptor_mib": 0.0234375,
+      "input_tensors_mib": 2.32379150390625,
+      "retained_outputs_mib": 0.0,
+      "retained_views_mib": 0.0,
+      "input_mode": "streaming",
+      "output_mode": "sink",
+      "cuda_allocated_mib": 8018.9140625,
+      "cuda_reserved_mib": 9644.0
+    },
+    {
+      "frame_index": 59,
+      "retained_frame_ids": [
+        0,
+        1,
+        2,
+        57,
+        58,
+        59
+      ],
+      "camera_retained_frame_ids": [
+        0,
+        1,
+        2,
+        57,
+        58,
+        59
+      ],
+      "temporal_bank_frame_ids": {},
+      "aggregator_kv_mib": 585.5625,
+      "camera_kv_mib": 1.5,
+      "descriptor_mib": 0.0234375,
+      "input_tensors_mib": 2.32379150390625,
+      "retained_outputs_mib": 0.0,
+      "retained_views_mib": 0.0,
+      "input_mode": "streaming",
+      "output_mode": "sink",
+      "cuda_allocated_mib": 8019.9921875,
+      "cuda_reserved_mib": 9644.0
+    },
+    {
+      "frame_index": 60,
+      "retained_frame_ids": [
+        0,
+        1,
+        2,
+        58,
+        59,
+        60
+      ],
+      "camera_retained_frame_ids": [
+        0,
+        1,
+        2,
+        58,
+        59,
+        60
+      ],
+      "temporal_bank_frame_ids": {},
+      "aggregator_kv_mib": 585.5625,
+      "camera_kv_mib": 1.5,
+      "descriptor_mib": 0.0234375,
+      "input_tensors_mib": 2.32379150390625,
+      "retained_outputs_mib": 0.0,
+      "retained_views_mib": 0.0,
+      "input_mode": "streaming",
+      "output_mode": "sink",
+      "cuda_allocated_mib": 8019.453125,
+      "cuda_reserved_mib": 9644.0
+    },
+    {
+      "frame_index": 61,
+      "retained_frame_ids": [
+        0,
+        1,
+        2,
+        59,
+        60,
+        61
+      ],
+      "camera_retained_frame_ids": [
+        0,
+        1,
+        2,
+        59,
+        60,
+        61
+      ],
+      "temporal_bank_frame_ids": {},
+      "aggregator_kv_mib": 585.5625,
+      "camera_kv_mib": 1.5,
+      "descriptor_mib": 0.0234375,
+      "input_tensors_mib": 2.32379150390625,
+      "retained_outputs_mib": 0.0,
+      "retained_views_mib": 0.0,
+      "input_mode": "streaming",
+      "output_mode": "sink",
+      "cuda_allocated_mib": 8019.162109375,
+      "cuda_reserved_mib": 9644.0
+    },
+    {
+      "frame_index": 62,
+      "retained_frame_ids": [
+        0,
+        1,
+        2,
+        60,
+        61,
+        62
+      ],
+      "camera_retained_frame_ids": [
+        0,
+        1,
+        2,
+        60,
+        61,
+        62
+      ],
+      "temporal_bank_frame_ids": {},
+      "aggregator_kv_mib": 585.5625,
+      "camera_kv_mib": 1.5,
+      "descriptor_mib": 0.0234375,
+      "input_tensors_mib": 2.32379150390625,
+      "retained_outputs_mib": 0.0,
+      "retained_views_mib": 0.0,
+      "input_mode": "streaming",
+      "output_mode": "sink",
+      "cuda_allocated_mib": 8018.9140625,
+      "cuda_reserved_mib": 9644.0
+    },
+    {
+      "frame_index": 63,
+      "retained_frame_ids": [
+        0,
+        1,
+        2,
+        61,
+        62,
+        63
+      ],
+      "camera_retained_frame_ids": [
+        0,
+        1,
+        2,
+        61,
+        62,
+        63
+      ],
+      "temporal_bank_frame_ids": {},
+      "aggregator_kv_mib": 585.5625,
+      "camera_kv_mib": 1.5,
+      "descriptor_mib": 0.0234375,
+      "input_tensors_mib": 2.32379150390625,
+      "retained_outputs_mib": 0.0,
+      "retained_views_mib": 0.0,
+      "input_mode": "streaming",
+      "output_mode": "sink",
+      "cuda_allocated_mib": 8019.9921875,
+      "cuda_reserved_mib": 9644.0
+    },
+    {
+      "frame_index": 64,
+      "retained_frame_ids": [
+        0,
+        1,
+        2,
+        62,
+        63,
+        64
+      ],
+      "camera_retained_frame_ids": [
+        0,
+        1,
+        2,
+        62,
+        63,
+        64
+      ],
+      "temporal_bank_frame_ids": {},
+      "aggregator_kv_mib": 585.5625,
+      "camera_kv_mib": 1.5,
+      "descriptor_mib": 0.0234375,
+      "input_tensors_mib": 2.32379150390625,
+      "retained_outputs_mib": 0.0,
+      "retained_views_mib": 0.0,
+      "input_mode": "streaming",
+      "output_mode": "sink",
+      "cuda_allocated_mib": 8018.9140625,
+      "cuda_reserved_mib": 9644.0
+    },
+    {
+      "frame_index": 65,
+      "retained_frame_ids": [
+        0,
+        1,
+        2,
+        63,
+        64,
+        65
+      ],
+      "camera_retained_frame_ids": [
+        0,
+        1,
+        2,
+        63,
+        64,
+        65
+      ],
+      "temporal_bank_frame_ids": {},
+      "aggregator_kv_mib": 585.5625,
+      "camera_kv_mib": 1.5,
+      "descriptor_mib": 0.0234375,
+      "input_tensors_mib": 2.32379150390625,
+      "retained_outputs_mib": 0.0,
+      "retained_views_mib": 0.0,
+      "input_mode": "streaming",
+      "output_mode": "sink",
+      "cuda_allocated_mib": 8019.619140625,
+      "cuda_reserved_mib": 9644.0
+    },
+    {
+      "frame_index": 66,
+      "retained_frame_ids": [
+        0,
+        1,
+        2,
+        64,
+        65,
+        66
+      ],
+      "camera_retained_frame_ids": [
+        0,
+        1,
+        2,
+        64,
+        65,
+        66
+      ],
+      "temporal_bank_frame_ids": {},
+      "aggregator_kv_mib": 585.5625,
+      "camera_kv_mib": 1.5,
+      "descriptor_mib": 0.0234375,
+      "input_tensors_mib": 2.32379150390625,
+      "retained_outputs_mib": 0.0,
+      "retained_views_mib": 0.0,
+      "input_mode": "streaming",
+      "output_mode": "sink",
+      "cuda_allocated_mib": 8019.453125,
+      "cuda_reserved_mib": 9644.0
+    },
+    {
+      "frame_index": 67,
+      "retained_frame_ids": [
+        0,
+        1,
+        2,
+        65,
+        66,
+        67
+      ],
+      "camera_retained_frame_ids": [
+        0,
+        1,
+        2,
+        65,
+        66,
+        67
+      ],
+      "temporal_bank_frame_ids": {},
+      "aggregator_kv_mib": 585.5625,
+      "camera_kv_mib": 1.5,
+      "descriptor_mib": 0.0234375,
+      "input_tensors_mib": 2.32379150390625,
+      "retained_outputs_mib": 0.0,
+      "retained_views_mib": 0.0,
+      "input_mode": "streaming",
+      "output_mode": "sink",
+      "cuda_allocated_mib": 8018.7890625,
+      "cuda_reserved_mib": 9644.0
+    },
+    {
+      "frame_index": 68,
+      "retained_frame_ids": [
+        0,
+        1,
+        2,
+        66,
+        67,
+        68
+      ],
+      "camera_retained_frame_ids": [
+        0,
+        1,
+        2,
+        66,
+        67,
+        68
+      ],
+      "temporal_bank_frame_ids": {},
+      "aggregator_kv_mib": 585.5625,
+      "camera_kv_mib": 1.5,
+      "descriptor_mib": 0.0234375,
+      "input_tensors_mib": 2.32379150390625,
+      "retained_outputs_mib": 0.0,
+      "retained_views_mib": 0.0,
+      "input_mode": "streaming",
+      "output_mode": "sink",
+      "cuda_allocated_mib": 8019.453125,
+      "cuda_reserved_mib": 9644.0
+    },
+    {
+      "frame_index": 69,
+      "retained_frame_ids": [
+        0,
+        1,
+        2,
+        67,
+        68,
+        69
+      ],
+      "camera_retained_frame_ids": [
+        0,
+        1,
+        2,
+        67,
+        68,
+        69
+      ],
+      "temporal_bank_frame_ids": {},
+      "aggregator_kv_mib": 585.5625,
+      "camera_kv_mib": 1.5,
+      "descriptor_mib": 0.0234375,
+      "input_tensors_mib": 2.32379150390625,
+      "retained_outputs_mib": 0.0,
+      "retained_views_mib": 0.0,
+      "input_mode": "streaming",
+      "output_mode": "sink",
+      "cuda_allocated_mib": 8019.9921875,
+      "cuda_reserved_mib": 9644.0
+    },
+    {
+      "frame_index": 70,
+      "retained_frame_ids": [
+        0,
+        1,
+        2,
+        68,
+        69,
+        70
+      ],
+      "camera_retained_frame_ids": [
+        0,
+        1,
+        2,
+        68,
+        69,
+        70
+      ],
+      "temporal_bank_frame_ids": {},
+      "aggregator_kv_mib": 585.5625,
+      "camera_kv_mib": 1.5,
+      "descriptor_mib": 0.0234375,
+      "input_tensors_mib": 2.32379150390625,
+      "retained_outputs_mib": 0.0,
+      "retained_views_mib": 0.0,
+      "input_mode": "streaming",
+      "output_mode": "sink",
+      "cuda_allocated_mib": 8018.515625,
+      "cuda_reserved_mib": 9644.0
+    },
+    {
+      "frame_index": 71,
+      "retained_frame_ids": [
+        0,
+        1,
+        2,
+        69,
+        70,
+        71
+      ],
+      "camera_retained_frame_ids": [
+        0,
+        1,
+        2,
+        69,
+        70,
+        71
+      ],
+      "temporal_bank_frame_ids": {},
+      "aggregator_kv_mib": 585.5625,
+      "camera_kv_mib": 1.5,
+      "descriptor_mib": 0.0234375,
+      "input_tensors_mib": 2.32379150390625,
+      "retained_outputs_mib": 0.0,
+      "retained_views_mib": 0.0,
+      "input_mode": "streaming",
+      "output_mode": "sink",
+      "cuda_allocated_mib": 8019.7265625,
+      "cuda_reserved_mib": 9644.0
+    },
+    {
+      "frame_index": 72,
+      "retained_frame_ids": [
+        0,
+        1,
+        2,
+        70,
+        71,
+        72
+      ],
+      "camera_retained_frame_ids": [
+        0,
+        1,
+        2,
+        70,
+        71,
+        72
+      ],
+      "temporal_bank_frame_ids": {},
+      "aggregator_kv_mib": 585.5625,
+      "camera_kv_mib": 1.5,
+      "descriptor_mib": 0.0234375,
+      "input_tensors_mib": 2.32379150390625,
+      "retained_outputs_mib": 0.0,
+      "retained_views_mib": 0.0,
+      "input_mode": "streaming",
+      "output_mode": "sink",
+      "cuda_allocated_mib": 8018.515625,
+      "cuda_reserved_mib": 9644.0
+    },
+    {
+      "frame_index": 73,
+      "retained_frame_ids": [
+        0,
+        1,
+        2,
+        71,
+        72,
+        73
+      ],
+      "camera_retained_frame_ids": [
+        0,
+        1,
+        2,
+        71,
+        72,
+        73
+      ],
+      "temporal_bank_frame_ids": {},
+      "aggregator_kv_mib": 585.5625,
+      "camera_kv_mib": 1.5,
+      "descriptor_mib": 0.0234375,
+      "input_tensors_mib": 2.32379150390625,
+      "retained_outputs_mib": 0.0,
+      "retained_views_mib": 0.0,
+      "input_mode": "streaming",
+      "output_mode": "sink",
+      "cuda_allocated_mib": 8018.7890625,
+      "cuda_reserved_mib": 9644.0
+    },
+    {
+      "frame_index": 74,
+      "retained_frame_ids": [
+        0,
+        1,
+        2,
+        72,
+        73,
+        74
+      ],
+      "camera_retained_frame_ids": [
+        0,
+        1,
+        2,
+        72,
+        73,
+        74
+      ],
+      "temporal_bank_frame_ids": {},
+      "aggregator_kv_mib": 585.5625,
+      "camera_kv_mib": 1.5,
+      "descriptor_mib": 0.0234375,
+      "input_tensors_mib": 2.32379150390625,
+      "retained_outputs_mib": 0.0,
+      "retained_views_mib": 0.0,
+      "input_mode": "streaming",
+      "output_mode": "sink",
+      "cuda_allocated_mib": 8018.515625,
+      "cuda_reserved_mib": 9644.0
+    },
+    {
+      "frame_index": 75,
+      "retained_frame_ids": [
+        0,
+        1,
+        2,
+        73,
+        74,
+        75
+      ],
+      "camera_retained_frame_ids": [
+        0,
+        1,
+        2,
+        73,
+        74,
+        75
+      ],
+      "temporal_bank_frame_ids": {},
+      "aggregator_kv_mib": 585.5625,
+      "camera_kv_mib": 1.5,
+      "descriptor_mib": 0.0234375,
+      "input_tensors_mib": 2.32379150390625,
+      "retained_outputs_mib": 0.0,
+      "retained_views_mib": 0.0,
+      "input_mode": "streaming",
+      "output_mode": "sink",
+      "cuda_allocated_mib": 8019.7265625,
+      "cuda_reserved_mib": 9644.0
+    },
+    {
+      "frame_index": 76,
+      "retained_frame_ids": [
+        0,
+        1,
+        2,
+        74,
+        75,
+        76
+      ],
+      "camera_retained_frame_ids": [
+        0,
+        1,
+        2,
+        74,
+        75,
+        76
+      ],
+      "temporal_bank_frame_ids": {},
+      "aggregator_kv_mib": 585.5625,
+      "camera_kv_mib": 1.5,
+      "descriptor_mib": 0.0234375,
+      "input_tensors_mib": 2.32379150390625,
+      "retained_outputs_mib": 0.0,
+      "retained_views_mib": 0.0,
+      "input_mode": "streaming",
+      "output_mode": "sink",
+      "cuda_allocated_mib": 8018.515625,
+      "cuda_reserved_mib": 9644.0
+    },
+    {
+      "frame_index": 77,
+      "retained_frame_ids": [
+        0,
+        1,
+        2,
+        75,
+        76,
+        77
+      ],
+      "camera_retained_frame_ids": [
+        0,
+        1,
+        2,
+        75,
+        76,
+        77
+      ],
+      "temporal_bank_frame_ids": {},
+      "aggregator_kv_mib": 585.5625,
+      "camera_kv_mib": 1.5,
+      "descriptor_mib": 0.0234375,
+      "input_tensors_mib": 2.32379150390625,
+      "retained_outputs_mib": 0.0,
+      "retained_views_mib": 0.0,
+      "input_mode": "streaming",
+      "output_mode": "sink",
+      "cuda_allocated_mib": 8020.556640625,
+      "cuda_reserved_mib": 9644.0
+    },
+    {
+      "frame_index": 78,
+      "retained_frame_ids": [
+        0,
+        1,
+        2,
+        76,
+        77,
+        78
+      ],
+      "camera_retained_frame_ids": [
+        0,
+        1,
+        2,
+        76,
+        77,
+        78
+      ],
+      "temporal_bank_frame_ids": {},
+      "aggregator_kv_mib": 585.5625,
+      "camera_kv_mib": 1.5,
+      "descriptor_mib": 0.0234375,
+      "input_tensors_mib": 2.32379150390625,
+      "retained_outputs_mib": 0.0,
+      "retained_views_mib": 0.0,
+      "input_mode": "streaming",
+      "output_mode": "sink",
+      "cuda_allocated_mib": 8018.515625,
+      "cuda_reserved_mib": 9644.0
+    },
+    {
+      "frame_index": 79,
+      "retained_frame_ids": [
+        0,
+        1,
+        2,
+        77,
+        78,
+        79
+      ],
+      "camera_retained_frame_ids": [
+        0,
+        1,
+        2,
+        77,
+        78,
+        79
+      ],
+      "temporal_bank_frame_ids": {},
+      "aggregator_kv_mib": 585.5625,
+      "camera_kv_mib": 1.5,
+      "descriptor_mib": 0.0234375,
+      "input_tensors_mib": 2.32379150390625,
+      "retained_outputs_mib": 0.0,
+      "retained_views_mib": 0.0,
+      "input_mode": "streaming",
+      "output_mode": "sink",
+      "cuda_allocated_mib": 8020.556640625,
+      "cuda_reserved_mib": 9644.0
+    },
+    {
+      "frame_index": 80,
+      "retained_frame_ids": [
+        0,
+        1,
+        2,
+        78,
+        79,
+        80
+      ],
+      "camera_retained_frame_ids": [
+        0,
+        1,
+        2,
+        78,
+        79,
+        80
+      ],
+      "temporal_bank_frame_ids": {},
+      "aggregator_kv_mib": 585.5625,
+      "camera_kv_mib": 1.5,
+      "descriptor_mib": 0.0234375,
+      "input_tensors_mib": 2.32379150390625,
+      "retained_outputs_mib": 0.0,
+      "retained_views_mib": 0.0,
+      "input_mode": "streaming",
+      "output_mode": "sink",
+      "cuda_allocated_mib": 8018.515625,
+      "cuda_reserved_mib": 9644.0
+    },
+    {
+      "frame_index": 81,
+      "retained_frame_ids": [
+        0,
+        1,
+        2,
+        79,
+        80,
+        81
+      ],
+      "camera_retained_frame_ids": [
+        0,
+        1,
+        2,
+        79,
+        80,
+        81
+      ],
+      "temporal_bank_frame_ids": {},
+      "aggregator_kv_mib": 585.5625,
+      "camera_kv_mib": 1.5,
+      "descriptor_mib": 0.0234375,
+      "input_tensors_mib": 2.32379150390625,
+      "retained_outputs_mib": 0.0,
+      "retained_views_mib": 0.0,
+      "input_mode": "streaming",
+      "output_mode": "sink",
+      "cuda_allocated_mib": 8020.556640625,
+      "cuda_reserved_mib": 9644.0
+    },
+    {
+      "frame_index": 82,
+      "retained_frame_ids": [
+        0,
+        1,
+        2,
+        80,
+        81,
+        82
+      ],
+      "camera_retained_frame_ids": [
+        0,
+        1,
+        2,
+        80,
+        81,
+        82
+      ],
+      "temporal_bank_frame_ids": {},
+      "aggregator_kv_mib": 585.5625,
+      "camera_kv_mib": 1.5,
+      "descriptor_mib": 0.0234375,
+      "input_tensors_mib": 2.32379150390625,
+      "retained_outputs_mib": 0.0,
+      "retained_views_mib": 0.0,
+      "input_mode": "streaming",
+      "output_mode": "sink",
+      "cuda_allocated_mib": 8018.515625,
+      "cuda_reserved_mib": 9644.0
+    },
+    {
+      "frame_index": 83,
+      "retained_frame_ids": [
+        0,
+        1,
+        2,
+        81,
+        82,
+        83
+      ],
+      "camera_retained_frame_ids": [
+        0,
+        1,
+        2,
+        81,
+        82,
+        83
+      ],
+      "temporal_bank_frame_ids": {},
+      "aggregator_kv_mib": 585.5625,
+      "camera_kv_mib": 1.5,
+      "descriptor_mib": 0.0234375,
+      "input_tensors_mib": 2.32379150390625,
+      "retained_outputs_mib": 0.0,
+      "retained_views_mib": 0.0,
+      "input_mode": "streaming",
+      "output_mode": "sink",
+      "cuda_allocated_mib": 8020.556640625,
+      "cuda_reserved_mib": 9644.0
+    },
+    {
+      "frame_index": 84,
+      "retained_frame_ids": [
+        0,
+        1,
+        2,
+        82,
+        83,
+        84
+      ],
+      "camera_retained_frame_ids": [
+        0,
+        1,
+        2,
+        82,
+        83,
+        84
+      ],
+      "temporal_bank_frame_ids": {},
+      "aggregator_kv_mib": 585.5625,
+      "camera_kv_mib": 1.5,
+      "descriptor_mib": 0.0234375,
+      "input_tensors_mib": 2.32379150390625,
+      "retained_outputs_mib": 0.0,
+      "retained_views_mib": 0.0,
+      "input_mode": "streaming",
+      "output_mode": "sink",
+      "cuda_allocated_mib": 8018.515625,
+      "cuda_reserved_mib": 9644.0
+    },
+    {
+      "frame_index": 85,
+      "retained_frame_ids": [
+        0,
+        1,
+        2,
+        83,
+        84,
+        85
+      ],
+      "camera_retained_frame_ids": [
+        0,
+        1,
+        2,
+        83,
+        84,
+        85
+      ],
+      "temporal_bank_frame_ids": {},
+      "aggregator_kv_mib": 585.5625,
+      "camera_kv_mib": 1.5,
+      "descriptor_mib": 0.0234375,
+      "input_tensors_mib": 2.32379150390625,
+      "retained_outputs_mib": 0.0,
+      "retained_views_mib": 0.0,
+      "input_mode": "streaming",
+      "output_mode": "sink",
+      "cuda_allocated_mib": 8020.556640625,
+      "cuda_reserved_mib": 9644.0
+    },
+    {
+      "frame_index": 86,
+      "retained_frame_ids": [
+        0,
+        1,
+        2,
+        84,
+        85,
+        86
+      ],
+      "camera_retained_frame_ids": [
+        0,
+        1,
+        2,
+        84,
+        85,
+        86
+      ],
+      "temporal_bank_frame_ids": {},
+      "aggregator_kv_mib": 585.5625,
+      "camera_kv_mib": 1.5,
+      "descriptor_mib": 0.0234375,
+      "input_tensors_mib": 2.32379150390625,
+      "retained_outputs_mib": 0.0,
+      "retained_views_mib": 0.0,
+      "input_mode": "streaming",
+      "output_mode": "sink",
+      "cuda_allocated_mib": 8018.515625,
+      "cuda_reserved_mib": 9644.0
+    },
+    {
+      "frame_index": 87,
+      "retained_frame_ids": [
+        0,
+        1,
+        2,
+        85,
+        86,
+        87
+      ],
+      "camera_retained_frame_ids": [
+        0,
+        1,
+        2,
+        85,
+        86,
+        87
+      ],
+      "temporal_bank_frame_ids": {},
+      "aggregator_kv_mib": 585.5625,
+      "camera_kv_mib": 1.5,
+      "descriptor_mib": 0.0234375,
+      "input_tensors_mib": 2.32379150390625,
+      "retained_outputs_mib": 0.0,
+      "retained_views_mib": 0.0,
+      "input_mode": "streaming",
+      "output_mode": "sink",
+      "cuda_allocated_mib": 8020.556640625,
+      "cuda_reserved_mib": 9644.0
+    },
+    {
+      "frame_index": 88,
+      "retained_frame_ids": [
+        0,
+        1,
+        2,
+        86,
+        87,
+        88
+      ],
+      "camera_retained_frame_ids": [
+        0,
+        1,
+        2,
+        86,
+        87,
+        88
+      ],
+      "temporal_bank_frame_ids": {},
+      "aggregator_kv_mib": 585.5625,
+      "camera_kv_mib": 1.5,
+      "descriptor_mib": 0.0234375,
+      "input_tensors_mib": 2.32379150390625,
+      "retained_outputs_mib": 0.0,
+      "retained_views_mib": 0.0,
+      "input_mode": "streaming",
+      "output_mode": "sink",
+      "cuda_allocated_mib": 8018.515625,
+      "cuda_reserved_mib": 9644.0
+    },
+    {
+      "frame_index": 89,
+      "retained_frame_ids": [
+        0,
+        1,
+        2,
+        87,
+        88,
+        89
+      ],
+      "camera_retained_frame_ids": [
+        0,
+        1,
+        2,
+        87,
+        88,
+        89
+      ],
+      "temporal_bank_frame_ids": {},
+      "aggregator_kv_mib": 585.5625,
+      "camera_kv_mib": 1.5,
+      "descriptor_mib": 0.0234375,
+      "input_tensors_mib": 2.32379150390625,
+      "retained_outputs_mib": 0.0,
+      "retained_views_mib": 0.0,
+      "input_mode": "streaming",
+      "output_mode": "sink",
+      "cuda_allocated_mib": 8020.556640625,
+      "cuda_reserved_mib": 9644.0
+    },
+    {
+      "frame_index": 90,
+      "retained_frame_ids": [
+        0,
+        1,
+        2,
+        88,
+        89,
+        90
+      ],
+      "camera_retained_frame_ids": [
+        0,
+        1,
+        2,
+        88,
+        89,
+        90
+      ],
+      "temporal_bank_frame_ids": {},
+      "aggregator_kv_mib": 585.5625,
+      "camera_kv_mib": 1.5,
+      "descriptor_mib": 0.0234375,
+      "input_tensors_mib": 2.32379150390625,
+      "retained_outputs_mib": 0.0,
+      "retained_views_mib": 0.0,
+      "input_mode": "streaming",
+      "output_mode": "sink",
+      "cuda_allocated_mib": 8018.515625,
+      "cuda_reserved_mib": 9644.0
+    },
+    {
+      "frame_index": 91,
+      "retained_frame_ids": [
+        0,
+        1,
+        2,
+        89,
+        90,
+        91
+      ],
+      "camera_retained_frame_ids": [
+        0,
+        1,
+        2,
+        89,
+        90,
+        91
+      ],
+      "temporal_bank_frame_ids": {},
+      "aggregator_kv_mib": 585.5625,
+      "camera_kv_mib": 1.5,
+      "descriptor_mib": 0.0234375,
+      "input_tensors_mib": 2.32379150390625,
+      "retained_outputs_mib": 0.0,
+      "retained_views_mib": 0.0,
+      "input_mode": "streaming",
+      "output_mode": "sink",
+      "cuda_allocated_mib": 8020.556640625,
+      "cuda_reserved_mib": 9644.0
+    },
+    {
+      "frame_index": 92,
+      "retained_frame_ids": [
+        0,
+        1,
+        2,
+        90,
+        91,
+        92
+      ],
+      "camera_retained_frame_ids": [
+        0,
+        1,
+        2,
+        90,
+        91,
+        92
+      ],
+      "temporal_bank_frame_ids": {},
+      "aggregator_kv_mib": 585.5625,
+      "camera_kv_mib": 1.5,
+      "descriptor_mib": 0.0234375,
+      "input_tensors_mib": 2.32379150390625,
+      "retained_outputs_mib": 0.0,
+      "retained_views_mib": 0.0,
+      "input_mode": "streaming",
+      "output_mode": "sink",
+      "cuda_allocated_mib": 8018.515625,
+      "cuda_reserved_mib": 9644.0
+    },
+    {
+      "frame_index": 93,
+      "retained_frame_ids": [
+        0,
+        1,
+        2,
+        91,
+        92,
+        93
+      ],
+      "camera_retained_frame_ids": [
+        0,
+        1,
+        2,
+        91,
+        92,
+        93
+      ],
+      "temporal_bank_frame_ids": {},
+      "aggregator_kv_mib": 585.5625,
+      "camera_kv_mib": 1.5,
+      "descriptor_mib": 0.0234375,
+      "input_tensors_mib": 2.32379150390625,
+      "retained_outputs_mib": 0.0,
+      "retained_views_mib": 0.0,
+      "input_mode": "streaming",
+      "output_mode": "sink",
+      "cuda_allocated_mib": 8020.556640625,
+      "cuda_reserved_mib": 9644.0
+    },
+    {
+      "frame_index": 94,
+      "retained_frame_ids": [
+        0,
+        1,
+        2,
+        92,
+        93,
+        94
+      ],
+      "camera_retained_frame_ids": [
+        0,
+        1,
+        2,
+        92,
+        93,
+        94
+      ],
+      "temporal_bank_frame_ids": {},
+      "aggregator_kv_mib": 585.5625,
+      "camera_kv_mib": 1.5,
+      "descriptor_mib": 0.0234375,
+      "input_tensors_mib": 2.32379150390625,
+      "retained_outputs_mib": 0.0,
+      "retained_views_mib": 0.0,
+      "input_mode": "streaming",
+      "output_mode": "sink",
+      "cuda_allocated_mib": 8018.515625,
+      "cuda_reserved_mib": 9644.0
+    },
+    {
+      "frame_index": 95,
+      "retained_frame_ids": [
+        0,
+        1,
+        2,
+        93,
+        94,
+        95
+      ],
+      "camera_retained_frame_ids": [
+        0,
+        1,
+        2,
+        93,
+        94,
+        95
+      ],
+      "temporal_bank_frame_ids": {},
+      "aggregator_kv_mib": 585.5625,
+      "camera_kv_mib": 1.5,
+      "descriptor_mib": 0.0234375,
+      "input_tensors_mib": 2.32379150390625,
+      "retained_outputs_mib": 0.0,
+      "retained_views_mib": 0.0,
+      "input_mode": "streaming",
+      "output_mode": "sink",
+      "cuda_allocated_mib": 8020.556640625,
+      "cuda_reserved_mib": 9644.0
+    },
+    {
+      "frame_index": 96,
+      "retained_frame_ids": [
+        0,
+        1,
+        2,
+        94,
+        95,
+        96
+      ],
+      "camera_retained_frame_ids": [
+        0,
+        1,
+        2,
+        94,
+        95,
+        96
+      ],
+      "temporal_bank_frame_ids": {},
+      "aggregator_kv_mib": 585.5625,
+      "camera_kv_mib": 1.5,
+      "descriptor_mib": 0.0234375,
+      "input_tensors_mib": 2.32379150390625,
+      "retained_outputs_mib": 0.0,
+      "retained_views_mib": 0.0,
+      "input_mode": "streaming",
+      "output_mode": "sink",
+      "cuda_allocated_mib": 8018.515625,
+      "cuda_reserved_mib": 9644.0
+    },
+    {
+      "frame_index": 97,
+      "retained_frame_ids": [
+        0,
+        1,
+        2,
+        95,
+        96,
+        97
+      ],
+      "camera_retained_frame_ids": [
+        0,
+        1,
+        2,
+        95,
+        96,
+        97
+      ],
+      "temporal_bank_frame_ids": {},
+      "aggregator_kv_mib": 585.5625,
+      "camera_kv_mib": 1.5,
+      "descriptor_mib": 0.0234375,
+      "input_tensors_mib": 2.32379150390625,
+      "retained_outputs_mib": 0.0,
+      "retained_views_mib": 0.0,
+      "input_mode": "streaming",
+      "output_mode": "sink",
+      "cuda_allocated_mib": 8020.556640625,
+      "cuda_reserved_mib": 9644.0
+    },
+    {
+      "frame_index": 98,
+      "retained_frame_ids": [
+        0,
+        1,
+        2,
+        96,
+        97,
+        98
+      ],
+      "camera_retained_frame_ids": [
+        0,
+        1,
+        2,
+        96,
+        97,
+        98
+      ],
+      "temporal_bank_frame_ids": {},
+      "aggregator_kv_mib": 585.5625,
+      "camera_kv_mib": 1.5,
+      "descriptor_mib": 0.0234375,
+      "input_tensors_mib": 2.32379150390625,
+      "retained_outputs_mib": 0.0,
+      "retained_views_mib": 0.0,
+      "input_mode": "streaming",
+      "output_mode": "sink",
+      "cuda_allocated_mib": 8018.515625,
+      "cuda_reserved_mib": 9644.0
+    },
+    {
+      "frame_index": 99,
+      "retained_frame_ids": [
+        0,
+        1,
+        2,
+        97,
+        98,
+        99
+      ],
+      "camera_retained_frame_ids": [
+        0,
+        1,
+        2,
+        97,
+        98,
+        99
+      ],
+      "temporal_bank_frame_ids": {},
+      "aggregator_kv_mib": 585.5625,
+      "camera_kv_mib": 1.5,
+      "descriptor_mib": 0.0234375,
+      "input_tensors_mib": 2.32379150390625,
+      "retained_outputs_mib": 0.0,
+      "retained_views_mib": 0.0,
+      "input_mode": "streaming",
+      "output_mode": "sink",
+      "cuda_allocated_mib": 8020.556640625,
+      "cuda_reserved_mib": 9644.0
+    },
+    {
+      "frame_index": 100,
+      "retained_frame_ids": [
+        0,
+        1,
+        2,
+        98,
+        99,
+        100
+      ],
+      "camera_retained_frame_ids": [
+        0,
+        1,
+        2,
+        98,
+        99,
+        100
+      ],
+      "temporal_bank_frame_ids": {},
+      "aggregator_kv_mib": 585.5625,
+      "camera_kv_mib": 1.5,
+      "descriptor_mib": 0.0234375,
+      "input_tensors_mib": 2.32379150390625,
+      "retained_outputs_mib": 0.0,
+      "retained_views_mib": 0.0,
+      "input_mode": "streaming",
+      "output_mode": "sink",
+      "cuda_allocated_mib": 8018.515625,
+      "cuda_reserved_mib": 9644.0
+    },
+    {
+      "frame_index": 101,
+      "retained_frame_ids": [
+        0,
+        1,
+        2,
+        99,
+        100,
+        101
+      ],
+      "camera_retained_frame_ids": [
+        0,
+        1,
+        2,
+        99,
+        100,
+        101
+      ],
+      "temporal_bank_frame_ids": {},
+      "aggregator_kv_mib": 585.5625,
+      "camera_kv_mib": 1.5,
+      "descriptor_mib": 0.0234375,
+      "input_tensors_mib": 2.32379150390625,
+      "retained_outputs_mib": 0.0,
+      "retained_views_mib": 0.0,
+      "input_mode": "streaming",
+      "output_mode": "sink",
+      "cuda_allocated_mib": 8020.556640625,
+      "cuda_reserved_mib": 9644.0
+    },
+    {
+      "frame_index": 102,
+      "retained_frame_ids": [
+        0,
+        1,
+        2,
+        100,
+        101,
+        102
+      ],
+      "camera_retained_frame_ids": [
+        0,
+        1,
+        2,
+        100,
+        101,
+        102
+      ],
+      "temporal_bank_frame_ids": {},
+      "aggregator_kv_mib": 585.5625,
+      "camera_kv_mib": 1.5,
+      "descriptor_mib": 0.0234375,
+      "input_tensors_mib": 2.32379150390625,
+      "retained_outputs_mib": 0.0,
+      "retained_views_mib": 0.0,
+      "input_mode": "streaming",
+      "output_mode": "sink",
+      "cuda_allocated_mib": 8018.515625,
+      "cuda_reserved_mib": 9644.0
+    },
+    {
+      "frame_index": 103,
+      "retained_frame_ids": [
+        0,
+        1,
+        2,
+        101,
+        102,
+        103
+      ],
+      "camera_retained_frame_ids": [
+        0,
+        1,
+        2,
+        101,
+        102,
+        103
+      ],
+      "temporal_bank_frame_ids": {},
+      "aggregator_kv_mib": 585.5625,
+      "camera_kv_mib": 1.5,
+      "descriptor_mib": 0.0234375,
+      "input_tensors_mib": 2.32379150390625,
+      "retained_outputs_mib": 0.0,
+      "retained_views_mib": 0.0,
+      "input_mode": "streaming",
+      "output_mode": "sink",
+      "cuda_allocated_mib": 8020.556640625,
+      "cuda_reserved_mib": 9644.0
+    },
+    {
+      "frame_index": 104,
+      "retained_frame_ids": [
+        0,
+        1,
+        2,
+        102,
+        103,
+        104
+      ],
+      "camera_retained_frame_ids": [
+        0,
+        1,
+        2,
+        102,
+        103,
+        104
+      ],
+      "temporal_bank_frame_ids": {},
+      "aggregator_kv_mib": 585.5625,
+      "camera_kv_mib": 1.5,
+      "descriptor_mib": 0.0234375,
+      "input_tensors_mib": 2.32379150390625,
+      "retained_outputs_mib": 0.0,
+      "retained_views_mib": 0.0,
+      "input_mode": "streaming",
+      "output_mode": "sink",
+      "cuda_allocated_mib": 8018.515625,
+      "cuda_reserved_mib": 9644.0
+    },
+    {
+      "frame_index": 105,
+      "retained_frame_ids": [
+        0,
+        1,
+        2,
+        103,
+        104,
+        105
+      ],
+      "camera_retained_frame_ids": [
+        0,
+        1,
+        2,
+        103,
+        104,
+        105
+      ],
+      "temporal_bank_frame_ids": {},
+      "aggregator_kv_mib": 585.5625,
+      "camera_kv_mib": 1.5,
+      "descriptor_mib": 0.0234375,
+      "input_tensors_mib": 2.32379150390625,
+      "retained_outputs_mib": 0.0,
+      "retained_views_mib": 0.0,
+      "input_mode": "streaming",
+      "output_mode": "sink",
+      "cuda_allocated_mib": 8020.556640625,
+      "cuda_reserved_mib": 9644.0
+    },
+    {
+      "frame_index": 106,
+      "retained_frame_ids": [
+        0,
+        1,
+        2,
+        104,
+        105,
+        106
+      ],
+      "camera_retained_frame_ids": [
+        0,
+        1,
+        2,
+        104,
+        105,
+        106
+      ],
+      "temporal_bank_frame_ids": {},
+      "aggregator_kv_mib": 585.5625,
+      "camera_kv_mib": 1.5,
+      "descriptor_mib": 0.0234375,
+      "input_tensors_mib": 2.32379150390625,
+      "retained_outputs_mib": 0.0,
+      "retained_views_mib": 0.0,
+      "input_mode": "streaming",
+      "output_mode": "sink",
+      "cuda_allocated_mib": 8018.515625,
+      "cuda_reserved_mib": 9644.0
+    },
+    {
+      "frame_index": 107,
+      "retained_frame_ids": [
+        0,
+        1,
+        2,
+        105,
+        106,
+        107
+      ],
+      "camera_retained_frame_ids": [
+        0,
+        1,
+        2,
+        105,
+        106,
+        107
+      ],
+      "temporal_bank_frame_ids": {},
+      "aggregator_kv_mib": 585.5625,
+      "camera_kv_mib": 1.5,
+      "descriptor_mib": 0.0234375,
+      "input_tensors_mib": 2.32379150390625,
+      "retained_outputs_mib": 0.0,
+      "retained_views_mib": 0.0,
+      "input_mode": "streaming",
+      "output_mode": "sink",
+      "cuda_allocated_mib": 8020.556640625,
+      "cuda_reserved_mib": 9644.0
+    },
+    {
+      "frame_index": 108,
+      "retained_frame_ids": [
+        0,
+        1,
+        2,
+        106,
+        107,
+        108
+      ],
+      "camera_retained_frame_ids": [
+        0,
+        1,
+        2,
+        106,
+        107,
+        108
+      ],
+      "temporal_bank_frame_ids": {},
+      "aggregator_kv_mib": 585.5625,
+      "camera_kv_mib": 1.5,
+      "descriptor_mib": 0.0234375,
+      "input_tensors_mib": 2.32379150390625,
+      "retained_outputs_mib": 0.0,
+      "retained_views_mib": 0.0,
+      "input_mode": "streaming",
+      "output_mode": "sink",
+      "cuda_allocated_mib": 8018.515625,
+      "cuda_reserved_mib": 9644.0
+    },
+    {
+      "frame_index": 109,
+      "retained_frame_ids": [
+        0,
+        1,
+        2,
+        107,
+        108,
+        109
+      ],
+      "camera_retained_frame_ids": [
+        0,
+        1,
+        2,
+        107,
+        108,
+        109
+      ],
+      "temporal_bank_frame_ids": {},
+      "aggregator_kv_mib": 585.5625,
+      "camera_kv_mib": 1.5,
+      "descriptor_mib": 0.0234375,
+      "input_tensors_mib": 2.32379150390625,
+      "retained_outputs_mib": 0.0,
+      "retained_views_mib": 0.0,
+      "input_mode": "streaming",
+      "output_mode": "sink",
+      "cuda_allocated_mib": 8020.556640625,
+      "cuda_reserved_mib": 9644.0
+    }
+  ],
+  "frame_inference_ms": [
+    93.98617553710938,
+    69.76403045654297,
+    70.50323486328125,
+    72.18351745605469,
+    78.53228759765625,
+    80.27839660644531,
+    97.91999816894531,
+    80.206787109375,
+    80.69977569580078,
+    81.83580780029297,
+    82.17987060546875,
+    81.32908630371094,
+    80.38511657714844,
+    80.8210220336914,
+    80.06537628173828,
+    81.27324676513672,
+    80.61727905273438,
+    80.79811096191406,
+    80.25682830810547,
+    80.34294128417969,
+    80.72857666015625,
+    80.52547454833984,
+    80.60253143310547,
+    80.78943634033203,
+    80.46214294433594,
+    80.62671661376953,
+    80.6533432006836,
+    81.04681396484375,
+    80.09574127197266,
+    80.776611328125,
+    80.81561279296875,
+    80.75421142578125,
+    80.58604431152344,
+    81.36156463623047,
+    80.90412902832031,
+    80.76620483398438,
+    81.16432189941406,
+    80.60761260986328,
+    80.9668197631836,
+    80.51350402832031,
+    80.74371337890625,
+    80.43974304199219,
+    80.35004425048828,
+    80.3636474609375,
+    80.32422637939453,
+    80.16175842285156,
+    80.83993530273438,
+    81.0387191772461,
+    80.78390502929688,
+    80.80044555664062,
+    80.63750457763672,
+    80.76822662353516,
+    82.00732421875,
+    81.35369873046875,
+    82.91558074951172,
+    81.43609619140625,
+    80.99590301513672,
+    80.40739440917969,
+    80.64383697509766,
+    80.09030151367188,
+    80.24288177490234,
+    80.54326629638672,
+    80.76729583740234,
+    80.66441345214844,
+    80.21920013427734,
+    80.78704071044922,
+    81.17581176757812,
+    80.9250259399414,
+    81.0030746459961,
+    81.50422668457031,
+    81.43427276611328,
+    81.03056335449219,
+    81.38105773925781,
+    80.97885131835938,
+    80.76512145996094,
+    81.52079772949219,
+    80.70073699951172,
+    81.1431655883789,
+    81.3842544555664,
+    80.42534637451172,
+    80.48992156982422,
+    80.63426971435547,
+    80.62210845947266,
+    80.83519744873047,
+    80.70972442626953,
+    81.44108581542969,
+    81.26175689697266,
+    81.48560333251953,
+    80.81814575195312,
+    80.455810546875,
+    80.74262237548828,
+    80.90275573730469,
+    80.46598052978516,
+    80.97539520263672,
+    81.05001831054688,
+    81.60205078125,
+    84.10816192626953,
+    84.31488037109375,
+    80.3344955444336,
+    81.12652587890625,
+    80.46249389648438,
+    81.1707534790039,
+    81.48857879638672,
+    81.03359985351562,
+    81.33657836914062,
+    80.84083557128906,
+    80.8111343383789,
+    80.65958404541016,
+    80.4366683959961,
+    80.79379272460938
+  ],
+  "summary": {
+    "num_selection_events": 104,
+    "mean_selection_cuda_ms": 0.43946615148049134,
+    "median_selection_cuda_ms": 0.3213919997215271,
+    "p95_selection_cuda_ms": 0.35371358692646027,
+    "total_selection_cuda_ms": 45.7044797539711,
+    "mean_frame_inference_ms": 80.88941130204634,
+    "selection_percent_of_frame_gpu_time": 0.5136584180828809,
+    "total_selector_dot_products": 936,
+    "mean_selector_dot_products_per_event": 9.0,
+    "descriptor_bytes_per_retained_frame": 4096,
+    "aggregator_kv_bytes_per_retained_frame": 102334464,
+    "camera_kv_bytes_per_retained_frame": 262144,
+    "peak_allocated_mib": 8472.57421875,
+    "peak_reserved_mib": 9644.0
+  },
+  "source_images": [
+    "frame-000000.color.png",
+    "frame-000005.color.png",
+    "frame-000010.color.png",
+    "frame-000015.color.png",
+    "frame-000020.color.png",
+    "frame-000025.color.png",
+    "frame-000030.color.png",
+    "frame-000035.color.png",
+    "frame-000040.color.png",
+    "frame-000045.color.png",
+    "frame-000050.color.png",
+    "frame-000055.color.png",
+    "frame-000060.color.png",
+    "frame-000065.color.png",
+    "frame-000070.color.png",
+    "frame-000075.color.png",
+    "frame-000080.color.png",
+    "frame-000085.color.png",
+    "frame-000090.color.png",
+    "frame-000095.color.png",
+    "frame-000100.color.png",
+    "frame-000105.color.png",
+    "frame-000110.color.png",
+    "frame-000115.color.png",
+    "frame-000120.color.png",
+    "frame-000125.color.png",
+    "frame-000130.color.png",
+    "frame-000135.color.png",
+    "frame-000140.color.png",
+    "frame-000145.color.png",
+    "frame-000150.color.png",
+    "frame-000155.color.png",
+    "frame-000160.color.png",
+    "frame-000165.color.png",
+    "frame-000170.color.png",
+    "frame-000175.color.png",
+    "frame-000180.color.png",
+    "frame-000185.color.png",
+    "frame-000190.color.png",
+    "frame-000195.color.png",
+    "frame-000200.color.png",
+    "frame-000205.color.png",
+    "frame-000210.color.png",
+    "frame-000215.color.png",
+    "frame-000220.color.png",
+    "frame-000225.color.png",
+    "frame-000230.color.png",
+    "frame-000235.color.png",
+    "frame-000240.color.png",
+    "frame-000245.color.png",
+    "frame-000250.color.png",
+    "frame-000255.color.png",
+    "frame-000260.color.png",
+    "frame-000265.color.png",
+    "frame-000270.color.png",
+    "frame-000275.color.png",
+    "frame-000280.color.png",
+    "frame-000285.color.png",
+    "frame-000290.color.png",
+    "frame-000295.color.png",
+    "frame-000300.color.png",
+    "frame-000305.color.png",
+    "frame-000310.color.png",
+    "frame-000315.color.png",
+    "frame-000320.color.png",
+    "frame-000325.color.png",
+    "frame-000330.color.png",
+    "frame-000335.color.png",
+    "frame-000340.color.png",
+    "frame-000345.color.png",
+    "frame-000350.color.png",
+    "frame-000355.color.png",
+    "frame-000360.color.png",
+    "frame-000365.color.png",
+    "frame-000370.color.png",
+    "frame-000375.color.png",
+    "frame-000380.color.png",
+    "frame-000385.color.png",
+    "frame-000390.color.png",
+    "frame-000395.color.png",
+    "frame-000400.color.png",
+    "frame-000405.color.png",
+    "frame-000410.color.png",
+    "frame-000415.color.png",
+    "frame-000420.color.png",
+    "frame-000425.color.png",
+    "frame-000430.color.png",
+    "frame-000435.color.png",
+    "frame-000440.color.png",
+    "frame-000445.color.png",
+    "frame-000450.color.png",
+    "frame-000455.color.png",
+    "frame-000460.color.png",
+    "frame-000465.color.png",
+    "frame-000470.color.png",
+    "frame-000475.color.png",
+    "frame-000480.color.png",
+    "frame-000485.color.png",
+    "frame-000490.color.png",
+    "frame-000495.color.png",
+    "frame-000500.color.png",
+    "frame-000505.color.png",
+    "frame-000510.color.png",
+    "frame-000515.color.png",
+    "frame-000520.color.png",
+    "frame-000525.color.png",
+    "frame-000530.color.png",
+    "frame-000535.color.png",
+    "frame-000540.color.png",
+    "frame-000545.color.png"
+  ],
+  "gpu_name": "NVIDIA RTX 6000 Ada Generation",
+  "torch_version": "2.3.1+cu121",
+  "cuda_version": "12.1",
+  "python_version": "3.11.9",
+  "timing_scope": "CUDA events around pruning/index selection only; trace logging excluded"
+}

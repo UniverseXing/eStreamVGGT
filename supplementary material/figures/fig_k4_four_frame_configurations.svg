@@ -1,0 +1,204 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<svg xmlns="http://www.w3.org/2000/svg"
+     width="1800" height="1120" viewBox="0 0 1800 1120"
+     role="img" aria-labelledby="title desc">
+  <title id="title">Four-frame cache configurations used in the K4 same-budget experiment</title>
+  <desc id="desc">Five cards show the four retained states used by Recent-4, Anchor plus Recent-4, Uniform-4, Random-4, and the proposed K4 policy after warm-up. Full cache is an unbounded reference and is therefore not shown as a four-slot policy.</desc>
+
+  <defs>
+    <style><![CDATA[
+      .text { font-family: Arial, Helvetica, "Liberation Sans", sans-serif; fill: #1F2937; }
+      .panel-title { font-size: 29px; font-weight: 700; }
+      .subtitle { font-size: 18px; fill: #52606D; }
+      .card-title { font-size: 24px; font-weight: 700; }
+      .body { font-size: 17px; }
+      .small { font-size: 15px; }
+      .tiny { font-size: 13px; }
+      .mono { font-family: "Liberation Mono", "Courier New", monospace; }
+      .panel { fill: #FFFFFF; stroke: #B8C3CF; stroke-width: 2; }
+      .card { fill: #FAFCFD; stroke: #C4CDD6; stroke-width: 2; }
+      .card-proposed { fill: #FFF9F0; stroke: #D08937; stroke-width: 3; }
+      .slot-text { font-family: Arial, Helvetica, sans-serif; font-size: 25px; font-weight: 700; fill: #FFFFFF; text-anchor: middle; dominant-baseline: middle; }
+      .slot-id { font-family: "Liberation Mono", "Courier New", monospace; font-size: 15px; fill: #334155; text-anchor: middle; }
+      .rule { stroke: #D6DEE6; stroke-width: 1.5; }
+    ]]></style>
+  </defs>
+
+  <rect x="0" y="0" width="1800" height="1120" fill="#FFFFFF"/>
+  <rect class="panel" x="24" y="22" width="1752" height="1074" rx="14"/>
+
+  <text class="text panel-title" x="52" y="65">K=4 same-budget cache configurations</text>
+  <text class="text subtitle" x="52" y="96">Steady-state layout after processing current frame I<tspan baseline-shift="sub" font-size="13">t</tspan> and pruning the coupled retained state to four frames</text>
+
+  <!-- Shared temporal context -->
+  <g aria-label="temporal context">
+    <line x1="102" y1="150" x2="1696" y2="150" stroke="#94A3B8" stroke-width="2.5"/>
+    <path d="M1696 150 L1680 142 L1680 158 Z" fill="#94A3B8"/>
+    <circle cx="125" cy="150" r="8" fill="#3F6F9F"/>
+    <circle cx="575" cy="150" r="5" fill="#CBD5E1"/>
+    <circle cx="1005" cy="150" r="5" fill="#CBD5E1"/>
+    <circle cx="1450" cy="150" r="7" fill="#75AD80"/>
+    <circle cx="1655" cy="150" r="9" fill="#2D7D46"/>
+    <text class="text small mono" x="125" y="181" text-anchor="middle">frame 0</text>
+    <text class="text small" x="790" y="181" text-anchor="middle">historical candidates</text>
+    <text class="text small" x="1450" y="181" text-anchor="middle">recent history</text>
+    <text class="text small mono" x="1655" y="181" text-anchor="middle">current t</text>
+  </g>
+
+  <!-- Card 1: Recent-4 -->
+  <g aria-label="Recent-4 configuration">
+    <rect class="card" x="55" y="214" width="535" height="326" rx="12"/>
+    <text class="text card-title" x="82" y="252">Recent-4</text>
+    <rect x="403" y="228" width="160" height="30" rx="15" fill="#E8EEF3" stroke="#A7B3BE"/>
+    <text class="text tiny mono" x="483" y="248" text-anchor="middle">fifo, K=4</text>
+
+    <g aria-label="Recent-4 retained slots">
+      <rect x="83" y="287" width="105" height="67" rx="7" fill="#75AD80"/>
+      <rect x="207" y="287" width="105" height="67" rx="7" fill="#75AD80"/>
+      <rect x="331" y="287" width="105" height="67" rx="7" fill="#75AD80"/>
+      <rect x="455" y="287" width="105" height="67" rx="7" fill="#2D7D46"/>
+      <text class="slot-text" x="135.5" y="321">R</text>
+      <text class="slot-text" x="259.5" y="321">R</text>
+      <text class="slot-text" x="383.5" y="321">R</text>
+      <text class="slot-text" x="507.5" y="321">C</text>
+      <text class="slot-id" x="135.5" y="380">t−3</text>
+      <text class="slot-id" x="259.5" y="380">t−2</text>
+      <text class="slot-id" x="383.5" y="380">t−1</text>
+      <text class="slot-id" x="507.5" y="380">t</text>
+    </g>
+    <line class="rule" x1="82" y1="405" x2="563" y2="405"/>
+    <text class="text body" x="322" y="438" text-anchor="middle">Retain only the four most recent states.</text>
+    <text class="text small" x="322" y="469" text-anchor="middle">No stable anchor and no visual selection.</text>
+    <text class="text small" x="322" y="499" text-anchor="middle" fill="#64748B">temporal locality baseline</text>
+  </g>
+
+  <!-- Card 2: Anchor+Recent-4 -->
+  <g aria-label="Anchor plus Recent-4 configuration">
+    <rect class="card" x="632" y="214" width="535" height="326" rx="12"/>
+    <text class="text card-title" x="659" y="252">Anchor+Recent-4</text>
+    <rect x="957" y="228" width="182" height="30" rx="15" fill="#E8EEF3" stroke="#A7B3BE"/>
+    <text class="text tiny mono" x="1048" y="248" text-anchor="middle">anchor_recent</text>
+
+    <g aria-label="Anchor plus Recent-4 retained slots">
+      <rect x="660" y="287" width="105" height="67" rx="7" fill="#3F6F9F"/>
+      <rect x="784" y="287" width="105" height="67" rx="7" fill="#75AD80"/>
+      <rect x="908" y="287" width="105" height="67" rx="7" fill="#75AD80"/>
+      <rect x="1032" y="287" width="105" height="67" rx="7" fill="#2D7D46"/>
+      <text class="slot-text" x="712.5" y="321">A</text>
+      <text class="slot-text" x="836.5" y="321">R</text>
+      <text class="slot-text" x="960.5" y="321">R</text>
+      <text class="slot-text" x="1084.5" y="321">C</text>
+      <text class="slot-id" x="712.5" y="380">0</text>
+      <text class="slot-id" x="836.5" y="380">t−2</text>
+      <text class="slot-id" x="960.5" y="380">t−1</text>
+      <text class="slot-id" x="1084.5" y="380">t</text>
+    </g>
+    <line class="rule" x1="659" y1="405" x2="1140" y2="405"/>
+    <text class="text body" x="899" y="438" text-anchor="middle">Fix frame 0 and retain two recent states.</text>
+    <text class="text small" x="899" y="469" text-anchor="middle">Matches K4's anchor/history/current slot count.</text>
+    <text class="text small" x="899" y="499" text-anchor="middle" fill="#64748B">key non-DINO baseline</text>
+  </g>
+
+  <!-- Card 3: Uniform-4 -->
+  <g aria-label="Uniform-4 configuration">
+    <rect class="card" x="1209" y="214" width="535" height="326" rx="12"/>
+    <text class="text card-title" x="1236" y="252">Uniform-4</text>
+    <rect x="1517" y="228" width="199" height="30" rx="15" fill="#E8EEF3" stroke="#A7B3BE"/>
+    <text class="text tiny mono" x="1616.5" y="248" text-anchor="middle">anchor_uniform_k4</text>
+
+    <g aria-label="Uniform-4 retained slots">
+      <rect x="1237" y="287" width="105" height="67" rx="7" fill="#3F6F9F"/>
+      <rect x="1361" y="287" width="105" height="67" rx="7" fill="#8775B8"/>
+      <rect x="1485" y="287" width="105" height="67" rx="7" fill="#8775B8"/>
+      <rect x="1609" y="287" width="105" height="67" rx="7" fill="#2D7D46"/>
+      <text class="slot-text" x="1289.5" y="321">A</text>
+      <text class="slot-text" x="1413.5" y="321">U</text>
+      <text class="slot-text" x="1537.5" y="321">U</text>
+      <text class="slot-text" x="1661.5" y="321">C</text>
+      <text class="slot-id" x="1289.5" y="380">0</text>
+      <text class="slot-id" x="1413.5" y="380">u₁</text>
+      <text class="slot-id" x="1537.5" y="380">u₂</text>
+      <text class="slot-id" x="1661.5" y="380">t</text>
+    </g>
+    <line class="rule" x1="1236" y1="405" x2="1717" y2="405"/>
+    <text class="text body" x="1476" y="438" text-anchor="middle">Fix frame 0 and deterministically space history.</text>
+    <text class="text small" x="1476" y="469" text-anchor="middle">No descriptor or image-content comparison.</text>
+    <text class="text small" x="1476" y="499" text-anchor="middle" fill="#64748B">deterministic coverage baseline</text>
+  </g>
+
+  <!-- Card 4: Random-4 -->
+  <g aria-label="Random-4 configuration">
+    <rect class="card" x="330" y="584" width="535" height="326" rx="12"/>
+    <text class="text card-title" x="357" y="622">Random-4</text>
+    <rect x="633" y="598" width="204" height="30" rx="15" fill="#E8EEF3" stroke="#A7B3BE"/>
+    <text class="text tiny mono" x="735" y="618" text-anchor="middle">random_reservoir_k4</text>
+
+    <g aria-label="Random-4 retained slots">
+      <rect x="358" y="657" width="105" height="67" rx="7" fill="#B45555"/>
+      <rect x="482" y="657" width="105" height="67" rx="7" fill="#B45555"/>
+      <rect x="606" y="657" width="105" height="67" rx="7" fill="#B45555"/>
+      <rect x="730" y="657" width="105" height="67" rx="7" fill="#2D7D46"/>
+      <text class="slot-text" x="410.5" y="691">S</text>
+      <text class="slot-text" x="534.5" y="691">S</text>
+      <text class="slot-text" x="658.5" y="691">S</text>
+      <text class="slot-text" x="782.5" y="691">C</text>
+      <text class="slot-id" x="410.5" y="750">s₁</text>
+      <text class="slot-id" x="534.5" y="750">s₂</text>
+      <text class="slot-id" x="658.5" y="750">s₃</text>
+      <text class="slot-id" x="782.5" y="750">t</text>
+    </g>
+    <line class="rule" x1="357" y1="775" x2="838" y2="775"/>
+    <text class="text body" x="597" y="808" text-anchor="middle">Keep three seeded reservoir history states.</text>
+    <text class="text small" x="597" y="839" text-anchor="middle">Experiment reports seeds 0, 1, and 2.</text>
+    <text class="text small" x="597" y="869" text-anchor="middle" fill="#64748B">stochastic coverage baseline</text>
+  </g>
+
+  <!-- Card 5: proposed K4 -->
+  <g aria-label="Proposed K4 configuration">
+    <rect class="card-proposed" x="935" y="584" width="535" height="326" rx="12"/>
+    <text class="text card-title" x="962" y="622">K4</text>
+    <text class="text small" x="1006" y="622" fill="#9A5E1C">proposed</text>
+    <rect x="1192" y="598" width="250" height="30" rx="15" fill="#FFF1DE" stroke="#D08937"/>
+    <text class="text tiny mono" x="1317" y="618" text-anchor="middle">anchor_recent_dino_diverse_k4</text>
+
+    <g aria-label="Proposed K4 retained slots">
+      <rect x="963" y="657" width="105" height="67" rx="7" fill="#3F6F9F"/>
+      <rect x="1087" y="657" width="105" height="67" rx="7" fill="#D88732"/>
+      <rect x="1211" y="657" width="105" height="67" rx="7" fill="#D88732"/>
+      <rect x="1335" y="657" width="105" height="67" rx="7" fill="#2D7D46"/>
+      <text class="slot-text" x="1015.5" y="691">A</text>
+      <text class="slot-text" x="1139.5" y="691">D</text>
+      <text class="slot-text" x="1263.5" y="691">D</text>
+      <text class="slot-text" x="1387.5" y="691">C</text>
+      <text class="slot-id" x="1015.5" y="750">0</text>
+      <text class="slot-id" x="1139.5" y="750">d₁</text>
+      <text class="slot-id" x="1263.5" y="750">d₂</text>
+      <text class="slot-id" x="1387.5" y="750">t</text>
+    </g>
+    <line class="rule" x1="962" y1="775" x2="1443" y2="775"/>
+    <text class="text body" x="1202" y="808" text-anchor="middle">Fix frame 0 and retain two DINO-diverse histories.</text>
+    <text class="text small" x="1202" y="839" text-anchor="middle">Rank old candidates by low visual redundancy.</text>
+    <text class="text small" x="1202" y="869" text-anchor="middle" fill="#9A5E1C">same four-state memory budget</text>
+  </g>
+
+  <!-- Legend -->
+  <g aria-label="slot legend">
+    <text class="text body" x="63" y="960" font-weight="700">Slot legend</text>
+    <rect x="165" y="940" width="22" height="22" rx="3" fill="#3F6F9F"/>
+    <text class="text small" x="196" y="957">A: fixed frame-0 anchor</text>
+    <rect x="393" y="940" width="22" height="22" rx="3" fill="#75AD80"/>
+    <text class="text small" x="424" y="957">R: recent history</text>
+    <rect x="582" y="940" width="22" height="22" rx="3" fill="#8775B8"/>
+    <text class="text small" x="613" y="957">U: uniform history</text>
+    <rect x="797" y="940" width="22" height="22" rx="3" fill="#B45555"/>
+    <text class="text small" x="828" y="957">S: seeded reservoir history</text>
+    <rect x="1085" y="940" width="22" height="22" rx="3" fill="#D88732"/>
+    <text class="text small" x="1116" y="957">D: DINO-selected history</text>
+    <rect x="1364" y="940" width="22" height="22" rx="3" fill="#2D7D46"/>
+    <text class="text small" x="1395" y="957">C: current frame</text>
+  </g>
+
+  <rect x="55" y="990" width="1690" height="72" rx="10" fill="#F4F6F8" stroke="#B8C3CF"/>
+  <text class="text body" x="80" y="1018"><tspan font-weight="700">Controlled comparison:</tspan> every policy above retains exactly four coupled frame states after warm-up; only the selection rule changes.</text>
+  <text class="text small" x="80" y="1046"><tspan font-weight="700">Full cache</tspan> retains all history {0, …, t} and is the original StreamVGGT reference, so it is intentionally omitted from the four-slot layouts.</text>
+</svg>

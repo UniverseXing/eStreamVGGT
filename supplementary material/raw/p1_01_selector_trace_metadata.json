@@ -1,0 +1,14 @@
+{
+  "dataset": "7-Scenes chess/seq-01",
+  "image_glob": "*.color.png",
+  "sampling_stride": 5,
+  "num_frames": 110,
+  "first_source_frame": "frame-000000.color.png",
+  "last_source_frame": "frame-000545.color.png",
+  "checkpoints_one_based": [
+    16,
+    51,
+    110
+  ],
+  "purpose": "descriptive selector audit; not used for tuning"
+}

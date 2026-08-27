@@ -7,7 +7,8 @@
 #SBATCH --output=streamvggt-stage5-%j.out
 #SBATCH --error=streamvggt-stage5-%j.err
 
-# Runs the two conference Stage 5 evidence-completion experiments.
+# Runs the conference Stage 5 experiments and the optional emergency Stage 5E
+# direct-baseline comparison.
 set -euo pipefail
 
 module load Miniforge3
@@ -36,6 +37,9 @@ case "${STREAMVGGT_RUN_TARGET:-stage5}" in
         ;;
     supplementary)
         bash "run_supplementary.sh"
+        ;;
+    stage5e)
+        bash "run_stage5e.sh"
         ;;
     *)
         echo "Unknown STREAMVGGT_RUN_TARGET=${STREAMVGGT_RUN_TARGET}" >&2
