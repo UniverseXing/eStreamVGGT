@@ -155,6 +155,26 @@ def copy_existing_assets(root: Path, output: Path) -> None:
     ):
         if (coverage_dir / name).is_file():
             copy_file(coverage_dir / name, output / "raw" / f"p1_05_{name}")
+    pose_dir = root / "eval_results" / "supplementary_k8_pose"
+    for name in (
+        "k8_pose_results.csv",
+        "k8_pose_comparison.csv",
+        "k8_pose_summary.csv",
+        "k8_pose_gate.csv",
+    ):
+        if (pose_dir / name).is_file():
+            copy_file(pose_dir / name, output / "tables" / f"p1_06_{name}")
+    for name in (
+        "figure_k8_pose_comparison.pdf",
+        "figure_k8_pose_comparison.png",
+    ):
+        if (pose_dir / name).is_file():
+            copy_file(pose_dir / name, output / "figures" / f"p1_06_{name}")
+    if (pose_dir / "k8_pose_metadata.json").is_file():
+        copy_file(
+            pose_dir / "k8_pose_metadata.json",
+            output / "raw" / "p1_06_k8_pose_metadata.json",
+        )
 
 
 def protocol_spec(task: str, dataset: str) -> dict[str, str]:
@@ -500,6 +520,9 @@ def write_manifest(root: Path, output: Path) -> None:
     k8_coverage_complete = (
         root / "eval_results/supplementary_k8_coverage/k8_temporal_coverage_summary.csv"
     ).is_file()
+    k8_pose_complete = (
+        root / "eval_results/supplementary_k8_pose/k8_pose_gate.csv"
+    ).is_file()
     rows = [
         {"id": "P0-01", "priority": "P0", "requirement": "dataset and evaluation protocol", "status": "complete_derived", "server_action": "none", "assets": "tables/p0_01_dataset_and_protocol.csv"},
         {"id": "P0-02", "priority": "P0", "requirement": "complete same-budget selection experiment", "status": "complete" if same_budget_refreshed else "awaiting_metric_refresh", "server_action": "none" if same_budget_refreshed else "CPU-only Stage5A finalize; no inference", "assets": "tables/p0_02_same_budget_summary_current.csv"},
@@ -516,6 +539,7 @@ def write_manifest(root: Path, output: Path) -> None:
         {"id": "P1-03", "priority": "P1", "requirement": "budget sweep", "status": "not_run", "server_action": "defer until P0 and P1-01 are frozen", "assets": "none"},
         {"id": "P1-04", "priority": "P1", "requirement": "selector measured overhead", "status": "complete" if selector_complete else "memory_bytes_available_latency_pending", "server_action": "none" if selector_complete else "produced by selector diagnostic", "assets": "tables/p0_08_memory_trace.csv; tables/p1_04_selector_overhead.csv"},
         {"id": "P1-05", "priority": "P1", "requirement": "matched hierarchical/non-hierarchical K8 temporal coverage", "status": "complete" if k8_coverage_complete else "not_run", "server_action": "none" if k8_coverage_complete else "one 110-view matched selector diagnostic", "assets": "tables/p1_05_*; figures/p1_05_*; raw/p1_05_*"},
+        {"id": "P1-06", "priority": "P1", "requirement": "matched 1000-frame hierarchical/non-hierarchical K8 TUM pose", "status": "complete" if k8_pose_complete else "not_run", "server_action": "none" if k8_pose_complete else "six-cell 1000-frame TUM pose run", "assets": "tables/p1_06_*; figures/p1_06_*; raw/p1_06_*"},
     ]
     write_csv(output / "MATERIAL_STATUS.csv", rows)
 

@@ -38,6 +38,10 @@ PUBLIC_METHOD_CONFIGS = {
     "anchor_recent_dino_diverse_k8": (8, "anchor_recent_dino_diverse_k8"),
 }
 
+SUPPLEMENTARY_METHOD_CONFIGS = {
+    "nonhierarchical_dino8": (8, "anchor_recent_dino_diverse"),
+}
+
 # Keep the frozen experiment identifiers accepted so the historical Stage 4C
 # commands and result manifests remain reproducible. New commands should use
 # the paper-facing names above.
@@ -46,7 +50,11 @@ LEGACY_METHOD_CONFIGS = {
     "old_dino_k6": (6, "anchor_recent_dino_diverse"),
     "temporal_binned_dino_k8": (8, "temporal_binned_dino_k8"),
 }
-METHOD_CONFIGS = {**PUBLIC_METHOD_CONFIGS, **LEGACY_METHOD_CONFIGS}
+METHOD_CONFIGS = {
+    **PUBLIC_METHOD_CONFIGS,
+    **SUPPLEMENTARY_METHOD_CONFIGS,
+    **LEGACY_METHOD_CONFIGS,
+}
 
 
 def parse_args():

@@ -45,6 +45,40 @@ for part in ${parts}; do
                 --steady-start-frame "${STREAMVGGT_SUPPLEMENTARY_STEADY_START_FRAME:-50}" \
                 --output-dir "${STREAMVGGT_SUPPLEMENTARY_K8_COVERAGE_ROOT:-${repo_root}/eval_results/supplementary_k8_coverage}"
             ;;
+        k8_pose)
+            echo "===== Supplementary P1: matched 1000-frame K8 TUM pose ====="
+            results_root="${STREAMVGGT_SUPPLEMENTARY_K8_POSE_ROOT:-${repo_root}/eval_results/supplementary_k8_pose}"
+            data_root="${STREAMVGGT_STAGE4C_DATA_ROOT:-${repo_root}/data/eval/stage4c_tum}"
+            weights="${STREAMVGGT_SUPPLEMENTARY_WEIGHTS:-${repo_root}/ckpt/checkpoints.pth}"
+            run_id="${SLURM_JOB_ID:-manual}-k8-pose-$(date +%s)"
+            sequences="${STREAMVGGT_STAGE4C_SEQUENCES:-rgbd_dataset_freiburg1_room rgbd_dataset_freiburg2_desk rgbd_dataset_freiburg3_long_office_household}"
+            read -r -a sequence_array <<< "${sequences}"
+            "${python_bin}" "scripts/check_stage4c_data.py" \
+                --root "${data_root}" \
+                --sequences "${sequence_array[@]}" \
+                --min-frames 1000
+            for method in anchor_recent_dino_diverse_k8 nonhierarchical_dino8; do
+                for sequence in "${sequence_array[@]}"; do
+                    output_dir="${results_root}/${method}/${sequence}/1000"
+                    echo "===== ${method}: ${sequence}, 1000 frames ====="
+                    "${python_bin}" "src/eval/long_sequence/eval_stage4c_tum_long.py" \
+                        --weights "${weights}" \
+                        --data-root "${data_root}" \
+                        --sequence "${sequence}" \
+                        --output-dir "${output_dir}" \
+                        --method "${method}" \
+                        --max-frames 1000 \
+                        --size 518 \
+                        --max-association-difference 0.02 \
+                        --run-scope frozen \
+                        --run-id "${run_id}"
+                done
+            done
+            "${python_bin}" "scripts/summarize_supplementary_k8_pose.py" \
+                --results-root "${results_root}" \
+                --output-dir "${results_root}" \
+                --expected-run-id "${run_id}"
+            ;;
         k8_controls)
             echo "===== Supplementary P1: matched K8 controls ====="
             for method in recent8 nonhierarchical_dino8; do

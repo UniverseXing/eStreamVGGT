@@ -117,7 +117,53 @@ method is evaluated under a new protocol. The matched experiment can support
 only a weaker comparative coverage claim, and does not establish that coverage
 causes better depth, pose, or reconstruction accuracy.
 
-### P1-D: budget sweep (deferred)
+### P1-D: matched 1000-frame K8 TUM pose comparison
+
+The temporal-coverage diagnostic measures selector behaviour, not downstream
+geometry. Connect the coverage result to long-sequence pose using the frozen
+Stage 4C raw-TUM protocol. Run Hierarchical K8 and Non-hierarchical DINO-8 on
+the same three sequences at exactly 1000 frames, with the same checkpoint,
+RGB/ground-truth association tolerance, resolution, streaming-release path and
+RTX 6000 Ada environment:
+
+```bash
+STREAMVGGT_RUN_TARGET=supplementary \
+STREAMVGGT_SUPPLEMENTARY_PARTS=k8_pose \
+sbatch run.sh
+```
+
+This is a six-cell experiment: two selectors by three sequences. It reports
+ATE, translation RPE and rotation RPE. The claim gates are fixed before the
+run:
+
+- *overall 1000-frame pose superiority* requires lower macro mean for all
+  three metrics and Hierarchical K8 wins on at least two of three sequences for
+  every metric;
+- *1000-frame rotation-pose specialist* requires at least 10% lower macro
+  rotation RPE and wins on at least two sequences, while macro ATE and
+  translation RPE regress by no more than 20% and no per-sequence ATE exceeds
+  twice the matched control;
+- if neither gate passes, retain only the selector-level temporal-coverage
+  result and make no downstream pose-advantage claim.
+
+Do not change the K8 age bins or rerun only favourable sequences after seeing
+the comparison. The experiment tests association between the frozen selector
+and pose performance; it does not by itself establish causal mediation by
+temporal coverage.
+
+Expected outputs are under `eval_results/supplementary_k8_pose/`:
+
+```text
+k8_pose_results.csv
+k8_pose_comparison.csv
+k8_pose_summary.csv
+k8_pose_gate.csv
+figure_k8_pose_comparison.pdf
+figure_k8_pose_comparison.png
+k8_pose_metadata.json
+```
+
+### P1-E: budget sweep (deferred)
 
 The requested K=2/4/6/8/12/16/Full sweep is not a clean one-dimensional ablation
 because the frozen K4, K6, and K8 use different slot layouts. Mixing those

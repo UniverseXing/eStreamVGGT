@@ -27,6 +27,9 @@ still used by repository tests and paper scripts.
 - The matched K8 temporal-coverage diagnostic compares Hierarchical K8 with
   Non-hierarchical DINO-8. It validates temporal-bin occupancy only and must
   not be presented as evidence of downstream accuracy causality.
+- The matched 1000-frame TUM pose comparison is the downstream companion to
+  that diagnostic; its pre-registered gates distinguish overall pose
+  superiority from a narrower rotation-pose-specialist result.
 
 Rebuild the curated package without inference:
 
