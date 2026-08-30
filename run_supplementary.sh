@@ -33,6 +33,18 @@ for part in ${parts}; do
                 --max-frames "${STREAMVGGT_SUPPLEMENTARY_MAX_FRAMES:-110}" \
                 --output-dir "${STREAMVGGT_SUPPLEMENTARY_RESULTS_ROOT:-${repo_root}/eval_results/supplementary_selector_trace}"
             ;;
+        k8_coverage)
+            echo "===== Supplementary P1: matched K8 temporal coverage ====="
+            "${python_bin}" "scripts/run_supplementary_k8_coverage.py" \
+                --repo-root "${repo_root}" \
+                --weights "${STREAMVGGT_SUPPLEMENTARY_WEIGHTS:-${repo_root}/ckpt/checkpoints.pth}" \
+                --images-dir "${STREAMVGGT_SUPPLEMENTARY_IMAGES_DIR:-${repo_root}/data/eval/7scenes/chess/seq-01}" \
+                --image-glob "${STREAMVGGT_SUPPLEMENTARY_IMAGE_GLOB:-*.color.png}" \
+                --sampling-stride "${STREAMVGGT_SUPPLEMENTARY_SAMPLING_STRIDE:-5}" \
+                --max-frames "${STREAMVGGT_SUPPLEMENTARY_MAX_FRAMES:-110}" \
+                --steady-start-frame "${STREAMVGGT_SUPPLEMENTARY_STEADY_START_FRAME:-50}" \
+                --output-dir "${STREAMVGGT_SUPPLEMENTARY_K8_COVERAGE_ROOT:-${repo_root}/eval_results/supplementary_k8_coverage}"
+            ;;
         k8_controls)
             echo "===== Supplementary P1: matched K8 controls ====="
             for method in recent8 nonhierarchical_dino8; do

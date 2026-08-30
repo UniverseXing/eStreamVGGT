@@ -24,6 +24,9 @@ still used by repository tests and paper scripts.
   into one small diagnostic run.
 - P1 K=8 controls and the broad budget sweep remain optional. They must not be
   used to retune the frozen K4/K6/K8 method after seeing held-out results.
+- The matched K8 temporal-coverage diagnostic compares Hierarchical K8 with
+  Non-hierarchical DINO-8. It validates temporal-bin occupancy only and must
+  not be presented as evidence of downstream accuracy causality.
 
 Rebuild the curated package without inference:
 

@@ -59,9 +59,9 @@ The existing K4 study already includes Recent-4, Anchor+Recent-4, Uniform-4,
 three Random-4 seeds, and K4. The remaining clean P1 component comparison is
 fixed K=8:
 
-- hierarchical K8: `anchor_recent_dino_diverse_k8`;
+- Hierarchical K8: `anchor_recent_dino_diverse_k8`;
 - Recent-8: `fifo`, window 8;
-- non-hierarchical DINO-8: legacy generic
+- Non-hierarchical DINO-8: legacy generic
   `anchor_recent_dino_diverse`, window 8.
 
 Run these on the three VideoDepth datasets only if schedule permits. Report all
@@ -76,7 +76,48 @@ sbatch run.sh
 This launches only the two missing controls; the frozen K8 rows are reused from
 Stage 4A/4B and checked for the same RTX 6000 Ada provenance.
 
-### P1-C: budget sweep (deferred)
+The matched VideoDepth table is not a basis for claiming that Hierarchical K8
+is the depth-optimal selector. Non-hierarchical DINO-8 is numerically stronger
+on Bonn and Sintel, and its paired AbsRel advantage on KITTI is clear. The
+hierarchical configuration remains a pre-frozen temporal/pose specialist.
+
+### P1-C: matched K8 temporal-coverage diagnostic
+
+The existing K8 trace demonstrates the hierarchical policy in isolation, but
+does not compare its temporal coverage with Non-hierarchical DINO-8. Run both
+selectors on the same fixed 110-view `7scenes/chess/seq-01` input:
+
+```bash
+STREAMVGGT_RUN_TARGET=supplementary \
+STREAMVGGT_SUPPLEMENTARY_PARTS=k8_coverage \
+sbatch run.sh
+```
+
+Both methods use the same checkpoint, ordered images, preprocessing and
+eight-state budget. Frame 0 is treated as the separate anchor. For sampled
+views 50--110, the four non-anchor age bins are recent (0--3), near (4--15),
+middle (16--47), and long ($\geq48$). The pre-registered claim gates are:
+
+- use *guarantees all four temporal bins* only if Hierarchical K8 has 100%
+  all-four coverage over all 61 measured steps;
+- otherwise use *more consistent multi-scale temporal coverage* only if its
+  all-four coverage exceeds Non-hierarchical DINO-8 by at least 0.20 and its
+  mean occupied-bin count exceeds the control by at least 0.25;
+- if either comparative threshold fails, report the trace descriptively and
+  make no comparative coverage claim;
+- no boundary, descriptor rule, start frame or K value may be changed after
+  seeing the matched output.
+
+The run writes per-step, summary and gate CSVs, both raw selector traces, and a
+timeline/coverage figure under `eval_results/supplementary_k8_coverage/`.
+The current isolated hierarchical trace covers all four bins in 58/61 measured
+steps (95.1%), with three middle-bin transition gaps at views 82--84. Therefore
+the strict word *guarantees* is already disallowed unless a corrected future
+method is evaluated under a new protocol. The matched experiment can support
+only a weaker comparative coverage claim, and does not establish that coverage
+causes better depth, pose, or reconstruction accuracy.
+
+### P1-D: budget sweep (deferred)
 
 The requested K=2/4/6/8/12/16/Full sweep is not a clean one-dimensional ablation
 because the frozen K4, K6, and K8 use different slot layouts. Mixing those
